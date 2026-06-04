@@ -1,0 +1,5 @@
+# GCP Minecraft On-Demand
+
+An event-driven, cost-optimized infrastructure deployment that hosts a containerized Minecraft server on Google Cloud Platform (GCP).
+
+*Architecture scales to zero when idle and wakes on DNS resolution.*
