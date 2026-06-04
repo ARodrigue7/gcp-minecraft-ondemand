@@ -1,0 +1,12 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Security & Secrets
+*.json
+*.env
+
+# Python
+__pycache__/
+*.pyc
