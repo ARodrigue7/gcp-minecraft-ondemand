@@ -27,9 +27,13 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [ ] Initialize Git repository with proper `.gitignore` configuration.
 * [ ] Establish modular folder structure (`/terraform`, `/functions`, `/scripts`).
 * [ ] Configure local workstation authentication with the `gcloud` CLI.
+* [x] Initialize Git repository with proper `.gitignore` configuration.
+* [x] Establish modular folder structure (`/terraform`, `/functions`, `/scripts`).
+* [x] Configure local workstation authentication with the `gcloud` CLI.
 
 ### ⬜ Phase 2: Infrastructure as Code (Terraform)
 * [ ] Write provider configuration and backend state declarations.
+* [x] Write provider configuration and backend state declarations.
 * [ ] Define the `google_compute_disk` resource for persistent game data storage.
 * [ ] Define the `google_compute_instance` block utilizing a container spec.
 * [ ] Configure `google_dns_managed_zone` and log-enabled `google_dns_policy`.
@@ -72,7 +76,9 @@ Plaintext
 *.env
 🔄 Change Log & Active Focus
 Current Iteration: Kickoff & Scaffolding.
+Current Iteration: Phase 2 - Provider & Variables.
 
 Active Blockers: None.
 
 Immediate Next Step: Define the exact folder scaffolding locally and draft the base Terraform provider file.
+Immediate Next Step: Define the persistent disk and VM instance resources.
