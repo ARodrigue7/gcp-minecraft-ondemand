@@ -202,6 +202,12 @@ You can customize the Minecraft server settings by editing [terraform/startup.sh
 
 ---
 
+## 🔮 Future Roadmap
+
+* **Deploy to Google Cloud Button**: Introduce a secure, interactive setup wizard within Google Cloud Shell (via the standard `Deploy to GCP` button) to automate project provisioning and eliminate manual local file creation.
+
+---
+
 ## 📝 License
 
 This project is licensed under the MIT License. See the [LICENSE](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/LICENSE) file for details.
