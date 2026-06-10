@@ -11,6 +11,10 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -101,11 +105,16 @@ resource "google_compute_instance" "minecraft" {
     startup-script = templatefile("${path.module}/startup.sh", {
       idle_timeout_seconds = var.idle_timeout_seconds
     })
+    approved-whitelist = ""
   }
 
   service_account {
     email  = google_service_account.minecraft_sa.email
     scopes = ["cloud-platform"]
+  }
+
+  lifecycle {
+    ignore_changes = [metadata["approved-whitelist"]]
   }
 }
 
@@ -233,4 +242,53 @@ resource "google_cloudfunctions_function" "minecraft_starter" {
   }
 
   service_account_email = google_service_account.cf_sa.email
+}
+
+# Secret key for whitelisting HMAC generation
+resource "random_id" "whitelist_secret" {
+  byte_length = 32
+}
+
+# HTTP-triggered Cloud Function for status checking and whitelist requests
+resource "google_cloudfunctions_function" "minecraft_status" {
+  name        = "minecraft-status"
+  description = "Returns Minecraft GCE VM status and handles whitelist requests via Discord"
+  runtime     = "python310"
+
+  available_memory_mb   = 256
+  source_archive_bucket = google_storage_bucket.function_bucket.name
+  source_archive_object = google_storage_bucket_object.function_zip_object.name
+  entry_point           = "get_status_http"
+  trigger_http          = true
+
+  environment_variables = {
+    PROJECT_ID          = var.project_id
+    ZONE                = var.zone
+    INSTANCE_NAME       = var.instance_name
+    DNS_ZONE_NAME       = var.dns_zone_name
+    DOMAIN_NAME         = var.domain_name
+    DISCORD_WEBHOOK_URL = var.discord_webhook_url
+    WHITELIST_SECRET    = random_id.whitelist_secret.hex
+  }
+
+  service_account_email = google_service_account.cf_sa.email
+}
+
+# Allow public (unauthenticated) access to the status function
+resource "google_cloudfunctions_function_iam_member" "status_invoker" {
+  project        = google_cloudfunctions_function.minecraft_status.project
+  region         = google_cloudfunctions_function.minecraft_status.region
+  cloud_function = google_cloudfunctions_function.minecraft_status.name
+
+  role   = "roles/cloudfunctions.invoker"
+  member = "allUsers"
+}
+
+# Generate frontend config.json automatically on terraform apply
+resource "local_file" "frontend_config" {
+  filename = "${path.module}/../docs/config.json"
+  content  = jsonencode({
+    statusUrl  = google_cloudfunctions_function.minecraft_status.https_trigger_url
+    domainName = var.domain_name
+  })
 }

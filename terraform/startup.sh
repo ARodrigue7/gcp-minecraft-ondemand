@@ -64,6 +64,20 @@ PORT=25565
 IDLE_LIMIT=${idle_timeout_seconds}
 INITIAL_DELAY=600 # 10 minutes startup grace period
 
+# Sync approved whitelist from GCE instance metadata attributes
+APPROVED_WHITELIST=$(curl -s -f -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/approved-whitelist || echo "")
+if [ -n "$APPROVED_WHITELIST" ]; then
+  IFS=',' read -ra PLAYERS <<< "$APPROVED_WHITELIST"
+  if docker ps --format '{{.Names}}' | grep -Eq "^minecraft$"; then
+    for player in "$${PLAYERS[@]}"; do
+      if [ -n "$player" ]; then
+        echo "Syncing whitelist for player: $player"
+        docker exec minecraft mc-send-to-rcon whitelist add "$player" >/dev/null 2>&1 || true
+      fi
+    done
+  fi
+fi
+
 # Get uptime in seconds
 UPTIME=$(cat /proc/uptime | awk '{print $1}')
 UPTIME=$${UPTIME%.*}

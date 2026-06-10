@@ -35,4 +35,9 @@ output "zone" {
   description = "The GCP zone where the VM instance resides"
 }
 
+output "status_function_url" {
+  value       = google_cloudfunctions_function.minecraft_status.https_trigger_url
+  description = "The HTTP URL to check the server status"
+}
+
 

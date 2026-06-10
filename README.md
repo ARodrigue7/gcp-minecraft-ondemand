@@ -33,47 +33,147 @@ Before deploying, ensure you have:
 2. The **gcloud CLI** installed and authenticated (`gcloud auth application-default login`).
 3. **Terraform** (>= 1.0) installed.
 4. A domain name managed by **Cloudflare** (e.g., `yourdomain.com`).
+5. A **Discord Webhook URL** (create this in Discord via `Server Settings` -> `Integrations` -> `Webhooks` -> `New Webhook`) to receive whitelist requests.
 
 ---
 
 ## 🚀 Setup & Deployment
 
-### Step 1: Clone the Repository
+### Phase 1: Google Cloud Platform (GCP) Preparation
+
+#### 1. Enable Required APIs
+Run the following command using the `gcloud` CLI to enable the necessary APIs in your GCP project:
 ```bash
-git clone https://github.com/your-username/gcp-ondemand-minecraft.git
-cd gcp-ondemand-minecraft
+gcloud services enable \
+  compute.googleapis.com \
+  dns.googleapis.com \
+  pubsub.googleapis.com \
+  logging.googleapis.com \
+  cloudfunctions.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com
 ```
 
-### Step 2: Configure Terraform Variables
-Create a `terraform/terraform.tfvars` file to specify your custom variables:
-```hcl
-project_id           = "your-gcp-project-id"
-domain_name          = "play.yourdomain.com"
-dns_zone_name        = "play-yourdomain-com"
-idle_timeout_seconds = 600   # Stop VM after 10 minutes of inactivity
-machine_type         = "e2-medium"
-disk_size_gb         = 10
+#### 2. Authenticate Local Environment
+Ensure your local terminal has Application Default Credentials configured so Terraform can deploy resources:
+```bash
+gcloud auth application-default login
 ```
 
-### Step 3: Deploy with Terraform
+---
+
+### Phase 2: Configure & Apply Terraform
+
+#### 1. Set Up Variables
+Copy the example variables file to your active configuration:
+```bash
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+```
+
+Open `terraform/terraform.tfvars` and configure the values:
+* `project_id`: Your actual GCP Project ID (e.g., `minecraft-ondemand-499002`).
+* `domain_name`: The subdomain players will use (e.g., `mc.pitcomi.com`).
+* `dns_zone_name`: Logical name for the zone inside GCP (e.g., `mc-pitcomi-com`).
+* `discord_webhook_url`: Your private Discord Webhook URL.
+* `idle_timeout_seconds`: Inactivity seconds before auto-shutdown (e.g., `600` for 10 minutes).
+
+#### 2. Deploy Infrastructure
 Navigate to the `terraform/` directory, initialize, and deploy the infrastructure:
 ```bash
 cd terraform
 terraform init
-terraform plan
 terraform apply
 ```
-*Note down the `dns_name_servers` output list upon successful application.*
+When prompted, type `yes` to confirm.
 
-### Step 4: Delegate Subdomain from Cloudflare
-To route requests through Cloud DNS for logging, you need to delegate the subdomain (e.g., `play.yourdomain.com`) to GCP:
+> [!NOTE]
+> Upon successful application, Terraform automatically creates the configuration file **`docs/config.json`** for your website and prints the assigned DNS name servers to your console.
+
+```text
+Outputs:
+dns_name_servers = [
+  "ns-cloud-c1.googledomains.com.",
+  "ns-cloud-c2.googledomains.com.",
+  "ns-cloud-c3.googledomains.com.",
+  "ns-cloud-c4.googledomains.com."
+]
+status_function_url = "https://us-central1-..."
+```
+**Keep these name servers handy for the next phase!**
+
+---
+
+### Phase 3: Cloudflare DNS Delegation
+
+To let GCP intercept DNS requests and trigger the server wake-up sequence, delegate the subdomain (e.g., `mc.pitcomi.com`) to Google Cloud DNS. Cloudflare will continue managing your root domain (`pitcomi.com`), but resolves the subdomain through GCP.
+
 1. Log in to your **Cloudflare Dashboard**.
-2. Select your domain (`yourdomain.com`) and go to the **DNS** settings.
-3. Add four new **NS Records** for the subdomain name (e.g., `play`):
-   * **Type**: `NS`
-   * **Name**: `play`
-   * **Content**: The GCP name servers from the Terraform output (e.g., `ns-cloud-c1.googledomains.com.`, etc.). Ensure you add one record for each of the four name servers.
-   * **TTL**: Auto / Default.
+2. Click on your domain (e.g., `pitcomi.com`).
+3. Click on **DNS** -> **Records** in the left sidebar.
+4. Create **four (4) NS Records**, one for each name server provided by your Terraform output.
+
+For each record:
+* **Type**: `NS`
+* **Name**: The subdomain prefix (e.g., `mc`).
+* **Nameserver**: A Google name server (e.g., `ns-cloud-c1.googledomains.com.`).
+* **TTL**: Auto / Default.
+
+> [!WARNING]
+> Do NOT create an `A` record on Cloudflare for `mc.pitcomi.com`. Cloudflare must delegate the entire DNS resolution of `mc.pitcomi.com` to GCP DNS so the query logs can trigger the Cloud Function.
+
+---
+
+### Phase 4: How to Test the Flow
+
+1. **Ping the Subdomain:**
+   Open a terminal and run `ping mc.yourdomain.com` or launch Minecraft and add the server.
+2. **First Resolution:**
+   Initially, the ping might timeout. Behind the scenes, GCP's Logging Sink detects the resolution query and triggers the `minecraft-starter` Cloud Function.
+3. **VM Startup:**
+   The function powers on the GCE VM, retrieves the external IP, and updates GCP Cloud DNS.
+4. **Connect:**
+   Within 10–20 seconds, re-ping or refresh Minecraft. The subdomain resolves to the VM's public IP, and you can join!
+5. **Scale-to-Zero:**
+   Once everyone logs off and the server is idle for 10 minutes, the watchdog shuts down the instance automatically to eliminate compute charges.
+
+---
+
+## 🛡️ Whitelisting & Administration
+
+### 1. Enable Whitelisting in Terraform
+By default, the server allows anyone to connect. To restrict access to whitelisted players:
+1. Open [terraform/startup.sh](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/terraform/startup.sh).
+2. Find the `docker run` command around line 45.
+3. Add the whitelist environment variable `-e ENABLE_WHITELIST=TRUE`:
+   ```bash
+   docker run -d \
+     --name minecraft \
+     --restart always \
+     -p 25565:25565 \
+     -v "$MOUNT_DIR/data:/data" \
+     -e EULA=TRUE \
+     -e TYPE=PAPER \
+     -e VERSION=LATEST \
+     -e MEMORY=3G \
+     -e ENABLE_WHITELIST=TRUE \
+     itzg/minecraft-server
+   ```
+4. Run `terraform apply` to apply the update to the server.
+
+### 2. Player Portal (`docs/play.html`)
+The player hub is a dedicated page for your community. It reads the auto-generated `docs/config.json` dynamically to:
+- Show a **Live Server Status** badge (`🟢 Online`, `🔴 Offline`, `🟡 Starting...`).
+- Provide a **Copy Address** button to copy `mc.yourdomain.com` to the clipboard.
+- Provide a **Whitelist Request** form.
+
+#### Whitelist Request Flow:
+1. A friend enters their Minecraft username on your Player Portal page and clicks **Submit**.
+2. The page posts the request to the HTTP Cloud Function endpoint.
+3. The Cloud Function securely posts a rich message embed to your Discord channel.
+4. The Discord message includes a **pre-formatted SSH command** you can copy/paste directly to whitelist them:
+   ```bash
+   gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
+   ```
 
 ---
 
@@ -96,11 +196,9 @@ Uploads your local files in the `saves/` directory back up to the cloud.
 ## ⚙️ Customization
 
 You can customize the Minecraft server settings by editing [terraform/startup.sh](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/terraform/startup.sh).
-
-By default, the server is running **PaperMC** (highly optimized for performance and RAM). You can change this by modifying the container environment variables in `startup.sh`:
-* `TYPE`: change from `PAPER` to `VANILLA`, `FORGE`, `FABRIC`, etc.
-* `VERSION`: set a specific version like `1.20.4` instead of `LATEST`.
-* `MEMORY`: change the JVM memory allocation (e.g., `3G`).
+* `TYPE`: Change from `PAPER` to `VANILLA`, `FORGE`, `FABRIC`, etc.
+* `VERSION`: Set a specific version like `1.20.4` instead of `LATEST`.
+* `MEMORY`: Change the JVM memory allocation (e.g., `3G`).
 
 ---
 

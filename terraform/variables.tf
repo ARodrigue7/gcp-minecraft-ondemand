@@ -53,3 +53,9 @@ variable "idle_timeout_seconds" {
   default     = 600
 }
 
+variable "discord_webhook_url" {
+  description = "The Discord Webhook URL to push whitelist requests"
+  type        = string
+  sensitive   = true
+}
+
