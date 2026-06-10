@@ -15,12 +15,24 @@ saves/
 
 ## 🚀 How to Upload Saves to GCE
 Once your files are placed in this directory, run the helper script from the root workspace directory:
+**Mac/Linux:**
 ```bash
 ./scripts/upload-saves.sh
 ```
 
+**Windows (PowerShell):**
+```powershell
+.\scripts\upload-saves.ps1
+```
+
 ## 📥 How to Backup Saves from GCE
 To download the current world files from your GCE instance to this local `saves/` folder:
+**Mac/Linux:**
 ```bash
 ./scripts/download-saves.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\scripts\download-saves.ps1
 ```

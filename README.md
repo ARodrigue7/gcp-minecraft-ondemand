@@ -77,6 +77,22 @@ To route requests through Cloud DNS for logging, you need to delegate the subdom
 
 ---
 
+## 💾 Backing up & Restoring Saves
+
+This repository includes helper scripts to easily upload and download your world data to and from the GCP instance. You will need to install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) before running them.
+
+### Download World Data from Server
+Downloads the current Minecraft world from the cloud to your local `saves/` directory.
+* **Mac/Linux:** `./scripts/download-saves.sh`
+* **Windows (PowerShell):** `.\scripts\download-saves.ps1`
+
+### Upload Local World Data to Server
+Uploads your local files in the `saves/` directory back up to the cloud.
+* **Mac/Linux:** `./scripts/upload-saves.sh`
+* **Windows (PowerShell):** `.\scripts\upload-saves.ps1`
+
+---
+
 ## ⚙️ Customization
 
 You can customize the Minecraft server settings by editing [terraform/startup.sh](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/terraform/startup.sh).
