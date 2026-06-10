@@ -15,7 +15,8 @@ venv/
 # Environment specifics
 *.tfvars
 terraform/files/
-saves/
+saves/*
+!saves/README.md
 logs/
 .DS_Store
 GEMINI.md
