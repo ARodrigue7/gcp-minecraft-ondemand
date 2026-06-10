@@ -41,25 +41,28 @@ fi
 mkdir -p "$MOUNT_DIR/data"
 chmod -R 777 "$MOUNT_DIR/data"
 
-# Run the Minecraft server container
-# We use PaperMC by default for better performance and lower resource usage than vanilla
-docker run -d \
-  --name minecraft \
-  --restart always \
-  -p 25565:25565 \
-  -v "$MOUNT_DIR/data:/data" \
-  -e EULA=TRUE \
-  -e TYPE=PAPER \
-  -e VERSION=LATEST \
-  -e MEMORY=3G \
-  itzg/minecraft-server
+# Run the Minecraft server container (only if it doesn't already exist)
+if ! docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
+  docker run -d \
+    --name minecraft \
+    --restart always \
+    -p 25565:25565 \
+    -v "$MOUNT_DIR/data:/data" \
+    -e EULA=TRUE \
+    -e TYPE=PAPER \
+    -e VERSION=LATEST \
+    -e MEMORY=3G \
+    itzg/minecraft-server
+fi
 
-# Create watchdog script
-cat <<'EOF' > /usr/local/bin/minecraft-watchdog.sh
+# Create watchdog script in the persistent, executable disk directory
+WATCHDOG_SCRIPT="/mnt/disks/minecraft-data/minecraft-watchdog.sh"
+
+cat <<'EOF' > /mnt/disks/minecraft-data/minecraft-watchdog.sh
 #!/bin/bash
 PORT=25565
 IDLE_LIMIT=${idle_timeout_seconds}
-INITIAL_DELAY=1200 # 20 minutes startup grace period
+INITIAL_DELAY=600 # 10 minutes startup grace period
 
 # Get uptime in seconds
 UPTIME=$(cat /proc/uptime | awk '{print $1}')
@@ -95,7 +98,7 @@ else
 fi
 EOF
 
-chmod +x /usr/local/bin/minecraft-watchdog.sh
+chmod +x /mnt/disks/minecraft-data/minecraft-watchdog.sh
 
 # Create systemd service for watchdog
 cat <<'EOF' > /etc/systemd/system/minecraft-watchdog.service
@@ -105,7 +108,7 @@ After=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/minecraft-watchdog.sh
+ExecStart=/mnt/disks/minecraft-data/minecraft-watchdog.sh
 EOF
 
 # Create systemd timer for watchdog (runs every minute)
