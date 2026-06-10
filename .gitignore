@@ -10,3 +10,12 @@
 # Python
 __pycache__/
 *.pyc
+venv/
+
+# Environment specifics
+*.tfvars
+terraform/files/
+saves/
+logs/
+.DS_Store
+GEMINI.md

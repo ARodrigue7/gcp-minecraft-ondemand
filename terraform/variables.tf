@@ -22,3 +22,34 @@ variable "instance_name" {
   type        = string
   default     = "minecraft-server"
 }
+
+variable "domain_name" {
+  description = "The fully qualified domain name for the Minecraft server (e.g. mc.pitcomi.com)"
+  type        = string
+  default     = "mc.pitcomi.com"
+}
+
+variable "dns_zone_name" {
+  description = "The name of the Cloud DNS managed zone"
+  type        = string
+  default     = "mc-pitcomi-com"
+}
+
+variable "disk_size_gb" {
+  description = "Size of the persistent data disk in GB"
+  type        = number
+  default     = 10
+}
+
+variable "machine_type" {
+  description = "Compute Engine machine type for the Minecraft server"
+  type        = string
+  default     = "e2-medium"
+}
+
+variable "idle_timeout_seconds" {
+  description = "Idle timeout in seconds before the VM shuts down automatically"
+  type        = number
+  default     = 600
+}
+

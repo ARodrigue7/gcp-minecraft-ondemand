@@ -1,0 +1,24 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and fill in your actual values.
+
+# The GCP Project ID where resources will be deployed
+project_id = "your-gcp-project-id"
+
+# The fully qualified domain name for the Minecraft server (e.g. play.yourdomain.com)
+domain_name = "play.yourdomain.com"
+
+# The name of the Cloud DNS managed zone
+dns_zone_name = "play-yourdomain-com"
+
+# Size of the persistent data disk in GB (standard pd)
+disk_size_gb = 10
+
+# Compute Engine machine type (e.g., e2-medium or e2-small)
+machine_type = "e2-medium"
+
+# Idle timeout in seconds before the VM shuts down automatically (10 minutes)
+idle_timeout_seconds = 600
+
+# The GCP region and zone for regional resources
+region = "us-central1"
+zone   = "us-central1-a"
