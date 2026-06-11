@@ -6,6 +6,8 @@ import re
 import hmac
 import hashlib
 from googleapiclient import discovery
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
 
 # Read configuration from environment variables
 PROJECT_ID = os.environ.get('PROJECT_ID')
@@ -15,6 +17,7 @@ DNS_ZONE_NAME = os.environ.get('DNS_ZONE_NAME')
 DOMAIN_NAME = os.environ.get('DOMAIN_NAME')
 WHITELIST_SECRET = os.environ.get('WHITELIST_SECRET')
 FUNCTION_REGION = os.environ.get('FUNCTION_REGION', 'us-central1')
+DISCORD_PUBLIC_KEY = os.environ.get('DISCORD_PUBLIC_KEY')
 
 # Build the client services
 # cache_discovery=False prevents file-locking warnings in read-only environments
@@ -143,6 +146,22 @@ def generate_signature(username):
         raise ValueError("WHITELIST_SECRET is not configured.")
     return hmac.new(WHITELIST_SECRET.encode('utf-8'), username.encode('utf-8'), hashlib.sha256).hexdigest()
 
+def verify_discord_signature(signature, timestamp, body):
+    """Verifies that an incoming interaction request is cryptographically signed by Discord."""
+    if not DISCORD_PUBLIC_KEY:
+        print("Error: DISCORD_PUBLIC_KEY is not configured.")
+        return False
+    try:
+        verify_key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))
+        verify_key.verify(f"{timestamp}{body}".encode('utf-8'), bytes.fromhex(signature))
+        return True
+    except BadSignatureError:
+        print("Discord signature validation failed: Bad Signature.")
+        return False
+    except Exception as e:
+        print(f"Error validating Discord signature: {e}")
+        return False
+
 def add_to_gce_metadata_whitelist(username):
     """Appends a username to the approved-whitelist metadata attribute on the VM."""
     # 1. Fetch current GCE VM details
@@ -217,6 +236,25 @@ def send_discord_webhook(username, status_url):
                 },
                 "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
             }
+        ],
+        "components": [
+            {
+                "type": 1,
+                "components": [
+                    {
+                        "type": 2,
+                        "label": "Approve Whitelist",
+                        "style": 3,
+                        "custom_id": f"approve_whitelist:{username}:{sig}"
+                    },
+                    {
+                        "type": 2,
+                        "label": "Deny",
+                        "style": 4,
+                        "custom_id": f"deny_whitelist:{username}:{sig}"
+                    }
+                ]
+            }
         ]
     }
 
@@ -283,6 +321,92 @@ def get_status_http(request):
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
     }
+
+    # Parse and verify Discord Interaction signature headers
+    signature = request.headers.get('X-Signature-Ed25519')
+    timestamp = request.headers.get('X-Signature-Timestamp')
+    
+    if signature and timestamp:
+        body_str = request.get_data(as_text=True)
+        if not verify_discord_signature(signature, timestamp, body_str):
+            return ("Invalid request signature", 401)
+            
+        try:
+            interaction = json.loads(body_str)
+        except Exception as e:
+            return ("Invalid JSON payload", 400)
+            
+        inter_type = interaction.get('type')
+        
+        # type = 1 is PING (Verification request)
+        if inter_type == 1:
+            return (json.dumps({"type": 1}), 200, {'Content-Type': 'application/json'})
+            
+        # type = 3 is Message Component (Button click)
+        elif inter_type == 3:
+            data = interaction.get('data', {})
+            custom_id = data.get('custom_id', '')
+            
+            if not custom_id:
+                return ("Missing custom_id", 400)
+                
+            try:
+                parts = custom_id.split(':')
+                if len(parts) != 3:
+                    return ("Invalid custom_id format", 400)
+                    
+                action, username, sig = parts
+                
+                # Verify HMAC signature
+                expected_sig = generate_signature(username)
+                if not hmac.compare_digest(sig, expected_sig):
+                    return ("Unauthorized action", 403)
+                    
+                if action == 'approve_whitelist':
+                    add_to_gce_metadata_whitelist(username)
+                    
+                    approver = "Unknown Admin"
+                    member = interaction.get('member')
+                    if member and 'user' in member:
+                        approver = member['user'].get('username', approver)
+                    elif 'user' in interaction:
+                        approver = interaction['user'].get('username', approver)
+                        
+                    response_payload = {
+                        "type": 7, # UPDATE_MESSAGE
+                        "data": {
+                            "content": f"✓ **{username}** has been approved and whitelisted by **@{approver}**!",
+                            "embeds": [],
+                            "components": [] # Removes the buttons!
+                        }
+                    }
+                    return (json.dumps(response_payload), 200, {'Content-Type': 'application/json'})
+                    
+                elif action == 'deny_whitelist':
+                    denier = "Unknown Admin"
+                    member = interaction.get('member')
+                    if member and 'user' in member:
+                        denier = member['user'].get('username', denier)
+                    elif 'user' in interaction:
+                        denier = interaction['user'].get('username', denier)
+                        
+                    response_payload = {
+                        "type": 7, # UPDATE_MESSAGE
+                        "data": {
+                            "content": f"✗ Whitelist request for **{username}** was denied by **@{denier}**.",
+                            "embeds": [],
+                            "components": []
+                        }
+                    }
+                    return (json.dumps(response_payload), 200, {'Content-Type': 'application/json'})
+                    
+                else:
+                    return ("Invalid action", 400)
+            except Exception as e:
+                print(f"Error processing interaction component: {e}")
+                return (f"Internal error: {str(e)}", 500)
+                
+        return ("Unknown interaction type", 400)
 
     if request.method == 'GET':
         action = request.args.get('action')

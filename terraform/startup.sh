@@ -87,17 +87,24 @@ if [ $UPTIME -lt $INITIAL_DELAY ]; then
   exit 0
 fi
 
-# Count active TCP connections on port 25565
-ACTIVE_CONNS=$(ss -t -H state established '( sport = :'$PORT' )' | wc -l)
-echo "Active connections: $ACTIVE_CONNS"
+# Count active players online using RCON command
+ONLINE_PLAYERS=0
+if docker ps --format '{{.Names}}' | grep -Eq "^minecraft$"; then
+  # Run RCON command and parse output (e.g. "There are 0 of a max of 20 players online:")
+  RCON_OUT=$(docker exec minecraft mc-send-to-rcon list 2>/dev/null || echo "")
+  if [[ "$RCON_OUT" =~ There\ are\ ([0-9]+) ]]; then
+    ONLINE_PLAYERS="$${BASH_REMATCH[1]}"
+  fi
+fi
+echo "Active players: $ONLINE_PLAYERS"
 
-if [ "$ACTIVE_CONNS" -gt 0 ]; then
+if [ "$ONLINE_PLAYERS" -gt 0 ]; then
   rm -f /tmp/minecraft-idle-since
-  echo "Connections active. Idle timer reset."
+  echo "Players active. Idle timer reset."
 else
   if [ ! -f /tmp/minecraft-idle-since ]; then
     date +%s > /tmp/minecraft-idle-since
-    echo "No connections. Idle timer started."
+    echo "No players online. Idle timer started."
   else
     IDLE_SINCE=$(cat /tmp/minecraft-idle-since)
     NOW=$(date +%s)

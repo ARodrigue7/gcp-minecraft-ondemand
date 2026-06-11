@@ -59,3 +59,9 @@ variable "discord_webhook_url" {
   sensitive   = true
 }
 
+variable "discord_public_key" {
+  description = "The Discord Bot Application Public Key for interaction verification"
+  type        = string
+  sensitive   = true
+}
+
