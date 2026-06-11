@@ -1,0 +1,545 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@800&display=swap');
+
+:root {
+    /* Woodland Theme Color Palette */
+    --forest-dark: #091a10;
+    --forest-moss: rgba(16, 37, 24, 0.82);
+    --forest-border: #143520;
+    
+    /* Wooden Planks Styles */
+    --wood-light: #c2844a;
+    --wood-dark: #8c5325;
+    --wood-border: #422006;
+    --wood-bevel: #5c3210;
+    
+    /* Golden Accents */
+    --gold-light: #fbbf24;
+    --gold-dark: #d97706;
+    --gold-border: #78350f;
+    --gold-bevel: #b45309;
+
+    /* Text Colors */
+    --text-primary: #fffbeb;
+    --text-secondary: #a7f3d0;
+    --text-dark: #451a03;
+    
+    /* UI States */
+    --state-online: #10b981;
+    --state-offline: #ef4444;
+    --state-starting: #f59e0b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Fredoka', sans-serif;
+    background-color: var(--forest-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 1.5rem;
+    overflow-x: hidden;
+}
+
+/* Illustrated Forest Background */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('minecraft_forest_bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -2;
+}
+
+/* Parallax Dark Green Overlay to keep text readable */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(9, 26, 16, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+    z-index: -1;
+}
+
+/* Layout Container */
+.container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 620px;
+    padding: 1rem 0;
+}
+
+/* Back Link for play.html */
+.back-link-wrapper {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}
+
+.back-link svg {
+    transition: transform 0.2s ease;
+}
+
+.back-link:hover svg {
+    transform: translateX(-4px);
+}
+
+/* 🪵 Wooden Signboard Card */
+.glass-card {
+    background: var(--forest-moss);
+    border: 4px solid var(--wood-border);
+    border-radius: 28px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.glass-card::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 2px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    pointer-events: none;
+}
+
+/* Game Badge */
+.game-badge {
+    display: inline-block;
+    background: linear-gradient(to bottom, var(--wood-light), var(--wood-dark));
+    border: 2px solid var(--wood-border);
+    color: var(--text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 0 var(--wood-border),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Icon Wrap (Bevelled Wood Circle) */
+.icon-wrapper {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 88px;
+    height: 88px;
+    background: linear-gradient(135deg, var(--wood-light), var(--wood-dark));
+    border: 4px solid var(--wood-border);
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+    box-shadow: 0 8px 0 var(--wood-border),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+/* 3D Cartoon Title & Outlines */
+.title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 2.75rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    line-height: 1.15;
+    color: #ffffff;
+    /* Heavy 3D outline to match game UI */
+    text-shadow: 3px 3px 0 var(--wood-border),
+                 -3px -3px 0 var(--wood-border),
+                 3px -3px 0 var(--wood-border),
+                 -3px 3px 0 var(--wood-border),
+                 0 5px 0 var(--wood-border),
+                 0 10px 15px rgba(0, 0, 0, 0.6);
+}
+
+/* Highlight Yellow/Amber Title Gradient */
+.gradient-text {
+    background: linear-gradient(to bottom, #fffbeb 20%, #fde047 40%, #eab308 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(2px 2px 0px var(--wood-border))
+            drop-shadow(-2px -2px 0px var(--wood-border))
+            drop-shadow(2px -2px 0px var(--wood-border))
+            drop-shadow(-2px 2px 0px var(--wood-border));
+}
+
+.description {
+    color: var(--text-secondary);
+    font-size: 1.15rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Feature Badges */
+.features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.feature-tag {
+    background: rgba(9, 26, 16, 0.5);
+    border: 2px solid var(--forest-border);
+    padding: 0.6rem 1.2rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+}
+
+.feature-tag:hover {
+    transform: scale(1.05);
+    border-color: var(--wood-light);
+}
+
+/* Action Stacks */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+@media (min-width: 480px) {
+    .actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+/* 🪵 3D WOOD-PLANK BUTTON STYLES */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1rem 1.75rem;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: 'Fredoka', sans-serif;
+    transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+/* Primary Wood Plank Button */
+.btn-primary {
+    background: linear-gradient(to bottom, var(--wood-light), var(--wood-dark));
+    color: #ffffff;
+    border: 3px solid var(--wood-border);
+    text-shadow: 0 2px 0 var(--wood-border);
+    box-shadow: 0 6px 0 var(--wood-border),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+}
+
+.btn-primary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 var(--wood-border),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Secondary Gold Highlight Button */
+.btn-secondary {
+    background: linear-gradient(to bottom, var(--gold-light), var(--gold-dark));
+    color: #ffffff;
+    border: 3px solid var(--gold-border);
+    text-shadow: 0 2px 0 var(--gold-border);
+    box-shadow: 0 6px 0 var(--gold-border),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-secondary:hover {
+    filter: brightness(1.1);
+}
+
+.btn-secondary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 var(--gold-border),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Full Width Button Helper */
+.btn-block {
+    width: 100%;
+}
+
+.btn:disabled {
+    filter: grayscale(0.5) brightness(0.8);
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.5) !important;
+}
+
+/* 📡 STATUS PANEL & CONNECTIONS (play.html) */
+.status-panel {
+    background: rgba(9, 26, 16, 0.6);
+    border: 3px solid var(--wood-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    margin-bottom: 2rem;
+    text-align: left;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--wood-border);
+    padding-bottom: 1.25rem;
+}
+
+.status-label {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Status Badge Styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+}
+
+.badge.online {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 2px solid #059669;
+}
+
+.badge.offline {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 2px solid #dc2626;
+}
+
+.badge.starting {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 2px solid #d97706;
+}
+
+.badge.loading {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 2px solid #475569;
+}
+
+/* Pulsing Badge Dot */
+.pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: currentColor;
+    display: inline-block;
+}
+
+.online .pulse-dot, .starting .pulse-dot {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px currentColor; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+/* Connection Details (Wood Log style inputs) */
+.connection-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.connection-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.connection-input-group {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.connection-input-group input {
+    flex: 1;
+    background: rgba(9, 26, 16, 0.8);
+    border: 3px solid var(--wood-border);
+    border-radius: 12px;
+    color: #fef08a; /* Warm yellow address text */
+    padding: 0.85rem 1.25rem;
+    font-family: monospace;
+    font-size: 1.05rem;
+    font-weight: 700;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    transition: border-color 0.2s;
+}
+
+.connection-input-group input:focus {
+    border-color: var(--gold-light);
+}
+
+.connection-input-group .btn {
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+/* Whitelist Form styling */
+.whitelist-section {
+    text-align: left;
+    border-top: 2px solid var(--wood-border);
+    padding-top: 2rem;
+}
+
+.section-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.section-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.whitelist-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.whitelist-form input[type="text"] {
+    width: 100%;
+    background: rgba(9, 26, 16, 0.6);
+    border: 3px solid var(--wood-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 1rem 1.25rem;
+    font-size: 1.05rem;
+    font-family: 'Fredoka', sans-serif;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+}
+
+.whitelist-form input[type="text"]:focus {
+    border-color: var(--gold-light);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5),
+                0 0 0 3px rgba(250, 204, 21, 0.15);
+}
+
+/* Whitelist Feedback Messages */
+.form-message {
+    margin-top: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+.form-message.success {
+    background-color: rgba(16, 185, 129, 0.15);
+    border: 2px solid #059669;
+    color: #34d399;
+}
+
+.form-message.error {
+    background-color: rgba(239, 68, 68, 0.15);
+    border: 2px solid #dc2626;
+    color: #f87171;
+}
+
+.form-message.hidden {
+    display: none;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

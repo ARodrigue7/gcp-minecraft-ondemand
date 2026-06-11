@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Hub - GCP Minecraft On-Demand</title>
+    <meta name="description" content="Check server status, copy connection details, and request whitelisting for the on-demand Minecraft server.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="container">
+        <!-- Back to Project Landing -->
+        <div class="back-link-wrapper">
+            <a href="index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Project Landing
+            </a>
+        </div>
+
+        <div class="glass-card fade-in">
+            <div class="game-badge">🎮 Server Portal</div>
+            
+            <h1 class="title">Player <span class="gradient-text">Hub</span></h1>
+            <p class="description">
+                Check server status, request whitelist access, or copy connection details below.
+            </p>
+
+            <!-- 📡 Live Server Status Card -->
+            <div class="status-panel">
+                <div class="status-header">
+                    <span class="status-label">Server Status</span>
+                    <div id="status-badge" class="badge loading">
+                        <span class="pulse-dot"></span>
+                        <span id="status-text">Checking...</span>
+                    </div>
+                </div>
+                
+                <!-- Server Connection Info -->
+                <div class="connection-box">
+                    <div class="connection-label">Server Address</div>
+                    <div class="connection-input-group">
+                        <input type="text" id="server-ip" value="Loading address..." readonly>
+                        <button id="copy-btn" class="btn btn-primary" title="Copy Address">
+                            <span id="copy-icon">📋</span>
+                            <span id="copy-text">Copy</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🛡️ Whitelist Request Form -->
+            <div class="whitelist-section">
+                <h3 class="section-title">Request Whitelist Access</h3>
+                <p class="section-desc">Submit your Minecraft username. The admin will get a notification on Discord to whitelist you.</p>
+                
+                <form id="whitelist-form" class="whitelist-form">
+                    <div class="form-group">
+                        <input type="text" id="mc-username" placeholder="Minecraft Username (e.g. Steve)" required autocomplete="off">
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn btn-secondary btn-block">
+                        Submit Whitelist Request
+                    </button>
+                </form>
+                
+                <!-- Feedback Messages -->
+                <div id="form-message" class="form-message hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let config = {
+            statusUrl: "",
+            domainName: "mc.yourdomain.com"
+        };
+
+        const statusBadge = document.getElementById("status-badge");
+        const statusText = document.getElementById("status-text");
+        const serverIpInput = document.getElementById("server-ip");
+        const copyBtn = document.getElementById("copy-btn");
+        const copyText = document.getElementById("copy-text");
+        const copyIcon = document.getElementById("copy-icon");
+        const whitelistForm = document.getElementById("whitelist-form");
+        const mcUsernameInput = document.getElementById("mc-username");
+        const submitBtn = document.getElementById("submit-btn");
+        const formMessage = document.getElementById("form-message");
+
+        // Load configuration and initialize
+        async function init() {
+            // 1. Try reading from URL query parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryApi = urlParams.get("api");
+            const queryDomain = urlParams.get("domain");
+
+            if (queryApi && queryDomain) {
+                config.statusUrl = queryApi;
+                config.domainName = queryDomain;
+                // Save to localStorage for persistence
+                localStorage.setItem("mcod_statusUrl", queryApi);
+                localStorage.setItem("mcod_domainName", queryDomain);
+            } else {
+                // 2. Try falling back to localStorage
+                const storedApi = localStorage.getItem("mcod_statusUrl");
+                const storedDomain = localStorage.getItem("mcod_domainName");
+                if (storedApi && storedDomain) {
+                    config.statusUrl = storedApi;
+                    config.domainName = storedDomain;
+                }
+            }
+
+            let loadedConfig = config.statusUrl !== "";
+
+            // 3. If still empty, try loading config.json
+            if (!loadedConfig) {
+                try {
+                    // Try fetching config.json (generated by Terraform)
+                    const res = await fetch("config.json");
+                    if (res.ok) {
+                        config = await res.json();
+                        loadedConfig = true;
+                    } else {
+                        console.warn("config.json not found. Using default values.");
+                    }
+                } catch (e) {
+                    console.warn("Could not load config.json. Using default configuration.", e);
+                }
+            }
+
+            // Update domain display
+            if (loadedConfig) {
+                serverIpInput.value = config.domainName;
+            } else {
+                if (window.location.protocol === "file:") {
+                    serverIpInput.value = "Local Preview (config.json blocked)";
+                    statusBadge.className = "badge loading";
+                    statusText.textContent = "CORS Blocked";
+                } else {
+                    serverIpInput.value = "Not Configured";
+                    statusBadge.className = "badge offline";
+                    statusText.textContent = "Config Error";
+                }
+            }
+
+            // Start checking status
+            if (config.statusUrl) {
+                checkStatus();
+                // Check status every 15 seconds
+                setInterval(checkStatus, 15000);
+            } else if (!loadedConfig && window.location.protocol === "file:") {
+                // Do not attempt to check status if local preview CORS blocked
+            } else {
+                statusBadge.className = "badge offline";
+                statusText.textContent = "Offline (No API configured)";
+            }
+        }
+
+        // Fetch VM status from Cloud Function
+        async function checkStatus() {
+            try {
+                const res = await fetch(config.statusUrl);
+                if (!res.ok) throw new Error("API returned an error");
+                
+                const data = await res.json();
+                updateStatusUI(data.status);
+            } catch (e) {
+                console.error("Failed to check status:", e);
+                statusBadge.className = "badge offline";
+                statusText.textContent = "Unknown (API Error)";
+            }
+        }
+
+        // Update the visual state of the status badge
+        function updateStatusUI(status) {
+            statusBadge.className = "badge";
+            
+            if (status === "RUNNING") {
+                statusBadge.classList.add("online");
+                statusText.textContent = "Online";
+            } else if (status === "TERMINATED") {
+                statusBadge.classList.add("offline");
+                statusText.textContent = "Offline";
+            } else if (status === "PROVISIONING" || status === "STAGING" || status === "STARTING") {
+                statusBadge.classList.add("starting");
+                statusText.textContent = "Starting...";
+            } else {
+                statusBadge.classList.add("offline");
+                statusText.textContent = status || "Offline";
+            }
+        }
+
+        // Handle Connection IP Copy to Clipboard
+        copyBtn.addEventListener("click", () => {
+            serverIpInput.select();
+            serverIpInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(serverIpInput.value)
+                .then(() => {
+                    copyText.textContent = "Copied!";
+                    copyIcon.textContent = "✅";
+                    copyBtn.classList.add("copied");
+                    
+                    setTimeout(() => {
+                        copyText.textContent = "Copy";
+                        copyIcon.textContent = "📋";
+                        copyBtn.classList.remove("copied");
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Could not copy text: ", err);
+                });
+        });
+
+        // Handle Whitelist Form Submission
+        whitelistForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const username = mcUsernameInput.value.trim();
+            if (!username) return;
+
+            // Basic validation matching backend regex
+            const usernameRegex = /^[a-zA-Z0-9_]{3,16}$/;
+            if (!usernameRegex.test(username)) {
+                showMessage("Invalid username! Must be 3-16 alphanumeric characters and underscores.", "error");
+                return;
+            }
+
+            // Disable submit button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending Request...";
+            formMessage.classList.add("hidden");
+
+            try {
+                if (!config.statusUrl) {
+                    throw new Error("Cloud Function Status URL is not configured.");
+                }
+
+                const res = await fetch(config.statusUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showMessage(`Success! Whitelist request for <strong>${username}</strong> sent to Discord.`, "success");
+                    mcUsernameInput.value = "";
+                } else {
+                    throw new Error(data.error || "Failed to send whitelist request.");
+                }
+            } catch (err) {
+                console.error("Error submitting form:", err);
+                showMessage(err.message || "An unexpected error occurred. Please try again.", "error");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Whitelist Request";
+            }
+        });
+
+        function showMessage(text, type) {
+            formMessage.innerHTML = text;
+            formMessage.className = `form-message ${type}`;
+            formMessage.classList.remove("hidden");
+        }
+
+        // Initialize portal
+        window.addEventListener("DOMContentLoaded", init);
+    </script>
+</body>
+</html>
