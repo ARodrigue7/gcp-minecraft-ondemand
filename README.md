@@ -72,8 +72,8 @@ cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 
 Open `terraform/terraform.tfvars` and configure the values:
 * `project_id`: Your actual GCP Project ID (e.g., `minecraft-ondemand-499002`).
-* `domain_name`: The subdomain players will use (e.g., `mc.pitcomi.com`).
-* `dns_zone_name`: Logical name for the zone inside GCP (e.g., `mc-pitcomi-com`).
+* `domain_name`: The subdomain players will use (e.g., `mc.yourdomain.com`).
+* `dns_zone_name`: Logical name for the zone inside GCP (e.g., `mc-yourdomain-com`).
 * `discord_webhook_url`: Your private Discord Webhook URL.
 * `idle_timeout_seconds`: Inactivity seconds before auto-shutdown (e.g., `600` for 10 minutes).
 
@@ -105,10 +105,10 @@ status_function_url = "https://us-central1-..."
 
 ### Phase 3: Cloudflare DNS Delegation
 
-To let GCP intercept DNS requests and trigger the server wake-up sequence, delegate the subdomain (e.g., `mc.pitcomi.com`) to Google Cloud DNS. Cloudflare will continue managing your root domain (`pitcomi.com`), but resolves the subdomain through GCP.
+To let GCP intercept DNS requests and trigger the server wake-up sequence, delegate the subdomain (e.g., `mc.yourdomain.com`) to Google Cloud DNS. Cloudflare will continue managing your root domain (`yourdomain.com`), but resolves the subdomain through GCP.
 
 1. Log in to your **Cloudflare Dashboard**.
-2. Click on your domain (e.g., `pitcomi.com`).
+2. Click on your domain (e.g., `yourdomain.com`).
 3. Click on **DNS** -> **Records** in the left sidebar.
 4. Create **four (4) NS Records**, one for each name server provided by your Terraform output.
 
@@ -119,7 +119,7 @@ For each record:
 * **TTL**: Auto / Default.
 
 > [!WARNING]
-> Do NOT create an `A` record on Cloudflare for `mc.pitcomi.com`. Cloudflare must delegate the entire DNS resolution of `mc.pitcomi.com` to GCP DNS so the query logs can trigger the Cloud Function.
+> Do NOT create an `A` record on Cloudflare for `mc.yourdomain.com`. Cloudflare must delegate the entire DNS resolution of `mc.yourdomain.com` to GCP DNS so the query logs can trigger the Cloud Function.
 
 ---
 

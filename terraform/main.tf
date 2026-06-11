@@ -122,7 +122,7 @@ resource "google_compute_instance" "minecraft" {
 # 🌐 CLOUD DNS CONFIGURATION
 # ==========================================
 
-# Managed Public DNS Zone for mc.pitcomi.com
+# Managed Public DNS Zone for mc.yourdomain.com
 resource "google_dns_managed_zone" "minecraft_zone" {
   name        = var.dns_zone_name
   dns_name    = "${var.domain_name}."
@@ -156,7 +156,7 @@ resource "google_pubsub_topic" "dns_query_topic" {
   name = "minecraft-dns-query-topic"
 }
 
-# Log Sink to route DNS query logs for mc.pitcomi.com to the Pub/Sub topic
+# Log Sink to route DNS query logs for mc.yourdomain.com to the Pub/Sub topic
 resource "google_logging_project_sink" "dns_query_sink" {
   name                   = "minecraft-dns-query-sink"
   destination            = "pubsub.googleapis.com/${google_pubsub_topic.dns_query_topic.id}"

@@ -24,15 +24,15 @@ variable "instance_name" {
 }
 
 variable "domain_name" {
-  description = "The fully qualified domain name for the Minecraft server (e.g. mc.pitcomi.com)"
+  description = "The fully qualified domain name for the Minecraft server (e.g. mc.yourdomain.com)"
   type        = string
-  default     = "mc.pitcomi.com"
+  default     = "mc.yourdomain.com"
 }
 
 variable "dns_zone_name" {
   description = "The name of the Cloud DNS managed zone"
   type        = string
-  default     = "mc-pitcomi-com"
+  default     = "mc-yourdomain-com"
 }
 
 variable "disk_size_gb" {
