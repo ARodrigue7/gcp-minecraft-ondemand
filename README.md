@@ -205,6 +205,7 @@ You can customize the Minecraft server settings by editing [terraform/startup.sh
 ## 🔮 Future Roadmap
 
 * **Deploy to Google Cloud Button**: Introduce a secure, interactive setup wizard within Google Cloud Shell (via the standard `Deploy to GCP` button) to automate project provisioning and eliminate manual local file creation.
+* **Bot & Abuse Prevention**: Mitigate automated bot-scanner wakeup loops by switching from public DNS query logging to an authenticated "Wake Up Server" button on the Player Portal (with simple passcode protection), and update the GCE watchdog script to check actual online player count using RCON instead of raw TCP handshakes.
 
 ---
 
