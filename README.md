@@ -161,19 +161,28 @@ By default, the server allows anyone to connect. To restrict access to whitelist
 4. Run `terraform apply` to apply the update to the server.
 
 ### 2. Player Portal (`docs/play.html`)
-The player hub is a dedicated page for your community. It reads the auto-generated `docs/config.json` dynamically to:
+The player hub is a dedicated page for your community. It reads the configuration dynamically to:
 - Show a **Live Server Status** badge (`🟢 Online`, `🔴 Offline`, `🟡 Starting...`).
 - Provide a **Copy Address** button to copy `mc.yourdomain.com` to the clipboard.
 - Provide a **Whitelist Request** form.
 
-#### Whitelist Request Flow:
+#### Whitelist Request & One-Click Approval Flow:
 1. A friend enters their Minecraft username on your Player Portal page and clicks **Submit**.
 2. The page posts the request to the HTTP Cloud Function endpoint.
 3. The Cloud Function securely posts a rich message embed to your Discord channel.
-4. The Discord message includes a **pre-formatted SSH command** you can copy/paste directly to whitelist them:
-   ```bash
-   gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
-   ```
+4. The Discord message includes two approval options:
+   - **One-Click Approval Link (Recommended)**: Click the `[🟢 Click here to Approve Whitelist]` link. GCF verifies the secure HMAC signature, appends the player to the GCE metadata, and **automatically deletes the alert message from Discord** to keep your channel clean!
+   - **Manual SSH Command**: Copy/paste the pre-formatted command:
+     ```bash
+     gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
+     ```
+
+#### 🌐 Dynamic Configuration for Cloners/Forks:
+If other developers clone or fork this project, they do not need to rebuild or host their own website to test the player portal. They can pass their variables directly in the URL:
+```text
+https://your-username.github.io/gcp-minecraft-ondemand/play.html?api=https://YOUR_FUNCTION_URL&domain=YOUR_DOMAIN
+```
+Visiting this link **once** will automatically save the custom `api` and `domain` parameters to the browser's `localStorage` and persist them for all future visits! Otherwise, the page defaults to reading the local `docs/config.json`.
 
 ---
 
