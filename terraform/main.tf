@@ -269,6 +269,7 @@ resource "google_cloudfunctions_function" "minecraft_status" {
     DOMAIN_NAME         = var.domain_name
     DISCORD_WEBHOOK_URL = var.discord_webhook_url
     WHITELIST_SECRET    = random_id.whitelist_secret.hex
+    FUNCTION_REGION     = var.region
   }
 
   service_account_email = google_service_account.cf_sa.email

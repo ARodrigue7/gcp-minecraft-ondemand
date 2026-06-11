@@ -14,6 +14,7 @@ INSTANCE_NAME = os.environ.get('INSTANCE_NAME')
 DNS_ZONE_NAME = os.environ.get('DNS_ZONE_NAME')
 DOMAIN_NAME = os.environ.get('DOMAIN_NAME')
 WHITELIST_SECRET = os.environ.get('WHITELIST_SECRET')
+FUNCTION_REGION = os.environ.get('FUNCTION_REGION', 'us-central1')
 
 # Build the client services
 # cache_discovery=False prevents file-locking warnings in read-only environments
@@ -478,7 +479,8 @@ def get_status_http(request):
                 return (json.dumps({"error": "Invalid Minecraft username format. Usernames must be 3-16 characters long and contain only letters, numbers, and underscores."}), 400, headers)
 
             # Send whitelist request to Discord with the signature base URL
-            success = send_discord_webhook(username, request.base_url)
+            status_url = f"https://{FUNCTION_REGION}-{PROJECT_ID}.cloudfunctions.net/minecraft-status"
+            success = send_discord_webhook(username, status_url)
             if success:
                 return (json.dumps({"success": True, "message": f"Whitelist request for '{username}' sent successfully to the server administrator!"}), 200, headers)
             else:
