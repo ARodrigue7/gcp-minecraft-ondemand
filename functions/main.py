@@ -189,16 +189,16 @@ def send_discord_webhook(username, status_url):
         print("Error: DISCORD_WEBHOOK_URL environment variable is not configured.")
         return False
 
-    # Generate cryptographic approval link
+    # Generate signature and initial approval link
     sig = generate_signature(username)
-    approval_url = f"{status_url}?action=approve&username={username}&sig={sig}"
+    temp_approval_url = f"{status_url}?action=approve&username={username}&sig={sig}"
 
     payload = {
         "content": None,
         "embeds": [
             {
                 "title": "🎮 Whitelist Request Received",
-                "description": f"A player has requested access to the Minecraft server.\n\n[🟢 Click here to Approve Whitelist]({approval_url})",
+                "description": f"A player has requested access to the Minecraft server.\n\n[🟢 Click here to Approve Whitelist]({temp_approval_url})",
                 "color": 5814783, # Purple Accent
                 "fields": [
                     {
@@ -221,18 +221,47 @@ def send_discord_webhook(username, status_url):
     }
 
     try:
+        # 1. Post to webhook with wait=true to get the message ID
         data = json.dumps(payload).encode('utf-8')
+        post_url = f"{webhook_url}?wait=true"
         req = urllib.request.Request(
-            webhook_url,
+            post_url,
             data=data,
             headers={
                 'Content-Type': 'application/json',
                 'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'
             }
         )
+        message_id = None
         with urllib.request.urlopen(req) as response:
-            # Discord webhooks return 204 No Content on success
-            return response.status in (200, 204)
+            resp_body = response.read().decode('utf-8')
+            if resp_body:
+                resp_json = json.loads(resp_body)
+                message_id = resp_json.get('id')
+
+        # If we failed to get a message ID, return success (message was still sent)
+        if not message_id:
+            return True
+
+        # 2. Update approval URL with the real message ID and PATCH the message to edit the link
+        real_approval_url = f"{status_url}?action=approve&username={username}&sig={sig}&message_id={message_id}"
+        payload["embeds"][0]["description"] = f"A player has requested access to the Minecraft server.\n\n[🟢 Click here to Approve Whitelist]({real_approval_url})"
+        
+        patch_data = json.dumps(payload).encode('utf-8')
+        patch_url = f"{webhook_url}/messages/{message_id}"
+        patch_req = urllib.request.Request(
+            patch_url,
+            data=patch_data,
+            headers={
+                'Content-Type': 'application/json',
+                'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'
+            },
+            method='PATCH'
+        )
+        with urllib.request.urlopen(patch_req) as patch_response:
+            pass
+
+        return True
     except Exception as e:
         print(f"Error executing Discord Webhook: {e}")
         return False
@@ -262,6 +291,7 @@ def get_status_http(request):
         if action == 'approve':
             username = request.args.get('username')
             sig = request.args.get('sig')
+            message_id = request.args.get('message_id')
             
             if not username or not sig:
                 return ("Missing 'username' or 'sig' query parameters.", 400)
@@ -274,6 +304,22 @@ def get_status_http(request):
                 
                 # Append to GCE VM approved-whitelist metadata
                 add_to_gce_metadata_whitelist(username)
+                
+                # Delete the Discord webhook message to keep the channel clean
+                if message_id:
+                    try:
+                        webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
+                        if webhook_url:
+                            delete_url = f"{webhook_url}/messages/{message_id}"
+                            del_req = urllib.request.Request(
+                                delete_url,
+                                method='DELETE',
+                                headers={'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'}
+                            )
+                            with urllib.request.urlopen(del_req) as del_resp:
+                                pass
+                    except Exception as e:
+                        print(f"Failed to delete Discord message: {e}")
                 
                 # Return confirmation landing page
                 html = f"""
