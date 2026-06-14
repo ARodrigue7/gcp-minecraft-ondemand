@@ -72,6 +72,12 @@ variable "wakeup_passcode" {
   sensitive   = true
 }
 
+variable "admin_passcode" {
+  description = "Passcode required to access the admin portal and run console commands"
+  type        = string
+  sensitive   = true
+}
+
 variable "enable_dns_autostart" {
   description = "Enable autostarting the server whenever the domain is queried/resolved. Set to false to require manual portal starts."
   type        = bool

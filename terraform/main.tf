@@ -35,6 +35,28 @@ resource "google_compute_disk" "minecraft_data" {
   size = var.disk_size_gb
 }
 
+# Storage Bucket for versioned backups
+resource "google_storage_bucket" "minecraft_backups" {
+  name                        = "${var.project_id}-backups"
+  location                    = var.region
+  uniform_bucket_level_access = true
+  force_destroy               = true
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    condition {
+      num_newer_versions = 5
+      with_state         = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
 # ==========================================
 # 🖥️ COMPUTE ENGINE VM (MINECRAFT SERVER)
 # ==========================================
@@ -56,6 +78,20 @@ resource "google_project_iam_member" "vm_logging" {
 resource "google_project_iam_member" "vm_monitoring" {
   project = var.project_id
   role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.minecraft_sa.email}"
+}
+
+# Grant VM permissions to write backups to GCS
+resource "google_storage_bucket_iam_member" "vm_backups_admin" {
+  bucket = google_storage_bucket.minecraft_backups.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.minecraft_sa.email}"
+}
+
+# Grant VM permissions to modify metadata (to clear command queue)
+resource "google_project_iam_member" "vm_compute_admin" {
+  project = var.project_id
+  role    = "roles/compute.instanceAdmin.v1"
   member  = "serviceAccount:${google_service_account.minecraft_sa.email}"
 }
 
@@ -104,8 +140,12 @@ resource "google_compute_instance" "minecraft" {
     # Render the startup script template containing the watchdog configuration
     startup-script = templatefile("${path.module}/startup.sh", {
       idle_timeout_seconds = var.idle_timeout_seconds
+      backups_bucket       = google_storage_bucket.minecraft_backups.name
     })
     approved-whitelist = ""
+    pending-commands   = ""
+    online-players     = ""
+    backup-status      = ""
   }
 
   service_account {
@@ -114,7 +154,12 @@ resource "google_compute_instance" "minecraft" {
   }
 
   lifecycle {
-    ignore_changes = [metadata["approved-whitelist"]]
+    ignore_changes = [
+      metadata["approved-whitelist"],
+      metadata["pending-commands"],
+      metadata["online-players"],
+      metadata["backup-status"]
+    ]
   }
 }
 
@@ -219,6 +264,20 @@ resource "google_project_iam_member" "cf_dns" {
   member  = "serviceAccount:${google_service_account.cf_sa.email}"
 }
 
+# Grant Cloud Function permissions to list/read backups
+resource "google_storage_bucket_iam_member" "cf_backups_viewer" {
+  bucket = google_storage_bucket.minecraft_backups.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+# Grant Cloud Function permissions to read container logs from Cloud Logging
+resource "google_project_iam_member" "cf_logging_viewer" {
+  project = var.project_id
+  role    = "roles/logging.viewer"
+  member  = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
 # Cloud Function resource triggered by DNS logs via Pub/Sub
 resource "google_cloudfunctions_function" "minecraft_starter" {
   name        = "minecraft-starter"
@@ -274,6 +333,9 @@ resource "google_cloudfunctions_function" "minecraft_status" {
     FUNCTION_REGION     = var.region
     DISCORD_PUBLIC_KEY  = var.discord_public_key
     WAKEUP_PASSCODE     = var.wakeup_passcode
+    ADMIN_PASSCODE      = var.admin_passcode
+    BACKUPS_BUCKET      = google_storage_bucket.minecraft_backups.name
+    INSTANCE_ID         = google_compute_instance.minecraft.instance_id
   }
 
   service_account_email = google_service_account.cf_sa.email

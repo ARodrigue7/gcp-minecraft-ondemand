@@ -20,11 +20,16 @@ WHITELIST_SECRET = os.environ.get('WHITELIST_SECRET')
 FUNCTION_REGION = os.environ.get('FUNCTION_REGION', 'us-central1')
 DISCORD_PUBLIC_KEY = os.environ.get('DISCORD_PUBLIC_KEY')
 WAKEUP_PASSCODE = os.environ.get('WAKEUP_PASSCODE')
+ADMIN_PASSCODE = os.environ.get('ADMIN_PASSCODE')
+BACKUPS_BUCKET = os.environ.get('BACKUPS_BUCKET')
+INSTANCE_ID = os.environ.get('INSTANCE_ID')
 
 # Build the client services
 # cache_discovery=False prevents file-locking warnings in read-only environments
 compute = discovery.build('compute', 'v1', cache_discovery=False)
 dns = discovery.build('dns', 'v1', cache_discovery=False)
+logging_service = discovery.build('logging', 'v2', cache_discovery=False)
+storage_service = discovery.build('storage', 'v1', cache_discovery=False)
 
 def get_instance_status_and_ip():
     """Retrieves the current status and public IP address of the VM instance."""
@@ -219,6 +224,184 @@ def add_to_gce_metadata_whitelist(username):
     )
     update_request.execute()
 
+def check_admin_auth(request):
+    """Verifies the admin passcode in the request headers."""
+    if not ADMIN_PASSCODE:
+        return False
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+        else:
+            token = auth_header
+        return token == ADMIN_PASSCODE
+    return False
+
+def get_backups_list():
+    """Retrieves version history of rolling_backup.tar.gz from GCS."""
+    if not BACKUPS_BUCKET:
+        return []
+    try:
+        res = storage_service.objects().list(bucket=BACKUPS_BUCKET, versions=True).execute()
+        items = res.get('items', [])
+        
+        backups = []
+        for item in items:
+            if item.get('name') == 'rolling_backup.tar.gz':
+                gen = item.get('generation')
+                size = int(item.get('size', 0))
+                updated = item.get('timeCreated')
+                backups.append({
+                    "generation": gen,
+                    "size": size,
+                    "timeCreated": updated
+                })
+        
+        backups.sort(key=lambda x: x['timeCreated'], reverse=True)
+        return backups[:5]
+    except Exception as e:
+        print(f"Error listing backups: {e}")
+        return []
+
+def get_minecraft_logs():
+    """Retrieves recent Minecraft container log entries from Cloud Logging."""
+    if not PROJECT_ID or not INSTANCE_ID:
+        return []
+    try:
+        log_filter = (
+            f'resource.type="gce_instance" '
+            f'AND resource.labels.instance_id="{INSTANCE_ID}" '
+            f'AND log_name="projects/{PROJECT_ID}/logs/cos"'
+        )
+        
+        body = {
+            "resourceNames": [f"projects/{PROJECT_ID}"],
+            "filter": log_filter,
+            "orderBy": "timestamp desc",
+            "pageSize": 50
+        }
+        
+        res = logging_service.entries().list(body=body).execute()
+        entries = res.get('entries', [])
+        
+        logs = []
+        for entry in entries:
+            text = entry.get('textPayload', '')
+            if not text and 'jsonPayload' in entry:
+                text = entry['jsonPayload'].get('message', '')
+            
+            if text:
+                timestamp = entry.get('timestamp')
+                logs.append({
+                    "timestamp": timestamp,
+                    "message": text.strip()
+                })
+        
+        logs.reverse()
+        return logs
+    except Exception as e:
+        print(f"Error fetching logs: {e}")
+        return [{"timestamp": "", "message": f"Error loading logs: {e}"}]
+
+def enqueue_admin_command(command):
+    """Appends a command to GCE metadata pending-commands."""
+    request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
+    instance = request.execute()
+    
+    metadata = instance.get('metadata', {})
+    items = metadata.get('items', [])
+    
+    commands_item = next((item for item in items if item['key'] == 'pending-commands'), None)
+    
+    if commands_item:
+        current_val = commands_item['value']
+        commands = [c.strip() for c in current_val.split(',') if c.strip()]
+    else:
+        commands = []
+        
+    if command not in commands:
+        commands.append(command)
+        
+    new_value = ','.join(commands)
+    
+    if commands_item:
+        commands_item['value'] = new_value
+    else:
+        items.append({'key': 'pending-commands', 'value': new_value})
+        
+    update_request = compute.instances().setMetadata(
+        project=PROJECT_ID,
+        zone=ZONE,
+        instance=INSTANCE_NAME,
+        body={
+            'fingerprint': metadata.get('fingerprint'),
+            'items': items
+        }
+    )
+    update_request.execute()
+
+def remove_from_gce_metadata_whitelist(username):
+    """Removes a username from the approved-whitelist metadata attribute on the VM."""
+    request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
+    instance = request.execute()
+    
+    metadata = instance.get('metadata', {})
+    items = metadata.get('items', [])
+    
+    whitelist_item = next((item for item in items if item['key'] == 'approved-whitelist'), None)
+    
+    if whitelist_item:
+        players = [p.strip() for p in whitelist_item['value'].split(',') if p.strip()]
+    else:
+        players = []
+        
+    if username in players:
+        players.remove(username)
+        
+    new_value = ','.join(players)
+    
+    if whitelist_item:
+        whitelist_item['value'] = new_value
+    else:
+        items.append({'key': 'approved-whitelist', 'value': new_value})
+        
+    update_request = compute.instances().setMetadata(
+        project=PROJECT_ID,
+        zone=ZONE,
+        instance=INSTANCE_NAME,
+        body={
+            'fingerprint': metadata.get('fingerprint'),
+            'items': items
+        }
+    )
+    update_request.execute()
+
+def download_backup_file(generation):
+    """Downloads a specific generation of rolling_backup.tar.gz from GCS and returns it."""
+    if not BACKUPS_BUCKET:
+        return ("Backups bucket is not configured", 400)
+    try:
+        url = f"https://storage.googleapis.com/storage/v1/b/{BACKUPS_BUCKET}/o/rolling_backup.tar.gz?alt=media&generation={generation}"
+        
+        token_url = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+        req = urllib.request.Request(token_url, headers={"Metadata-Flavor": "Google"})
+        with urllib.request.urlopen(req) as response:
+            token_data = json.loads(response.read().decode('utf-8'))
+            access_token = token_data['access_token']
+        
+        file_req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access_token}"})
+        with urllib.request.urlopen(file_req) as file_resp:
+            file_content = file_resp.read()
+            
+        headers = {
+            'Content-Type': 'application/x-gzip',
+            'Content-Disposition': f'attachment; filename="minecraft_backup_{generation}.tar.gz"'
+        }
+        return (file_content, 200, headers)
+    except Exception as e:
+        print(f"Error downloading backup: {e}")
+        return (f"Failed to download backup: {str(e)}", 500)
+
 def send_discord_webhook(username, status_url):
     """Sends a formatted alert about a whitelist request to Discord with a one-click approval link."""
     webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
@@ -329,7 +512,7 @@ def get_status_http(request):
         headers = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '3600'
         }
         return ('', 204, headers)
@@ -339,6 +522,91 @@ def get_status_http(request):
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
     }
+
+    # Handle Admin endpoints
+    action = request.args.get('action')
+    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_remove', 'admin_download_backup']:
+        is_auth = False
+        if action == 'admin_download_backup':
+            passcode = request.args.get('passcode')
+            is_auth = (passcode == ADMIN_PASSCODE)
+        else:
+            is_auth = check_admin_auth(request)
+            
+        if not is_auth:
+            return (json.dumps({"error": "Unauthorized"}), 401, headers)
+            
+        if request.method == 'GET':
+            if action == 'admin_status':
+                try:
+                    status, ip = get_instance_status_and_ip()
+                    
+                    vm = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                    metadata = vm.get('metadata', {})
+                    items = metadata.get('items', [])
+                    
+                    players_item = next((item for item in items if item['key'] == 'online-players'), None)
+                    online_players = players_item['value'] if players_item else "none"
+                    
+                    whitelist_item = next((item for item in items if item['key'] == 'approved-whitelist'), None)
+                    approved_whitelist = whitelist_item['value'] if whitelist_item else ""
+                    
+                    backups = get_backups_list()
+                    
+                    return (
+                        json.dumps({
+                            "status": status,
+                            "ip": ip,
+                            "online_players": online_players,
+                            "whitelist": [p.strip() for p in approved_whitelist.split(',') if p.strip()],
+                            "backups": backups
+                        }),
+                        200,
+                        headers
+                    )
+                except Exception as e:
+                    print(f"Error loading admin status: {e}")
+                    return (json.dumps({"error": str(e)}), 500, headers)
+                    
+            elif action == 'admin_logs':
+                logs = get_minecraft_logs()
+                return (json.dumps({"logs": logs}), 200, headers)
+                
+            elif action == 'admin_download_backup':
+                generation = request.args.get('generation')
+                if not generation:
+                    return ("Missing generation parameter", 400)
+                file_content, code, custom_headers = download_backup_file(generation)
+                if code == 200:
+                    merged_headers = {**headers, **custom_headers}
+                    return (file_content, code, merged_headers)
+                else:
+                    return (file_content, code, headers)
+                    
+        elif request.method == 'POST':
+            try:
+                request_json = request.get_json(silent=True) or {}
+                
+                if action == 'admin_command':
+                    command = request_json.get('command')
+                    if not command:
+                        return (json.dumps({"error": "Missing command in payload"}), 400, headers)
+                    
+                    enqueue_admin_command(command)
+                    return (json.dumps({"success": True, "message": f"Command '{command}' enqueued successfully."}), 200, headers)
+                    
+                elif action == 'admin_whitelist_remove':
+                    username = request_json.get('username')
+                    if not username:
+                        return (json.dumps({"error": "Missing username in payload"}), 400, headers)
+                    
+                    remove_from_gce_metadata_whitelist(username)
+                    enqueue_admin_command(f"whitelist remove {username}")
+                    return (json.dumps({"success": True, "message": f"Player '{username}' removed from whitelist."}), 200, headers)
+                    
+            except Exception as e:
+                print(f"Error handling admin post request: {e}")
+                return (json.dumps({"error": str(e)}), 500, headers)
 
     # Parse and verify Discord Interaction signature headers
     signature = request.headers.get('X-Signature-Ed25519')

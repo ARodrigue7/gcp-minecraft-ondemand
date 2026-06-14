@@ -1098,3 +1098,36 @@ body::after {
     border-color: #10b981;
     color: #6ee7b7;
 }
+
+/* ==========================================================================
+   🛠️ ADMIN PORTAL TAB & CONSOLE STYLING
+   ========================================================================== */
+
+.tab-content.hidden {
+    display: none !important;
+}
+
+.tab-btn {
+    width: 100%;
+    justify-content: flex-start !important;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: linear-gradient(to bottom, var(--gold-light), var(--gold-dark)) !important;
+    border-color: var(--gold-border) !important;
+    color: #ffffff !important;
+    text-shadow: 0 2px 0 var(--gold-border) !important;
+    box-shadow: 0 6px 0 var(--gold-border),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
+    transform: none !important;
+}
+
+.tab-btn.active:active {
+    transform: translateY(2px) !important;
+    box-shadow: 0 4px 0 var(--gold-border),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
