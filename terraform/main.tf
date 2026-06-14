@@ -158,6 +158,7 @@ resource "google_pubsub_topic" "dns_query_topic" {
 
 # Log Sink to route DNS query logs for mc.yourdomain.com to the Pub/Sub topic
 resource "google_logging_project_sink" "dns_query_sink" {
+  count                  = var.enable_dns_autostart ? 1 : 0
   name                   = "minecraft-dns-query-sink"
   destination            = "pubsub.googleapis.com/${google_pubsub_topic.dns_query_topic.id}"
   filter                 = "resource.type=\"dns_query\" AND jsonPayload.queryName=\"${var.domain_name}.\""
@@ -166,9 +167,10 @@ resource "google_logging_project_sink" "dns_query_sink" {
 
 # IAM policy to allow the Log Sink to publish events to Pub/Sub
 resource "google_pubsub_topic_iam_member" "dns_query_sink_publisher" {
+  count  = var.enable_dns_autostart ? 1 : 0
   topic  = google_pubsub_topic.dns_query_topic.name
   role   = "roles/pubsub.publisher"
-  member = google_logging_project_sink.dns_query_sink.writer_identity
+  member = google_logging_project_sink.dns_query_sink[0].writer_identity
 }
 
 # ==========================================
@@ -271,6 +273,7 @@ resource "google_cloudfunctions_function" "minecraft_status" {
     WHITELIST_SECRET    = random_id.whitelist_secret.hex
     FUNCTION_REGION     = var.region
     DISCORD_PUBLIC_KEY  = var.discord_public_key
+    WAKEUP_PASSCODE     = var.wakeup_passcode
   }
 
   service_account_email = google_service_account.cf_sa.email
@@ -286,11 +289,11 @@ resource "google_cloudfunctions_function_iam_member" "status_invoker" {
   member = "allUsers"
 }
 
-# Generate frontend config.json automatically on terraform apply
+# Generate frontend config.js automatically on terraform apply
 resource "local_file" "frontend_config" {
-  filename = "${path.module}/../docs/config.json"
-  content  = jsonencode({
+  filename = "${path.module}/../docs/config.js"
+  content  = "window.serverConfig = ${jsonencode({
     statusUrl  = google_cloudfunctions_function.minecraft_status.https_trigger_url
     domainName = var.domain_name
-  })
+  })};"
 }

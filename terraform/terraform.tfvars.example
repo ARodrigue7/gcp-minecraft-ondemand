@@ -28,3 +28,9 @@ discord_webhook_url = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEB
 
 # Discord Bot Application Public Key for interaction verification
 discord_public_key = "YOUR_DISCORD_BOT_PUBLIC_KEY"
+
+# Passcode required to wake up the server via the web portal (leave empty for no password)
+wakeup_passcode = "your-wakeup-passcode"
+
+# Set to false to disable DNS autostart (forcing manual passcode entry on portal)
+enable_dns_autostart = false

@@ -65,3 +65,16 @@ variable "discord_public_key" {
   sensitive   = true
 }
 
+variable "wakeup_passcode" {
+  description = "Passcode required to wake up the server via the web portal (leave empty to allow wake up without a password check)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "enable_dns_autostart" {
+  description = "Enable autostarting the server whenever the domain is queried/resolved. Set to false to require manual portal starts."
+  type        = bool
+  default     = true
+}
+

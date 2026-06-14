@@ -5,6 +5,7 @@ import urllib.request
 import re
 import hmac
 import hashlib
+import socket
 from googleapiclient import discovery
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
@@ -18,6 +19,7 @@ DOMAIN_NAME = os.environ.get('DOMAIN_NAME')
 WHITELIST_SECRET = os.environ.get('WHITELIST_SECRET')
 FUNCTION_REGION = os.environ.get('FUNCTION_REGION', 'us-central1')
 DISCORD_PUBLIC_KEY = os.environ.get('DISCORD_PUBLIC_KEY')
+WAKEUP_PASSCODE = os.environ.get('WAKEUP_PASSCODE')
 
 # Build the client services
 # cache_discovery=False prevents file-locking warnings in read-only environments
@@ -38,6 +40,22 @@ def get_instance_status_and_ip():
             ip = access_configs[0].get('natIP')
             
     return status, ip
+
+def is_minecraft_ready(ip, port=25565, timeout=1.0):
+    """Checks if the Minecraft server is actually listening on the given IP and port."""
+    if not ip:
+        return False
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect((ip, port))
+        s.shutdown(socket.SHUT_RDWR)
+        return True
+    except Exception:
+        return False
+    finally:
+        s.close()
+
 
 def start_instance():
     """Triggers the start request for the VM instance."""
@@ -621,6 +639,12 @@ def get_status_http(request):
         # Standard GET Status checking
         try:
             status, ip = get_instance_status_and_ip()
+            
+            # If GCE VM is RUNNING, check if the Minecraft container is actually listening yet
+            if status == 'RUNNING' and ip:
+                if not is_minecraft_ready(ip):
+                    status = 'STARTING' # Override status so UI waits
+
             return (
                 json.dumps({
                     "status": status,
@@ -637,8 +661,31 @@ def get_status_http(request):
     elif request.method == 'POST':
         try:
             request_json = request.get_json(silent=True)
-            if not request_json or 'username' not in request_json:
-                return (json.dumps({"error": "Missing 'username' in request payload."}), 400, headers)
+            if not request_json:
+                return (json.dumps({"error": "Missing request payload."}), 400, headers)
+
+            action = request_json.get('action')
+
+            # 1. Wake Up / Start Server action
+            if action == 'start':
+                passcode = request_json.get('passcode')
+                
+                # Enforce passcode check if configured
+                if WAKEUP_PASSCODE and passcode != WAKEUP_PASSCODE:
+                    return (json.dumps({"error": "Invalid passcode. Wake up request denied."}), 403, headers)
+                
+                # Check status and start if stopped
+                status, ip = get_instance_status_and_ip()
+                if status == 'TERMINATED':
+                    print(f"Starting GCE instance {INSTANCE_NAME} via HTTP start command...")
+                    start_instance()
+                    return (json.dumps({"success": True, "message": "Server startup initiated successfully."}), 200, headers)
+                else:
+                    return (json.dumps({"success": True, "message": f"Server is already in state: {status}."}), 200, headers)
+
+            # 2. Whitelist Request (default if action is not start)
+            if 'username' not in request_json:
+                return (json.dumps({"error": "Missing 'username' or 'action' in request payload."}), 400, headers)
 
             username = request_json['username'].strip()
             if not username:

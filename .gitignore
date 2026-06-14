@@ -20,4 +20,5 @@ saves/*
 logs/
 .DS_Store
 GEMINI.md
-!docs/config.json
+docs/config.js
+docs/config.json
