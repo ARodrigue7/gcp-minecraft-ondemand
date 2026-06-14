@@ -1,1 +1,1 @@
-window.serverConfig = {"domainName":"mc.pitcomi.com","statusUrl":"https://us-central1-minecraft-ondemand-499002.cloudfunctions.net/minecraft-status"};
+window.serverConfig = {"domainName":"mc.pitcomi.com","statusUrl":"https://minecraft-status-kph3kdzzsq-uc.a.run.app"};

@@ -9,6 +9,7 @@ import socket
 from googleapiclient import discovery
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
+import functions_framework
 
 # Read configuration from environment variables
 PROJECT_ID = os.environ.get('PROJECT_ID')
@@ -121,7 +122,8 @@ def update_dns_record(new_ip):
     )
     request.execute()
 
-def start_minecraft(event, context):
+@functions_framework.cloud_event
+def start_minecraft(cloudevent):
     """Cloud Function entry point triggered by Pub/Sub event."""
     print("Received DNS query event trigger. Checking Minecraft VM...")
     
@@ -506,6 +508,7 @@ def send_discord_webhook(username, status_url):
         print(f"Error executing Discord Webhook: {e}")
         return False
 
+@functions_framework.http
 def get_status_http(request):
     """HTTP Cloud Function that retrieves VM status, handles whitelist submissions, and approves players."""
     # Set CORS headers for preflight request
@@ -996,7 +999,9 @@ def get_status_http(request):
                 return (json.dumps({"error": "Invalid Minecraft username format. Usernames must be 3-16 characters long and contain only letters, numbers, and underscores."}), 400, headers)
 
             # Send whitelist request to Discord with the signature base URL
-            status_url = f"https://{FUNCTION_REGION}-{PROJECT_ID}.cloudfunctions.net/minecraft-status"
+            status_url = request.base_url
+            if status_url.endswith('/'):
+                status_url = status_url[:-1]
             success = send_discord_webhook(username, status_url)
             if success:
                 return (json.dumps({"success": True, "message": f"Whitelist request for '{username}' sent successfully to the server administrator!"}), 200, headers)
