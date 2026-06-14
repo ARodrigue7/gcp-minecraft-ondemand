@@ -271,7 +271,8 @@ def get_minecraft_logs():
         log_filter = (
             f'resource.type="gce_instance" '
             f'AND resource.labels.instance_id="{INSTANCE_ID}" '
-            f'AND log_name="projects/{PROJECT_ID}/logs/cos"'
+            f'AND (log_name="projects/{PROJECT_ID}/logs/gcplogs-docker-driver" '
+            f'OR log_name="projects/{PROJECT_ID}/logs/cos")'
         )
         
         body = {
@@ -525,7 +526,7 @@ def get_status_http(request):
 
     # Handle Admin endpoints
     action = request.args.get('action')
-    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_remove', 'admin_download_backup']:
+    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_remove', 'admin_download_backup', 'admin_power']:
         is_auth = False
         if action == 'admin_download_backup':
             passcode = request.args.get('passcode')
@@ -540,6 +541,12 @@ def get_status_http(request):
             if action == 'admin_status':
                 try:
                     status, ip = get_instance_status_and_ip()
+                    
+                    if status == 'RUNNING' and ip:
+                        try:
+                            update_dns_record(ip)
+                        except Exception as dns_err:
+                            print(f"Error updating DNS in admin status: {dns_err}")
                     
                     vm = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
                     metadata = vm.get('metadata', {})
@@ -603,6 +610,26 @@ def get_status_http(request):
                     remove_from_gce_metadata_whitelist(username)
                     enqueue_admin_command(f"whitelist remove {username}")
                     return (json.dumps({"success": True, "message": f"Player '{username}' removed from whitelist."}), 200, headers)
+                    
+                elif action == 'admin_power':
+                    command = request_json.get('command')
+                    if not command:
+                        return (json.dumps({"error": "Missing command in payload"}), 400, headers)
+                    
+                    if command == 'start':
+                        print(f"Admin starting VM: {INSTANCE_NAME}...")
+                        start_instance()
+                        return (json.dumps({"success": True, "message": "VM startup initiated."}), 200, headers)
+                    elif command == 'stop':
+                        print(f"Admin stopping VM: {INSTANCE_NAME}...")
+                        compute.instances().stop(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                        return (json.dumps({"success": True, "message": "VM shutdown initiated."}), 200, headers)
+                    elif command == 'restart':
+                        print(f"Admin restarting VM: {INSTANCE_NAME}...")
+                        compute.instances().reset(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                        return (json.dumps({"success": True, "message": "VM restart initiated."}), 200, headers)
+                    else:
+                        return (json.dumps({"error": f"Invalid power command: {command}"}), 400, headers)
                     
             except Exception as e:
                 print(f"Error handling admin post request: {e}")
@@ -910,6 +937,11 @@ def get_status_http(request):
             
             # If GCE VM is RUNNING, check if the Minecraft container is actually listening yet
             if status == 'RUNNING' and ip:
+                try:
+                    update_dns_record(ip)
+                except Exception as dns_err:
+                    print(f"Error updating DNS in standard status: {dns_err}")
+                
                 if not is_minecraft_ready(ip):
                     status = 'STARTING' # Override status so UI waits
 

@@ -41,19 +41,26 @@ fi
 mkdir -p "$MOUNT_DIR/data"
 chmod -R 777 "$MOUNT_DIR/data"
 
-# Run the Minecraft server container (only if it doesn't already exist)
-if ! docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
-  docker run -d \
-    --name minecraft \
-    --restart always \
-    -p 25565:25565 \
-    -v "$MOUNT_DIR/data:/data" \
-    -e EULA=TRUE \
-    -e TYPE=PAPER \
-    -e VERSION=LATEST \
-    -e MEMORY=3G \
-    itzg/minecraft-server
+# Run the Minecraft server container (recreate on boot to ensure fresh config/logs)
+if docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
+  echo "Removing existing minecraft container..."
+  docker stop minecraft || true
+  docker rm minecraft || true
 fi
+
+echo "Starting fresh Minecraft server container..."
+docker run -d \
+  --name minecraft \
+  --restart always \
+  --log-driver=gcplogs \
+  -p 25565:25565 \
+  -v "$MOUNT_DIR/data:/data" \
+  -e EULA=TRUE \
+  -e TYPE=PAPER \
+  -e VERSION=LATEST \
+  -e MEMORY=3G \
+  itzg/minecraft-server
+
 
 # Create watchdog script in the persistent, executable disk directory
 WATCHDOG_SCRIPT="/mnt/disks/minecraft-data/minecraft-watchdog.sh"

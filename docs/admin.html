@@ -69,7 +69,7 @@
                 <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Overview of live system metrics and connected players.</p>
                 
                 <div class="status-panel" style="margin-bottom: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                         <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--forest-border);">
                             <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">VM STATE</div>
                             <div id="state-text" style="font-weight: 700; font-size: 1.2rem; color: #f87171;">OFFLINE</div>
@@ -82,6 +82,13 @@
                             <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">CONNECTION</div>
                             <div id="connection-address" style="font-weight: 700; font-size: 0.9rem; color: #34d399; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 0.25rem;">-</div>
                         </div>
+                    </div>
+                    
+                    <!-- VM Controls -->
+                    <div style="display: flex; gap: 0.75rem; border-top: 2px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" id="vm-start-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px;">⚡ Start VM</button>
+                        <button type="button" id="vm-stop-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; background: linear-gradient(to bottom, #ef4444, #dc2626); border-color: #991b1b;">🛑 Stop VM</button>
+                        <button type="button" id="vm-restart-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; background: linear-gradient(to bottom, #f59e0b, #d97706); border-color: #b45309;">🔄 Restart VM</button>
                     </div>
                 </div>
 
@@ -317,6 +324,23 @@ Type a command below to begin.
                 }
             });
 
+            // VM Power Controls
+            const vmStartBtn = document.getElementById("vm-start-btn");
+            const vmStopBtn = document.getElementById("vm-stop-btn");
+            const vmRestartBtn = document.getElementById("vm-restart-btn");
+
+            vmStartBtn.addEventListener("click", () => triggerVmPower("start"));
+            vmStopBtn.addEventListener("click", () => {
+                if (confirm("Are you sure you want to stop/terminate the Minecraft VM instance?")) {
+                    triggerVmPower("stop");
+                }
+            });
+            vmRestartBtn.addEventListener("click", () => {
+                if (confirm("Are you sure you want to restart/reboot the Minecraft VM instance?")) {
+                    triggerVmPower("restart");
+                }
+            });
+
             refreshLogsBtn.addEventListener("click", loadLogs);
 
             consoleForm.addEventListener("submit", async (e) => {
@@ -536,6 +560,34 @@ Type a command below to begin.
             } else {
                 const data = await res.json();
                 throw new Error(data.error || "Failed to execute command.");
+            }
+        }
+
+        async function triggerVmPower(powerAction) {
+            if (!adminPasscode || !statusUrl) return;
+
+            showToast(`⏳ Sending ${powerAction} command to VM...`, "starting");
+
+            try {
+                const res = await fetch(`${statusUrl}?action=admin_power`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${adminPasscode}`
+                    },
+                    body: JSON.stringify({ command: powerAction })
+                });
+
+                if (res.ok) {
+                    showToast(`✓ VM ${powerAction} request succeeded!`, "success");
+                    loadDashboardData();
+                } else {
+                    const data = await res.json();
+                    throw new Error(data.error || "Failed to trigger power action.");
+                }
+            } catch (err) {
+                console.error(err);
+                showToast(`❌ VM power action failed: ${err.message}`, "error");
             }
         }
 
