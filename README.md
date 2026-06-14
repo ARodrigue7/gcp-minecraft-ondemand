@@ -142,7 +142,7 @@ For each record:
 
 ### 1. Enable Whitelisting in Terraform
 By default, the server allows anyone to connect. To restrict access to whitelisted players:
-1. Open [terraform/startup.sh](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/terraform/startup.sh).
+1. Open [terraform/startup.sh](terraform/startup.sh).
 2. Find the `docker run` command around line 45.
 3. Add the whitelist environment variable `-e ENABLE_WHITELIST=TRUE`:
    ```bash
@@ -170,12 +170,26 @@ The player hub is a dedicated page for your community. It reads the configuratio
 1. A friend enters their Minecraft username on your Player Portal page and clicks **Submit**.
 2. The page posts the request to the HTTP Cloud Function endpoint.
 3. The Cloud Function securely posts a rich message embed to your Discord channel.
-4. The Discord message includes two approval options:
-   - **One-Click Approval Link (Recommended)**: Click the `[🟢 Click here to Approve Whitelist]` link. GCF verifies the secure HMAC signature, appends the player to the GCE metadata, and **automatically deletes the alert message from Discord** to keep your channel clean!
+4. The Discord message includes three approval options:
+   - **Interactive Discord Buttons (Recommended)**: Click the **Approve Whitelist** or **Deny** buttons directly within your Discord client. This handles the request instantly, writes who approved it in-place, and removes the buttons so they cannot be clicked again. *Note: Requires setting up a Discord Application. See [discord_bot_setup_guide.md](discord_bot_setup_guide.md) for full instructions.*
+   - **One-Click Approval Link (Fallback)**: Click the `[🟢 Click here to Approve Whitelist]` hyperlink in the embed. GCF verifies the secure HMAC signature, appends the player to the GCE metadata, and **automatically deletes the webhook alert message from Discord** to keep your channel clean!
    - **Manual SSH Command**: Copy/paste the pre-formatted command:
      ```bash
      gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
      ```
+
+### 3. Wake Up Protection (Passcode Protection)
+To prevent unauthorized users or automated web scrapers from spawning wakeup loops, you can enable a passcode lock on the **Wake Up Server** action:
+1. Open `terraform/terraform.tfvars`.
+2. Add a value for `wakeup_passcode`:
+   ```hcl
+   wakeup_passcode = "your-super-secret-password"
+   ```
+3. Run `terraform apply`.
+4. The portal (`play.html`) will now automatically display a **Server Passcode** field whenever the server is offline. Clicking the **Wake Up Server** button will prompt for this passcode, preventing bot wakeups.
+
+### 4. RCON Watchdog Player Check
+Instead of checking raw TCP connection sockets (which can be tricked into keeping the VM online by automated server lists, scanner bots, or simple TCP pings), the watchdog script uses the Minecraft RCON client to query the exact player count (`mc-send-to-rcon list`). If the active player count remains at `0` for your configured timeout (default `600` seconds / 10 minutes), the VM is shut down gracefully.
 
 #### 🌐 Dynamic Configuration for Cloners/Forks:
 If other developers clone or fork this project, they do not need to rebuild or host their own website to test the player portal. They can pass their variables directly in the URL:
@@ -204,7 +218,7 @@ Uploads your local files in the `saves/` directory back up to the cloud.
 
 ## ⚙️ Customization
 
-You can customize the Minecraft server settings by editing [terraform/startup.sh](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/terraform/startup.sh).
+You can customize the Minecraft server settings by editing [terraform/startup.sh](terraform/startup.sh).
 * `TYPE`: Change from `PAPER` to `VANILLA`, `FORGE`, `FABRIC`, etc.
 * `VERSION`: Set a specific version like `1.20.4` instead of `LATEST`.
 * `MEMORY`: Change the JVM memory allocation (e.g., `3G`).
@@ -214,10 +228,9 @@ You can customize the Minecraft server settings by editing [terraform/startup.sh
 ## 🔮 Future Roadmap
 
 * **Deploy to Google Cloud Button**: Introduce a secure, interactive setup wizard within Google Cloud Shell (via the standard `Deploy to GCP` button) to automate project provisioning and eliminate manual local file creation.
-* **Bot & Abuse Prevention**: Mitigate automated bot-scanner wakeup loops by switching from public DNS query logging to an authenticated "Wake Up Server" button on the Player Portal (with simple passcode protection), and update the GCE watchdog script to check actual online player count using RCON instead of raw TCP handshakes.
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License. See the [LICENSE](file:///Volumes/Dev%20Drive/gcp-ondemand-minecraft/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
