@@ -25,7 +25,7 @@ output "pubsub_topic" {
   description = "The Pub/Sub topic triggering the Cloud Function"
 }
 
-output  "minecraft_domain" {
+output "minecraft_domain" {
   value       = var.domain_name
   description = "The domain name players will use to connect"
 }

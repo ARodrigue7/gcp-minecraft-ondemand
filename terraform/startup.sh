@@ -37,9 +37,10 @@ if ! grep -q "$MOUNT_DIR" /etc/fstab; then
   echo "$DISK_PATH $MOUNT_DIR ext4 discard,defaults,nofail 0 2" >> /etc/fstab
 fi
 
-# Prepare directories with permissive access for the Docker container
+# Prepare directories with container user ownership (uid/gid 1000) and secure permissions
 mkdir -p "$MOUNT_DIR/data"
-chmod -R 777 "$MOUNT_DIR/data"
+chown -R 1000:1000 "$MOUNT_DIR/data"
+chmod -R 755 "$MOUNT_DIR/data"
 
 # Run the Minecraft server container (only if it doesn't already exist)
 if ! docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then

@@ -203,10 +203,22 @@ resource "google_service_account" "cf_sa" {
   display_name = "Minecraft Cloud Function Service Account"
 }
 
-# Grant Cloud Function permissions to start/stop the GCE instance
+# Custom IAM Role for Cloud Function to manage the Minecraft VM
+resource "google_project_iam_custom_role" "cf_compute_controller" {
+  role_id     = "minecraftInstanceController"
+  title       = "Minecraft Instance Controller"
+  description = "Allows getting, starting, and setting metadata on the Minecraft VM instance"
+  permissions = [
+    "compute.instances.get",
+    "compute.instances.start",
+    "compute.instances.setMetadata"
+  ]
+}
+
+# Grant Cloud Function permissions to start/stop the GCE instance (using custom role)
 resource "google_project_iam_member" "cf_compute" {
   project = var.project_id
-  role    = "roles/compute.instanceAdmin.v1"
+  role    = google_project_iam_custom_role.cf_compute_controller.id
   member  = "serviceAccount:${google_service_account.cf_sa.email}"
 }
 
@@ -289,7 +301,7 @@ resource "google_cloudfunctions_function_iam_member" "status_invoker" {
 # Generate frontend config.json automatically on terraform apply
 resource "local_file" "frontend_config" {
   filename = "${path.module}/../docs/config.json"
-  content  = jsonencode({
+  content = jsonencode({
     statusUrl  = google_cloudfunctions_function.minecraft_status.https_trigger_url
     domainName = var.domain_name
   })
