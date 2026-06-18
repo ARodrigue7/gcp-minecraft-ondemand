@@ -35,6 +35,28 @@ resource "google_compute_disk" "minecraft_data" {
   size = var.disk_size_gb
 }
 
+# Storage Bucket for versioned backups
+resource "google_storage_bucket" "minecraft_backups" {
+  name                        = "${var.project_id}-backups"
+  location                    = var.region
+  uniform_bucket_level_access = true
+  force_destroy               = true
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    condition {
+      num_newer_versions = 5
+      with_state         = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+}
+
 # ==========================================
 # 🖥️ COMPUTE ENGINE VM (MINECRAFT SERVER)
 # ==========================================
@@ -56,6 +78,20 @@ resource "google_project_iam_member" "vm_logging" {
 resource "google_project_iam_member" "vm_monitoring" {
   project = var.project_id
   role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.minecraft_sa.email}"
+}
+
+# Grant VM permissions to write backups to GCS
+resource "google_storage_bucket_iam_member" "vm_backups_admin" {
+  bucket = google_storage_bucket.minecraft_backups.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.minecraft_sa.email}"
+}
+
+# Grant VM permissions to modify metadata (to clear command queue)
+resource "google_project_iam_member" "vm_compute_admin" {
+  project = var.project_id
+  role    = "roles/compute.instanceAdmin.v1"
   member  = "serviceAccount:${google_service_account.minecraft_sa.email}"
 }
 
@@ -104,8 +140,12 @@ resource "google_compute_instance" "minecraft" {
     # Render the startup script template containing the watchdog configuration
     startup-script = templatefile("${path.module}/startup.sh", {
       idle_timeout_seconds = var.idle_timeout_seconds
+      backups_bucket       = google_storage_bucket.minecraft_backups.name
     })
     approved-whitelist = ""
+    pending-commands   = ""
+    online-players     = ""
+    backup-status      = ""
   }
 
   service_account {
@@ -114,7 +154,12 @@ resource "google_compute_instance" "minecraft" {
   }
 
   lifecycle {
-    ignore_changes = [metadata["approved-whitelist"]]
+    ignore_changes = [
+      metadata["approved-whitelist"],
+      metadata["pending-commands"],
+      metadata["online-players"],
+      metadata["backup-status"]
+    ]
   }
 }
 
@@ -158,6 +203,7 @@ resource "google_pubsub_topic" "dns_query_topic" {
 
 # Log Sink to route DNS query logs for mc.yourdomain.com to the Pub/Sub topic
 resource "google_logging_project_sink" "dns_query_sink" {
+  count                  = var.enable_dns_autostart ? 1 : 0
   name                   = "minecraft-dns-query-sink"
   destination            = "pubsub.googleapis.com/${google_pubsub_topic.dns_query_topic.id}"
   filter                 = "resource.type=\"dns_query\" AND jsonPayload.queryName=\"${var.domain_name}.\""
@@ -166,9 +212,10 @@ resource "google_logging_project_sink" "dns_query_sink" {
 
 # IAM policy to allow the Log Sink to publish events to Pub/Sub
 resource "google_pubsub_topic_iam_member" "dns_query_sink_publisher" {
+  count  = var.enable_dns_autostart ? 1 : 0
   topic  = google_pubsub_topic.dns_query_topic.name
   role   = "roles/pubsub.publisher"
-  member = google_logging_project_sink.dns_query_sink.writer_identity
+  member = google_logging_project_sink.dns_query_sink[0].writer_identity
 }
 
 # ==========================================
@@ -229,31 +276,74 @@ resource "google_project_iam_member" "cf_dns" {
   member  = "serviceAccount:${google_service_account.cf_sa.email}"
 }
 
-# Cloud Function resource triggered by DNS logs via Pub/Sub
-resource "google_cloudfunctions_function" "minecraft_starter" {
-  name        = "minecraft-starter"
-  description = "Starts Minecraft GCE VM and updates Cloud DNS record on player request"
-  runtime     = "python310"
+# Grant Cloud Function permissions to list/read backups
+resource "google_storage_bucket_iam_member" "cf_backups_viewer" {
+  bucket = google_storage_bucket.minecraft_backups.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.cf_sa.email}"
+}
 
-  available_memory_mb   = 256
-  source_archive_bucket = google_storage_bucket.function_bucket.name
-  source_archive_object = google_storage_bucket_object.function_zip_object.name
-  entry_point           = "start_minecraft"
+# Grant Cloud Function permissions to read container logs from Cloud Logging
+resource "google_project_iam_member" "cf_logging_viewer" {
+  project = var.project_id
+  role    = "roles/logging.viewer"
+  member  = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+# Grant Cloud Run invoker permission to the function service account (for Eventarc Pub/Sub trigger)
+resource "google_project_iam_member" "cf_run_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+# Grant Eventarc event receiver permission to the function service account (for Eventarc Pub/Sub trigger)
+resource "google_project_iam_member" "cf_event_receiver" {
+  project = var.project_id
+  role    = "roles/eventarc.eventReceiver"
+  member  = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+# Cloud Function resource triggered by DNS logs via Pub/Sub (2nd Gen)
+resource "google_cloudfunctions2_function" "minecraft_starter" {
+  name        = "minecraft-starter"
+  location    = var.region
+  description = "Starts Minecraft GCE VM and updates Cloud DNS record on player request"
+
+  build_config {
+    runtime     = "python310"
+    entry_point = "start_minecraft"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.function_zip_object.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count    = 3
+    min_instance_count    = 0
+    available_memory      = "256Mi"
+    timeout_seconds       = 60
+    service_account_email = google_service_account.cf_sa.email
+
+    environment_variables = {
+      PROJECT_ID    = var.project_id
+      ZONE          = var.zone
+      INSTANCE_NAME = var.instance_name
+      DNS_ZONE_NAME = var.dns_zone_name
+      DOMAIN_NAME   = var.domain_name
+    }
+  }
 
   event_trigger {
-    event_type = "google.pubsub.topic.publish"
-    resource   = google_pubsub_topic.dns_query_topic.id
+    trigger_region        = var.region
+    event_type            = "google.cloud.pubsub.topic.v1.messagePublished"
+    pubsub_topic          = google_pubsub_topic.dns_query_topic.id
+    retry_policy          = "RETRY_POLICY_DO_NOT_RETRY"
+    service_account_email = google_service_account.cf_sa.email
   }
-
-  environment_variables = {
-    PROJECT_ID    = var.project_id
-    ZONE          = var.zone
-    INSTANCE_NAME = var.instance_name
-    DNS_ZONE_NAME = var.dns_zone_name
-    DOMAIN_NAME   = var.domain_name
-  }
-
-  service_account_email = google_service_account.cf_sa.email
 }
 
 # Secret key for whitelisting HMAC generation
@@ -261,48 +351,62 @@ resource "random_id" "whitelist_secret" {
   byte_length = 32
 }
 
-# HTTP-triggered Cloud Function for status checking and whitelist requests
-resource "google_cloudfunctions_function" "minecraft_status" {
+# HTTP-triggered Cloud Function for status checking and whitelist requests (2nd Gen)
+resource "google_cloudfunctions2_function" "minecraft_status" {
   name        = "minecraft-status"
+  location    = var.region
   description = "Returns Minecraft GCE VM status and handles whitelist requests via Discord"
-  runtime     = "python310"
 
-  available_memory_mb   = 256
-  source_archive_bucket = google_storage_bucket.function_bucket.name
-  source_archive_object = google_storage_bucket_object.function_zip_object.name
-  entry_point           = "get_status_http"
-  trigger_http          = true
-
-  environment_variables = {
-    PROJECT_ID          = var.project_id
-    ZONE                = var.zone
-    INSTANCE_NAME       = var.instance_name
-    DNS_ZONE_NAME       = var.dns_zone_name
-    DOMAIN_NAME         = var.domain_name
-    DISCORD_WEBHOOK_URL = var.discord_webhook_url
-    WHITELIST_SECRET    = random_id.whitelist_secret.hex
-    FUNCTION_REGION     = var.region
-    DISCORD_PUBLIC_KEY  = var.discord_public_key
+  build_config {
+    runtime     = "python310"
+    entry_point = "get_status_http"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.function_zip_object.name
+      }
+    }
   }
 
-  service_account_email = google_service_account.cf_sa.email
+  service_config {
+    max_instance_count    = 3
+    min_instance_count    = 0
+    available_memory      = "256Mi"
+    timeout_seconds       = 60
+    service_account_email = google_service_account.cf_sa.email
+
+    environment_variables = {
+      PROJECT_ID          = var.project_id
+      ZONE                = var.zone
+      INSTANCE_NAME       = var.instance_name
+      DNS_ZONE_NAME       = var.dns_zone_name
+      DOMAIN_NAME         = var.domain_name
+      DISCORD_WEBHOOK_URL = var.discord_webhook_url
+      WHITELIST_SECRET    = random_id.whitelist_secret.hex
+      FUNCTION_REGION     = var.region
+      DISCORD_PUBLIC_KEY  = var.discord_public_key
+      WAKEUP_PASSCODE     = var.wakeup_passcode
+      ADMIN_PASSCODE      = var.admin_passcode
+      BACKUPS_BUCKET      = google_storage_bucket.minecraft_backups.name
+      INSTANCE_ID         = google_compute_instance.minecraft.instance_id
+    }
+  }
 }
 
-# Allow public (unauthenticated) access to the status function
-resource "google_cloudfunctions_function_iam_member" "status_invoker" {
-  project        = google_cloudfunctions_function.minecraft_status.project
-  region         = google_cloudfunctions_function.minecraft_status.region
-  cloud_function = google_cloudfunctions_function.minecraft_status.name
-
-  role   = "roles/cloudfunctions.invoker"
-  member = "allUsers"
+# Allow public (unauthenticated) access to the status function (2nd Gen via Cloud Run IAM)
+resource "google_cloud_run_service_iam_member" "status_invoker" {
+  project  = google_cloudfunctions2_function.minecraft_status.project
+  location = google_cloudfunctions2_function.minecraft_status.location
+  service  = google_cloudfunctions2_function.minecraft_status.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
 
-# Generate frontend config.json automatically on terraform apply
+# Generate frontend config.js automatically on terraform apply
 resource "local_file" "frontend_config" {
-  filename = "${path.module}/../docs/config.json"
-  content = jsonencode({
-    statusUrl  = google_cloudfunctions_function.minecraft_status.https_trigger_url
+  filename = "${path.module}/../docs/config.js"
+  content  = "window.serverConfig = ${jsonencode({
+    statusUrl  = google_cloudfunctions2_function.minecraft_status.service_config[0].uri
     domainName = var.domain_name
-  })
+  })};"
 }

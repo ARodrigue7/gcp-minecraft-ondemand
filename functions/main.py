@@ -13,7 +13,8 @@ from whitelist_manager import add_to_gce_metadata_whitelist
 # Validate configuration on module loading to fail fast
 validate_config()
 
-def start_minecraft(event, context):
+@functions_framework.cloud_event
+def start_minecraft(cloudevent):
     """Cloud Function entry point triggered by Pub/Sub event."""
     logger.info("Received DNS query event trigger. Checking Minecraft VM...")
     
@@ -55,6 +56,7 @@ def start_minecraft(event, context):
     else:
         logger.error("VM is running but does not have a public IP address.")
 
+@functions_framework.http
 def get_status_http(request):
     """HTTP Cloud Function that retrieves VM status, handles whitelist submissions, and approves players."""
     # Set CORS headers for preflight request
@@ -62,7 +64,7 @@ def get_status_http(request):
         headers = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '3600'
         }
         return ('', 204, headers)
@@ -72,6 +74,117 @@ def get_status_http(request):
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
     }
+
+    # Handle Admin endpoints
+    action = request.args.get('action')
+    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_remove', 'admin_download_backup', 'admin_power']:
+        is_auth = False
+        if action == 'admin_download_backup':
+            passcode = request.args.get('passcode')
+            is_auth = (passcode == ADMIN_PASSCODE)
+        else:
+            is_auth = check_admin_auth(request)
+            
+        if not is_auth:
+            return (json.dumps({"error": "Unauthorized"}), 401, headers)
+            
+        if request.method == 'GET':
+            if action == 'admin_status':
+                try:
+                    status, ip = get_instance_status_and_ip()
+                    
+                    if status == 'RUNNING' and ip:
+                        try:
+                            update_dns_record(ip)
+                        except Exception as dns_err:
+                            print(f"Error updating DNS in admin status: {dns_err}")
+                    
+                    vm = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                    metadata = vm.get('metadata', {})
+                    items = metadata.get('items', [])
+                    
+                    players_item = next((item for item in items if item['key'] == 'online-players'), None)
+                    online_players = players_item['value'] if players_item else "none"
+                    
+                    whitelist_item = next((item for item in items if item['key'] == 'approved-whitelist'), None)
+                    approved_whitelist = whitelist_item['value'] if whitelist_item else ""
+                    
+                    backups = get_backups_list()
+                    
+                    return (
+                        json.dumps({
+                            "status": status,
+                            "ip": ip,
+                            "online_players": online_players,
+                            "whitelist": [p.strip() for p in approved_whitelist.split(',') if p.strip()],
+                            "backups": backups
+                        }),
+                        200,
+                        headers
+                    )
+                except Exception as e:
+                    print(f"Error loading admin status: {e}")
+                    return (json.dumps({"error": str(e)}), 500, headers)
+                    
+            elif action == 'admin_logs':
+                logs = get_minecraft_logs()
+                return (json.dumps({"logs": logs}), 200, headers)
+                
+            elif action == 'admin_download_backup':
+                generation = request.args.get('generation')
+                if not generation:
+                    return ("Missing generation parameter", 400)
+                file_content, code, custom_headers = download_backup_file(generation)
+                if code == 200:
+                    merged_headers = {**headers, **custom_headers}
+                    return (file_content, code, merged_headers)
+                else:
+                    return (file_content, code, headers)
+                    
+        elif request.method == 'POST':
+            try:
+                request_json = request.get_json(silent=True) or {}
+                
+                if action == 'admin_command':
+                    command = request_json.get('command')
+                    if not command:
+                        return (json.dumps({"error": "Missing command in payload"}), 400, headers)
+                    
+                    enqueue_admin_command(command)
+                    return (json.dumps({"success": True, "message": f"Command '{command}' enqueued successfully."}), 200, headers)
+                    
+                elif action == 'admin_whitelist_remove':
+                    username = request_json.get('username')
+                    if not username:
+                        return (json.dumps({"error": "Missing username in payload"}), 400, headers)
+                    
+                    remove_from_gce_metadata_whitelist(username)
+                    enqueue_admin_command(f"whitelist remove {username}")
+                    return (json.dumps({"success": True, "message": f"Player '{username}' removed from whitelist."}), 200, headers)
+                    
+                elif action == 'admin_power':
+                    command = request_json.get('command')
+                    if not command:
+                        return (json.dumps({"error": "Missing command in payload"}), 400, headers)
+                    
+                    if command == 'start':
+                        print(f"Admin starting VM: {INSTANCE_NAME}...")
+                        start_instance()
+                        return (json.dumps({"success": True, "message": "VM startup initiated."}), 200, headers)
+                    elif command == 'stop':
+                        print(f"Admin stopping VM: {INSTANCE_NAME}...")
+                        compute.instances().stop(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                        return (json.dumps({"success": True, "message": "VM shutdown initiated."}), 200, headers)
+                    elif command == 'restart':
+                        print(f"Admin restarting VM: {INSTANCE_NAME}...")
+                        compute.instances().reset(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                        return (json.dumps({"success": True, "message": "VM restart initiated."}), 200, headers)
+                    else:
+                        return (json.dumps({"error": f"Invalid power command: {command}"}), 400, headers)
+                    
+            except Exception as e:
+                print(f"Error handling admin post request: {e}")
+                return (json.dumps({"error": str(e)}), 500, headers)
 
     # Parse and verify Discord Interaction signature headers
     signature = request.headers.get('X-Signature-Ed25519')
@@ -208,6 +321,17 @@ def get_status_http(request):
         # Standard GET Status checking
         try:
             status, ip = get_instance_status_and_ip()
+            
+            # If GCE VM is RUNNING, check if the Minecraft container is actually listening yet
+            if status == 'RUNNING' and ip:
+                try:
+                    update_dns_record(ip)
+                except Exception as dns_err:
+                    print(f"Error updating DNS in standard status: {dns_err}")
+                
+                if not is_minecraft_ready(ip):
+                    status = 'STARTING' # Override status so UI waits
+
             return (
                 json.dumps({
                     "status": status,
@@ -224,8 +348,31 @@ def get_status_http(request):
     elif request.method == 'POST':
         try:
             request_json = request.get_json(silent=True)
-            if not request_json or 'username' not in request_json:
-                return (json.dumps({"error": "Missing 'username' in request payload."}), 400, headers)
+            if not request_json:
+                return (json.dumps({"error": "Missing request payload."}), 400, headers)
+
+            action = request_json.get('action')
+
+            # 1. Wake Up / Start Server action
+            if action == 'start':
+                passcode = request_json.get('passcode')
+                
+                # Enforce passcode check if configured
+                if WAKEUP_PASSCODE and passcode != WAKEUP_PASSCODE:
+                    return (json.dumps({"error": "Invalid passcode. Wake up request denied."}), 403, headers)
+                
+                # Check status and start if stopped
+                status, ip = get_instance_status_and_ip()
+                if status == 'TERMINATED':
+                    print(f"Starting GCE instance {INSTANCE_NAME} via HTTP start command...")
+                    start_instance()
+                    return (json.dumps({"success": True, "message": "Server startup initiated successfully."}), 200, headers)
+                else:
+                    return (json.dumps({"success": True, "message": f"Server is already in state: {status}."}), 200, headers)
+
+            # 2. Whitelist Request (default if action is not start)
+            if 'username' not in request_json:
+                return (json.dumps({"error": "Missing 'username' or 'action' in request payload."}), 400, headers)
 
             username = request_json['username'].strip()
             if not username:
@@ -236,7 +383,9 @@ def get_status_http(request):
                 return (json.dumps({"error": "Invalid Minecraft username format. Usernames must be 3-16 characters long and contain only letters, numbers, and underscores."}), 400, headers)
 
             # Send whitelist request to Discord with the signature base URL
-            status_url = f"https://{FUNCTION_REGION}-{PROJECT_ID}.cloudfunctions.net/minecraft-status"
+            status_url = request.base_url
+            if status_url.endswith('/'):
+                status_url = status_url[:-1]
             success = send_discord_webhook(username, status_url)
             if success:
                 return (json.dumps({"success": True, "message": f"Whitelist request for '{username}' sent successfully to the server administrator!"}), 200, headers)

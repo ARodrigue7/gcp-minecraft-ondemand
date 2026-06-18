@@ -36,7 +36,7 @@ output "zone" {
 }
 
 output "status_function_url" {
-  value       = google_cloudfunctions_function.minecraft_status.https_trigger_url
+  value       = google_cloudfunctions2_function.minecraft_status.service_config[0].uri
   description = "The HTTP URL to check the server status"
 }
 
