@@ -548,3 +548,591 @@ body::after {
         transform: translateY(0);
     }
 }
+
+/* ==========================================================================
+   📡 GLASSMORPHIC DIRECTORY THEME FOR play.html
+   ========================================================================== */
+
+.directory-container {
+    display: flex;
+    gap: 1.75rem;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: left;
+    align-items: flex-start;
+}
+
+.directory-panel {
+    background: var(--forest-moss);
+    border: 4px solid var(--wood-border);
+    border-radius: 28px;
+    padding: 2rem;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.directory-panel::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 2px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    pointer-events: none;
+}
+
+.directory-left {
+    width: 480px;
+    flex-shrink: 0;
+    min-height: 480px;
+}
+
+.directory-right {
+    flex: 1;
+    min-height: 480px;
+}
+
+/* Panel Header & Titles */
+.panel-title-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.panel-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 2px 2px 0px var(--wood-border);
+}
+
+/* Search Box Wrapper */
+.search-wrapper {
+    position: relative;
+    margin-bottom: 1.25rem;
+    z-index: 2;
+}
+
+.search-input {
+    width: 100%;
+    background: rgba(9, 26, 16, 0.7);
+    border: 3px solid var(--wood-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-family: 'Fredoka', sans-serif;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    border-color: var(--gold-light);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 3px rgba(250, 204, 21, 0.1);
+}
+
+/* Server List Scroll Area */
+.server-list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-right: 0.25rem;
+    max-height: 350px;
+    z-index: 2;
+}
+
+/* Custom Scrollbar for Woodland Theme */
+.server-list-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.server-list-scroll::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.25);
+    border-radius: 9999px;
+}
+
+.server-list-scroll::-webkit-scrollbar-thumb {
+    background: var(--wood-dark);
+    border-radius: 9999px;
+    border: 1px solid var(--wood-border);
+}
+
+.server-list-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--wood-light);
+}
+
+/* Server Row Item */
+.server-row-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(9, 26, 16, 0.45);
+    border: 2px solid var(--forest-border);
+    border-radius: 16px;
+    padding: 0.85rem 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+}
+
+.server-row-item:hover {
+    border-color: var(--wood-light);
+    background: rgba(9, 26, 16, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.server-row-item.selected {
+    background: rgba(16, 37, 24, 0.9);
+    border-color: var(--gold-light);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 4px 12px rgba(251, 191, 36, 0.15);
+}
+
+/* Star/Favorite button */
+.star-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.15);
+    padding: 0;
+    transition: transform 0.15s, color 0.15s;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.star-btn:hover {
+    transform: scale(1.2);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.star-btn.starred {
+    color: var(--gold-light);
+    filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.4));
+}
+
+/* Server Row Details */
+.row-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow: hidden;
+}
+
+.row-name-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.row-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #ffffff;
+}
+
+.row-motd {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.row-domain {
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* Badges */
+.badge-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    border: 1px solid;
+    letter-spacing: 0.02em;
+}
+
+.badge-tag.public {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.badge-tag.private {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.badge-tag.primary {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Status Indicator (Row visual status) */
+.row-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    min-width: 60px;
+}
+
+.pulse-dot-mini {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+    display: inline-block;
+}
+
+.status-online { color: var(--state-online); }
+.status-offline { color: var(--state-offline); }
+.status-starting { color: var(--state-starting); }
+
+.status-online .pulse-dot-mini, .status-starting .pulse-dot-mini {
+    animation: pulse 1.5s infinite;
+}
+
+/* Controls Grid in Detail Panel */
+.details-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    z-index: 2;
+    position: relative;
+}
+
+.detail-actions-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 2px dashed rgba(255, 255, 255, 0.08);
+    padding-top: 1.5rem;
+}
+
+/* Custom directory buttons layout */
+.directory-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.directory-buttons .btn {
+    flex: 1;
+    min-width: 110px;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.95rem;
+}
+
+/* Modern Woodland Overlay Modals */
+.wood-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(9, 26, 16, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.wood-modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Note: Moved modal overlay/content classes to the Modals section at the end of the file to resolve positioning conflicts */
+
+.wood-modal-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 0px var(--wood-border);
+}
+
+.wood-modal-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+}
+
+/* Modals Form Layout */
+.wood-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: left;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-field label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.form-field input {
+    width: 100%;
+    background: rgba(9, 26, 16, 0.6);
+    border: 3px solid var(--wood-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    font-family: 'Fredoka', sans-serif;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    transition: all 0.2s;
+}
+
+.form-field input:focus {
+    border-color: var(--gold-light);
+}
+
+/* Modal Specific Alert Styles */
+.modal-alert {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 2px solid;
+    line-height: 1.4;
+    text-align: left;
+    margin-top: 0.5rem;
+}
+
+.modal-alert.success {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-color: #059669;
+    color: #34d399;
+}
+
+.modal-alert.error {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-color: #dc2626;
+    color: #f87171;
+}
+
+.modal-alert.hidden {
+    display: none;
+}
+
+/* Global Directory Alert/Toast */
+.dir-alert-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 10001;
+    max-width: 340px;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    border: 3px solid;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    pointer-events: none;
+    animation: slideDown 0.3s ease-out forwards;
+}
+
+.dir-alert-toast.success {
+    background-color: var(--forest-moss);
+    border-color: #059669;
+    color: #34d399;
+}
+
+.dir-alert-toast.starting {
+    background-color: var(--forest-moss);
+    border-color: #d97706;
+    color: #fbbf24;
+}
+
+.dir-alert-toast.error {
+    background-color: var(--forest-moss);
+    border-color: #dc2626;
+    color: #f87171;
+}
+
+.dir-alert-toast.hidden {
+    display: none;
+}
+
+/* Empty State Styling */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+}
+
+/* Responsive side-by-side splits */
+@media (max-width: 820px) {
+    .directory-container {
+        flex-direction: column;
+    }
+    .directory-left {
+        width: 100%;
+        flex: none;
+    }
+    .directory-left, .directory-right {
+        min-height: auto;
+        flex: none;
+    }
+    .server-list-scroll {
+        max-height: 250px;
+    }
+}
+
+/* Modals */
+.hidden {
+    display: none !important;
+}
+
+.wood-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wood-modal-content {
+    background: var(--forest-moss);
+    border: 4px solid var(--wood-border);
+    border-radius: 28px;
+    width: 90%;
+    max-width: 460px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8),
+                inset 0 0 20px rgba(0, 0, 0, 0.4);
+    position: relative;
+    text-align: center;
+    overflow: hidden;
+}
+
+.wood-modal-content::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 2px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    pointer-events: none;
+}
+
+.wood-modal-header {
+    background: rgba(0,0,0,0.3);
+    padding: 1.25rem;
+    border-bottom: 2px solid var(--wood-border);
+    text-align: center;
+}
+
+.wood-modal-header h3 {
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    text-shadow: 2px 2px 0 var(--wood-border);
+}
+
+.wood-modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-alert {
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid transparent;
+}
+.modal-alert.error {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #fca5a5;
+}
+.modal-alert.success {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #6ee7b7;
+}
+
+/* ==========================================================================
+   🛠️ ADMIN PORTAL TAB & CONSOLE STYLING
+   ========================================================================== */
+
+.tab-content.hidden {
+    display: none !important;
+}
+
+.tab-btn {
+    width: 100%;
+    justify-content: flex-start !important;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background: linear-gradient(to bottom, var(--gold-light), var(--gold-dark)) !important;
+    border-color: var(--gold-border) !important;
+    color: #ffffff !important;
+    text-shadow: 0 2px 0 var(--gold-border) !important;
+    box-shadow: 0 6px 0 var(--gold-border),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4) !important;
+    transform: none !important;
+}
+
+.tab-btn.active:active {
+    transform: translateY(2px) !important;
+    box-shadow: 0 4px 0 var(--gold-border),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+

@@ -1,10 +1,25 @@
+import socket
+import urllib.request
+import json
 from googleapiclient import discovery
-from config import PROJECT_ID, ZONE, INSTANCE_NAME, DNS_ZONE_NAME, DOMAIN_NAME, logger
+from config import (
+    PROJECT_ID,
+    ZONE,
+    INSTANCE_NAME,
+    DNS_ZONE_NAME,
+    DOMAIN_NAME,
+    BACKUPS_BUCKET,
+    INSTANCE_ID,
+    logger
+)
 
 # Build client services
 # cache_discovery=False prevents file-locking warnings in read-only environments
 compute = discovery.build('compute', 'v1', cache_discovery=False)
 dns = discovery.build('dns', 'v1', cache_discovery=False)
+logging_service = discovery.build('logging', 'v2', cache_discovery=False)
+storage_service = discovery.build('storage', 'v1', cache_discovery=False)
+
 
 def get_instance_status_and_ip():
     """Retrieves the current status and public IP address of the VM instance."""
@@ -83,3 +98,128 @@ def update_dns_record(new_ip):
     )
     request.execute()
     logger.info("DNS record successfully updated.")
+
+def is_minecraft_ready(ip, port=25565, timeout=1.0):
+    """Checks if the Minecraft server is actually listening on the given IP and port."""
+    if not ip:
+        logger.warning("No IP provided to check Minecraft status.")
+        return False
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect((ip, port))
+        s.shutdown(socket.SHUT_RDWR)
+        logger.info(f"Minecraft server is ready on {ip}:{port}.")
+        return True
+    except Exception:
+        logger.debug(f"Minecraft server not yet listening on {ip}:{port}.")
+        return False
+    finally:
+        s.close()
+
+def get_backups_list():
+    """Retrieves version history of rolling_backup.tar.gz from GCS."""
+    if not BACKUPS_BUCKET:
+        logger.warning("BACKUPS_BUCKET environment variable is not set. Cannot list backups.")
+        return []
+    try:
+        logger.info(f"Listing backups in GCS bucket: {BACKUPS_BUCKET}...")
+        res = storage_service.objects().list(bucket=BACKUPS_BUCKET, versions=True).execute()
+        items = res.get('items', [])
+        
+        backups = []
+        for item in items:
+            if item.get('name') == 'rolling_backup.tar.gz':
+                gen = item.get('generation')
+                size = int(item.get('size', 0))
+                updated = item.get('timeCreated')
+                backups.append({
+                    "generation": gen,
+                    "size": size,
+                    "timeCreated": updated
+                })
+        
+        backups.sort(key=lambda x: x['timeCreated'], reverse=True)
+        logger.info(f"Successfully retrieved {len(backups)} backups.")
+        return backups[:5]
+    except Exception as e:
+        logger.error(f"Error listing backups from GCS: {e}")
+        return []
+
+def download_backup_file(generation):
+    """Downloads a specific generation of rolling_backup.tar.gz from GCS and returns it."""
+    if not BACKUPS_BUCKET:
+        logger.error("BACKUPS_BUCKET environment variable is not configured.")
+        return ("Backups bucket is not configured", 400, {})
+    try:
+        logger.info(f"Downloading generation {generation} of rolling_backup.tar.gz from {BACKUPS_BUCKET}...")
+        url = f"https://storage.googleapis.com/storage/v1/b/{BACKUPS_BUCKET}/o/rolling_backup.tar.gz?alt=media&generation={generation}"
+        
+        token_url = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+        req = urllib.request.Request(token_url, headers={"Metadata-Flavor": "Google"})
+        try:
+            with urllib.request.urlopen(req) as response:
+                token_data = json.loads(response.read().decode('utf-8'))
+                access_token = token_data['access_token']
+        except Exception as token_err:
+            logger.error(f"Failed to fetch metadata auth token: {token_err}")
+            raise Exception("Failed to authorize GCS download via metadata token.")
+        
+        file_req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access_token}"})
+        with urllib.request.urlopen(file_req) as file_resp:
+            file_content = file_resp.read()
+            
+        custom_headers = {
+            'Content-Type': 'application/x-gzip',
+            'Content-Disposition': f'attachment; filename="minecraft_backup_{generation}.tar.gz"'
+        }
+        logger.info(f"Successfully downloaded backup generation {generation}.")
+        return (file_content, 200, custom_headers)
+    except Exception as e:
+        logger.error(f"Error downloading backup from GCS: {e}")
+        return (f"Failed to download backup: {str(e)}", 500, {})
+
+def get_minecraft_logs():
+    """Retrieves recent Minecraft container log entries from Cloud Logging."""
+    if not PROJECT_ID or not INSTANCE_ID:
+        logger.warning("PROJECT_ID or INSTANCE_ID config missing. Cannot fetch logs.")
+        return [{"timestamp": "", "message": "Logging parameters are not configured."}]
+    try:
+        logger.info(f"Fetching logs for instance {INSTANCE_ID} from Cloud Logging...")
+        log_filter = (
+            f'resource.type="gce_instance" '
+            f'AND resource.labels.instance_id="{INSTANCE_ID}" '
+            f'AND (log_name="projects/{PROJECT_ID}/logs/gcplogs-docker-driver" '
+            f'OR log_name="projects/{PROJECT_ID}/logs/cos")'
+        )
+        
+        body = {
+            "resourceNames": [f"projects/{PROJECT_ID}"],
+            "filter": log_filter,
+            "orderBy": "timestamp desc",
+            "pageSize": 50
+        }
+        
+        res = logging_service.entries().list(body=body).execute()
+        entries = res.get('entries', [])
+        
+        logs = []
+        for entry in entries:
+            text = entry.get('textPayload', '')
+            if not text and 'jsonPayload' in entry:
+                text = entry['jsonPayload'].get('message', '')
+            
+            if text:
+                timestamp = entry.get('timestamp')
+                logs.append({
+                    "timestamp": timestamp,
+                    "message": text.strip()
+                })
+        
+        logs.reverse()
+        logger.info(f"Retrieved {len(logs)} log entries.")
+        return logs
+    except Exception as e:
+        logger.error(f"Error fetching logs from Cloud Logging: {e}")
+        return [{"timestamp": "", "message": f"Error loading logs: {e}"}]
+

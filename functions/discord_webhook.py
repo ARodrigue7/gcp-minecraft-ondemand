@@ -1,19 +1,8 @@
-import hmac
-import hashlib
 import json
 import urllib.request
 import time
-from config import WHITELIST_SECRET, DISCORD_WEBHOOK_URL, INSTANCE_NAME, ZONE, logger
-
-def generate_signature(username):
-    """Generates a secure HMAC-SHA256 signature for a username."""
-    if not WHITELIST_SECRET:
-        raise ValueError("WHITELIST_SECRET is not configured.")
-    return hmac.new(
-        WHITELIST_SECRET.encode('utf-8'),
-        username.encode('utf-8'),
-        hashlib.sha256
-    ).hexdigest()
+from config import DISCORD_WEBHOOK_URL, INSTANCE_NAME, ZONE, logger
+from discord_auth import generate_signature
 
 def send_discord_webhook(username, status_url):
     """Sends a formatted alert about a whitelist request to Discord with a one-click approval link."""
