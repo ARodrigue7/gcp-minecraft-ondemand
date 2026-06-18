@@ -102,7 +102,7 @@ echo "Extracting package on server..."
 gcloud compute ssh "$INSTANCE_NAME" \
   --project="$PROJECT_ID" \
   --zone="$ZONE" \
-  --command="sudo tar -xzf /tmp/minecraft-upload.tar.gz -C /mnt/disks/minecraft-data/data && sudo chmod -R 777 /mnt/disks/minecraft-data/data && rm -f /tmp/minecraft-upload.tar.gz"
+  --command="sudo tar -xzf /tmp/minecraft-upload.tar.gz -C /mnt/disks/minecraft-data/data && sudo chown -R 1000:1000 /mnt/disks/minecraft-data/data && sudo chmod -R 755 /mnt/disks/minecraft-data/data && rm -f /tmp/minecraft-upload.tar.gz"
 
 echo "Files uploaded successfully."
 
