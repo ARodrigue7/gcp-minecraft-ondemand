@@ -44,19 +44,26 @@ mkdir -p "$MOUNT_DIR/data"
 chown -R 1000:1000 "$MOUNT_DIR/data"
 chmod -R 755 "$MOUNT_DIR/data"
 
-# Run the Minecraft server container (only if it doesn't already exist)
-if ! docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
-  docker run -d \
-    --name minecraft \
-    --restart always \
-    -p 25565:25565 \
-    -v "$MOUNT_DIR/data:/data" \
-    -e EULA=TRUE \
-    -e TYPE=PAPER \
-    -e VERSION=LATEST \
-    -e MEMORY=3G \
-    itzg/minecraft-server
+# Run the Minecraft server container (recreate on boot to ensure fresh config/logs)
+if docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
+  echo "Removing existing minecraft container..."
+  docker stop minecraft || true
+  docker rm minecraft || true
 fi
+
+echo "Starting fresh Minecraft server container..."
+docker run -d \
+  --name minecraft \
+  --restart always \
+  --log-driver=gcplogs \
+  -p 25565:25565 \
+  -v "$MOUNT_DIR/data:/data" \
+  -e EULA=TRUE \
+  -e TYPE=PAPER \
+  -e VERSION=LATEST \
+  -e MEMORY=3G \
+  itzg/minecraft-server
+
 
 # Create watchdog script in the persistent, executable disk directory
 WATCHDOG_SCRIPT="/mnt/disks/minecraft-data/minecraft-watchdog.sh"
@@ -66,6 +73,33 @@ cat <<'EOF' > /mnt/disks/minecraft-data/minecraft-watchdog.sh
 PORT=25565
 IDLE_LIMIT=${idle_timeout_seconds}
 INITIAL_DELAY=600 # 10 minutes startup grace period
+
+create_backup() {
+  echo "Starting Minecraft backup sequence..."
+  if docker ps --format '{{.Names}}' | grep -Eq "^minecraft$"; then
+    echo "Freezing auto-saves..."
+    docker exec minecraft mc-send-to-rcon save-off >/dev/null 2>&1 || true
+    docker exec minecraft mc-send-to-rcon save-all flush >/dev/null 2>&1 || true
+    sleep 2
+    
+    echo "Creating world archive..."
+    tar -czf /tmp/rolling_backup.tar.gz -C /mnt/disks/minecraft-data/data world world_nether world_the_end >/dev/null 2>&1 || true
+    
+    echo "Resuming auto-saves..."
+    docker exec minecraft mc-send-to-rcon save-on >/dev/null 2>&1 || true
+    
+    if [ -f /tmp/rolling_backup.tar.gz ]; then
+      echo "Uploading backup to GCS..."
+      gsutil cp /tmp/rolling_backup.tar.gz gs://${backups_bucket}/rolling_backup.tar.gz >/dev/null 2>&1 || true
+      rm -f /tmp/rolling_backup.tar.gz
+      echo "Backup uploaded successfully!"
+    else
+      echo "ERROR: Backup archive creation failed."
+    fi
+  else
+    echo "ERROR: Minecraft container is not running, skipping backup."
+  fi
+}
 
 # Sync approved whitelist from GCE instance metadata attributes
 APPROVED_WHITELIST=$(curl -s -f -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/approved-whitelist || echo "")
@@ -81,6 +115,30 @@ if [ -n "$APPROVED_WHITELIST" ]; then
   fi
 fi
 
+# Process pending admin commands from GCE metadata
+PENDING_COMMANDS=$(curl -s -f -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/pending-commands || echo "")
+if [ -n "$PENDING_COMMANDS" ]; then
+  echo "Found pending admin commands: $PENDING_COMMANDS"
+  IFS=',' read -ra CMDS <<< "$PENDING_COMMANDS"
+  for cmd in "$${CMDS[@]}"; do
+    if [ -n "$cmd" ]; then
+      cmd=$(echo "$cmd" | xargs)
+      echo "Executing command: $cmd"
+      if [ "$cmd" = "backup" ]; then
+        create_backup
+      else
+        docker exec minecraft mc-send-to-rcon "$cmd" >/dev/null 2>&1 || true
+      fi
+    fi
+  done
+  
+  VM_NAME=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/name)
+  VM_ZONE_FULL=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/zone)
+  VM_ZONE=$(basename "$VM_ZONE_FULL")
+  echo "Clearing pending commands metadata..."
+  gcloud compute instances add-metadata "$VM_NAME" --zone="$VM_ZONE" --metadata=pending-commands="" >/dev/null 2>&1 || true
+fi
+
 # Get uptime in seconds
 UPTIME=$(cat /proc/uptime | awk '{print $1}')
 UPTIME=$${UPTIME%.*}
@@ -92,14 +150,24 @@ fi
 
 # Count active players online using RCON command
 ONLINE_PLAYERS=0
+PLAYER_LIST="none"
 if docker ps --format '{{.Names}}' | grep -Eq "^minecraft$"; then
-  # Run RCON command and parse output (e.g. "There are 0 of a max of 20 players online:")
   RCON_OUT=$(docker exec minecraft mc-send-to-rcon list 2>/dev/null || echo "")
   if [[ "$RCON_OUT" =~ There\ are\ ([0-9]+) ]]; then
     ONLINE_PLAYERS="$${BASH_REMATCH[1]}"
   fi
+  if [ "$ONLINE_PLAYERS" -gt 0 ] && [[ "$RCON_OUT" =~ online:\ (.*) ]]; then
+    PLAYER_LIST="$${BASH_REMATCH[1]}"
+    PLAYER_LIST=$(echo "$PLAYER_LIST" | tr -d ' ')
+  fi
 fi
-echo "Active players: $ONLINE_PLAYERS"
+echo "Active players: $ONLINE_PLAYERS ($PLAYER_LIST)"
+
+# Sync online-players list to GCE metadata
+VM_NAME=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/name)
+VM_ZONE_FULL=$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/zone)
+VM_ZONE=$(basename "$VM_ZONE_FULL")
+gcloud compute instances add-metadata "$VM_NAME" --zone="$VM_ZONE" --metadata=online-players="$PLAYER_LIST" >/dev/null 2>&1 || true
 
 if [ "$ONLINE_PLAYERS" -gt 0 ]; then
   rm -f /tmp/minecraft-idle-since
@@ -114,7 +182,8 @@ else
     IDLE_TIME=$((NOW - IDLE_SINCE))
     echo "Idle for $IDLE_TIME seconds."
     if [ $IDLE_TIME -ge $IDLE_LIMIT ]; then
-      echo "Minecraft server has been idle for $IDLE_TIME seconds. Shutting down VM..."
+      echo "Minecraft server has been idle for $IDLE_TIME seconds. Auto-backing up before shutdown..."
+      create_backup
       docker stop -t 30 minecraft
       sudo poweroff
     fi

@@ -19,6 +19,12 @@ FUNCTION_REGION = os.environ.get('FUNCTION_REGION', 'us-central1')
 DISCORD_PUBLIC_KEY = os.environ.get('DISCORD_PUBLIC_KEY')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 
+# New config variables for Admin Panel, backups, and wakeup control
+ADMIN_PASSCODE = os.environ.get('ADMIN_PASSCODE')
+WAKEUP_PASSCODE = os.environ.get('WAKEUP_PASSCODE')
+BACKUPS_BUCKET = os.environ.get('BACKUPS_BUCKET')
+INSTANCE_ID = os.environ.get('INSTANCE_ID')
+
 def validate_config():
     """Validates that all critical configuration variables are loaded.
     Fails fast by raising a ValueError if required config is missing.
@@ -38,3 +44,18 @@ def validate_config():
         raise ValueError(msg)
         
     logger.info("Configuration successfully validated.")
+    
+    # Log warnings for missing optional parameters to help debug
+    optional = {
+        'ADMIN_PASSCODE': ADMIN_PASSCODE,
+        'WAKEUP_PASSCODE': WAKEUP_PASSCODE,
+        'BACKUPS_BUCKET': BACKUPS_BUCKET,
+        'INSTANCE_ID': INSTANCE_ID,
+        'WHITELIST_SECRET': WHITELIST_SECRET,
+        'DISCORD_PUBLIC_KEY': DISCORD_PUBLIC_KEY,
+        'DISCORD_WEBHOOK_URL': DISCORD_WEBHOOK_URL
+    }
+    missing_opt = [k for k, v in optional.items() if not v]
+    if missing_opt:
+        logger.warning(f"Optional configuration variables are missing: {', '.join(missing_opt)}")
+
