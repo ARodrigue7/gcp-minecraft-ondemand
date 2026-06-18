@@ -29,12 +29,14 @@ fi
 # Mount disk
 mkdir -p "$MOUNT_DIR"
 if ! mountpoint -q "$MOUNT_DIR"; then
-  mount -o discard,defaults "$DISK_PATH" "$MOUNT_DIR"
+  # ⚡ Bolt Optimization: Add noatime,nodiratime to reduce disk write cycles and GCP IOPS cost
+  mount -o discard,defaults,noatime,nodiratime "$DISK_PATH" "$MOUNT_DIR"
 fi
 
 # Add to fstab if not present
 if ! grep -q "$MOUNT_DIR" /etc/fstab; then
-  echo "$DISK_PATH $MOUNT_DIR ext4 discard,defaults,nofail 0 2" >> /etc/fstab
+  # ⚡ Bolt Optimization: Persist noatime,nodiratime to fstab to minimize write ops
+  echo "$DISK_PATH $MOUNT_DIR ext4 discard,defaults,noatime,nodiratime,nofail 0 2" >> /etc/fstab
 fi
 
 # Prepare directories with container user ownership (uid/gid 1000) and secure permissions
