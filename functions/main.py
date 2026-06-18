@@ -1,14 +1,42 @@
+import functions_framework
 import time
 import json
 import urllib.request
 import re
 import hmac
-from config import validate_config, PROJECT_ID, ZONE, INSTANCE_NAME, FUNCTION_REGION, DISCORD_WEBHOOK_URL, logger
+from config import (
+    validate_config,
+    PROJECT_ID,
+    ZONE,
+    INSTANCE_NAME,
+    DOMAIN_NAME,
+    DISCORD_WEBHOOK_URL,
+    WAKEUP_PASSCODE,
+    ADMIN_PASSCODE,
+    logger
+)
 from templates import get_whitelist_approved_html
-from gcp_client import get_instance_status_and_ip, start_instance, update_dns_record
-from discord_auth import verify_discord_signature
-from discord_webhook import generate_signature, send_discord_webhook
-from whitelist_manager import add_to_gce_metadata_whitelist
+from gcp_client import (
+    compute,
+    get_instance_status_and_ip,
+    start_instance,
+    update_dns_record,
+    is_minecraft_ready,
+    get_backups_list,
+    download_backup_file,
+    get_minecraft_logs
+)
+from discord_auth import (
+    verify_discord_signature,
+    generate_signature
+)
+from admin_auth import check_admin_auth
+from whitelist_manager import (
+    add_to_gce_metadata_whitelist,
+    remove_from_gce_metadata_whitelist,
+    enqueue_admin_command
+)
+from discord_webhook import send_discord_webhook
 
 # Validate configuration on module loading to fail fast
 validate_config()
