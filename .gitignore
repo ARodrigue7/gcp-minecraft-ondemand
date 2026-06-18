@@ -20,7 +20,5 @@ saves/*
 !saves/README.md
 logs/
 .DS_Store
-GEMINI.md
 docs/config.js
 docs/config.json
-.agents/
