@@ -57,7 +57,9 @@
                 
                 <form id="whitelist-form" class="whitelist-form">
                     <div class="form-group">
-                        <input type="text" id="mc-username" placeholder="Minecraft Username (e.g. Steve)" required autocomplete="off">
+                        <label for="mc-username" class="field-label" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">Minecraft Username <span class="required" aria-hidden="true" style="color: var(--state-offline);">*</span></label>
+                        <input type="text" id="mc-username" placeholder="e.g. Steve" required aria-required="true" aria-describedby="username-hint" autocomplete="off">
+                        <p id="username-hint" class="field-hint" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; opacity: 0.8;">Enter your exact in-game name (3-16 characters).</p>
                     </div>
                     <button type="submit" id="submit-btn" class="btn btn-secondary btn-block">
                         Submit Whitelist Request
@@ -65,7 +67,7 @@
                 </form>
                 
                 <!-- Feedback Messages -->
-                <div id="form-message" class="form-message hidden"></div>
+                <div id="form-message" class="form-message hidden" role="alert" aria-live="polite"></div>
             </div>
         </div>
     </main>
