@@ -22,3 +22,7 @@ logs/
 .DS_Store
 docs/config.js
 docs/config.json
+
+# Gemini & Agent files
+GEMINI.md
+.agents/
