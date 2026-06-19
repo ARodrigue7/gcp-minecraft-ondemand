@@ -59,11 +59,6 @@ variable "discord_webhook_url" {
   sensitive   = true
 }
 
-variable "discord_public_key" {
-  description = "The Discord Bot Application Public Key for interaction verification"
-  type        = string
-  sensitive   = true
-}
 
 variable "wakeup_passcode" {
   description = "Passcode required to wake up the server via the web portal (leave empty to allow wake up without a password check)"

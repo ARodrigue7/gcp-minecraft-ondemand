@@ -10,16 +10,17 @@ def send_discord_webhook(username, status_url):
         logger.error("DISCORD_WEBHOOK_URL environment variable is not configured.")
         return False
 
-    # Generate signature and initial approval link
+    # Generate signature, approval and deny links
     sig = generate_signature(username)
     temp_approval_url = f"{status_url}?action=approve&username={username}&sig={sig}"
+    temp_deny_url = f"{status_url}?action=deny&username={username}&sig={sig}"
 
     payload = {
         "content": None,
         "embeds": [
             {
                 "title": "🎮 Whitelist Request Received",
-                "description": f"A player has requested access to the Minecraft server.\n\n[🟢 Click here to Approve Whitelist]({temp_approval_url})",
+                "description": f"A player has requested access to the Minecraft server.\n\n[🟢 Approve Request]({temp_approval_url})  |  [🔴 Deny & Dismiss]({temp_deny_url})",
                 "color": 5814783,  # Purple Accent
                 "fields": [
                     {
@@ -37,25 +38,6 @@ def send_discord_webhook(username, status_url):
                     "text": "GCP Minecraft On-Demand Player Hub"
                 },
                 "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
-            }
-        ],
-        "components": [
-            {
-                "type": 1,
-                "components": [
-                    {
-                        "type": 2,
-                        "label": "Approve Whitelist",
-                        "style": 3,
-                        "custom_id": f"approve_whitelist:{username}:{sig}"
-                    },
-                    {
-                        "type": 2,
-                        "label": "Deny",
-                        "style": 4,
-                        "custom_id": f"deny_whitelist:{username}:{sig}"
-                    }
-                ]
             }
         ]
     }
@@ -85,10 +67,11 @@ def send_discord_webhook(username, status_url):
             logger.info("Webhook sent successfully, but did not receive message ID.")
             return True
 
-        # 2. Update approval URL with the real message ID and PATCH the message to edit the link
-        logger.info(f"Webhook message ID received: {message_id}. Patching with final approval URL...")
+        # 2. Update approval and deny URLs with the real message ID and PATCH the message to edit the link
+        logger.info(f"Webhook message ID received: {message_id}. Patching with final action URLs...")
         real_approval_url = f"{status_url}?action=approve&username={username}&sig={sig}&message_id={message_id}"
-        payload["embeds"][0]["description"] = f"A player has requested access to the Minecraft server.\n\n[🟢 Click here to Approve Whitelist]({real_approval_url})"
+        real_deny_url = f"{status_url}?action=deny&username={username}&sig={sig}&message_id={message_id}"
+        payload["embeds"][0]["description"] = f"A player has requested access to the Minecraft server.\n\n[🟢 Approve Request]({real_approval_url})  |  [🔴 Deny & Dismiss]({real_deny_url})"
         
         patch_data = json.dumps(payload).encode('utf-8')
         patch_url = f"{DISCORD_WEBHOOK_URL}/messages/{message_id}"

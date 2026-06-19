@@ -16,7 +16,6 @@ DNS_ZONE_NAME = os.environ.get('DNS_ZONE_NAME')
 DOMAIN_NAME = os.environ.get('DOMAIN_NAME')
 WHITELIST_SECRET = os.environ.get('WHITELIST_SECRET')
 FUNCTION_REGION = os.environ.get('FUNCTION_REGION', 'us-central1')
-DISCORD_PUBLIC_KEY = os.environ.get('DISCORD_PUBLIC_KEY')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 
 # New config variables for Admin Panel, backups, and wakeup control
@@ -52,7 +51,6 @@ def validate_config():
         'BACKUPS_BUCKET': BACKUPS_BUCKET,
         'INSTANCE_ID': INSTANCE_ID,
         'WHITELIST_SECRET': WHITELIST_SECRET,
-        'DISCORD_PUBLIC_KEY': DISCORD_PUBLIC_KEY,
         'DISCORD_WEBHOOK_URL': DISCORD_WEBHOOK_URL
     }
     missing_opt = [k for k, v in optional.items() if not v]

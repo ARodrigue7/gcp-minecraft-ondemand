@@ -15,7 +15,7 @@ from config import (
     ADMIN_PASSCODE,
     logger
 )
-from templates import get_whitelist_approved_html
+from templates import get_whitelist_approved_html, get_whitelist_denied_html
 from gcp_client import (
     compute,
     get_instance_status_and_ip,
@@ -26,10 +26,7 @@ from gcp_client import (
     download_backup_file,
     get_minecraft_logs
 )
-from discord_auth import (
-    verify_discord_signature,
-    generate_signature
-)
+from discord_auth import generate_signature
 from admin_auth import check_admin_auth
 from whitelist_manager import (
     add_to_gce_metadata_whitelist,
@@ -214,94 +211,6 @@ def get_status_http(request):
                 print(f"Error handling admin post request: {e}")
                 return (json.dumps({"error": str(e)}), 500, headers)
 
-    # Parse and verify Discord Interaction signature headers
-    signature = request.headers.get('X-Signature-Ed25519')
-    timestamp = request.headers.get('X-Signature-Timestamp')
-    
-    if signature and timestamp:
-        body_str = request.get_data(as_text=True)
-        if not verify_discord_signature(signature, timestamp, body_str):
-            return ("Invalid request signature", 401)
-            
-        try:
-            interaction = json.loads(body_str)
-        except Exception as e:
-            logger.error(f"Invalid interaction JSON payload: {e}")
-            return ("Invalid JSON payload", 400)
-            
-        inter_type = interaction.get('type')
-        
-        # type = 1 is PING (Verification request)
-        if inter_type == 1:
-            return (json.dumps({"type": 1}), 200, {'Content-Type': 'application/json'})
-            
-        # type = 3 is Message Component (Button click)
-        elif inter_type == 3:
-            data = interaction.get('data', {})
-            custom_id = data.get('custom_id', '')
-            
-            if not custom_id:
-                return ("Missing custom_id", 400)
-                
-            try:
-                parts = custom_id.split(':')
-                if len(parts) != 3:
-                    return ("Invalid custom_id format", 400)
-                    
-                action, username, sig = parts
-                
-                # Verify HMAC signature
-                expected_sig = generate_signature(username)
-                if not hmac.compare_digest(sig, expected_sig):
-                    logger.warning(f"Unauthorized component action for {username} - HMAC mismatch.")
-                    return ("Unauthorized action", 403)
-                    
-                if action == 'approve_whitelist':
-                    add_to_gce_metadata_whitelist(username)
-                    
-                    approver = "Unknown Admin"
-                    member = interaction.get('member')
-                    if member and 'user' in member:
-                        approver = member['user'].get('username', approver)
-                    elif 'user' in interaction:
-                        approver = interaction['user'].get('username', approver)
-                        
-                    response_payload = {
-                        "type": 7,  # UPDATE_MESSAGE
-                        "data": {
-                            "content": f"✓ **{username}** has been approved and whitelisted by **@{approver}**!",
-                            "embeds": [],
-                            "components": []  # Removes the buttons!
-                        }
-                    }
-                    return (json.dumps(response_payload), 200, {'Content-Type': 'application/json'})
-                    
-                elif action == 'deny_whitelist':
-                    denier = "Unknown Admin"
-                    member = interaction.get('member')
-                    if member and 'user' in member:
-                        denier = member['user'].get('username', denier)
-                    elif 'user' in interaction:
-                        denier = interaction['user'].get('username', denier)
-                        
-                    response_payload = {
-                        "type": 7,  # UPDATE_MESSAGE
-                        "data": {
-                            "content": f"✗ Whitelist request for **{username}** was denied by **@{denier}**.",
-                            "embeds": [],
-                            "components": []
-                        }
-                    }
-                    return (json.dumps(response_payload), 200, {'Content-Type': 'application/json'})
-                    
-                else:
-                    return ("Invalid action", 400)
-            except Exception as e:
-                logger.error(f"Error processing interaction component: {e}")
-                return (f"Internal error: {str(e)}", 500)
-                
-        return ("Unknown interaction type", 400)
-
     if request.method == 'GET':
         action = request.args.get('action')
         
@@ -345,6 +254,44 @@ def get_status_http(request):
             except Exception as e:
                 logger.error(f"Error handling whitelist approval: {e}")
                 return (f"Failed to process approval: {str(e)}", 500)
+
+        # Whitelist Denial/Dismiss Flow (GET link clicked from Discord)
+        elif action == 'deny':
+            username = request.args.get('username')
+            sig = request.args.get('sig')
+            message_id = request.args.get('message_id')
+            
+            if not username or not sig:
+                return ("Missing 'username' or 'sig' query parameters.", 400)
+                
+            try:
+                # Cryptographically verify signature
+                expected_sig = generate_signature(username)
+                if not hmac.compare_digest(sig, expected_sig):
+                    logger.warning(f"HMAC validation failed for GET whitelist deny link (username: {username}).")
+                    return ("Authentication failed: Invalid signature.", 403)
+                
+                # Delete the Discord webhook message to keep the channel clean
+                if message_id:
+                    try:
+                        if DISCORD_WEBHOOK_URL:
+                            delete_url = f"{DISCORD_WEBHOOK_URL}/messages/{message_id}"
+                            del_req = urllib.request.Request(
+                                delete_url,
+                                method='DELETE',
+                                headers={'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'}
+                            )
+                            with urllib.request.urlopen(del_req) as del_resp:
+                                pass
+                    except Exception as e:
+                        logger.error(f"Failed to delete Discord message on deny: {e}")
+                
+                # Return denied landing page HTML from templates module
+                html = get_whitelist_denied_html(username)
+                return (html, 200, {'Content-Type': 'text/html'})
+            except Exception as e:
+                logger.error(f"Error handling whitelist deny: {e}")
+                return (f"Failed to process deny request: {str(e)}", 500)
 
         # Standard GET Status checking
         try:

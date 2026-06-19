@@ -26,8 +26,6 @@ zone   = "us-central1-a"
 # Discord Webhook URL for whitelist requests
 discord_webhook_url = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
 
-# Discord Bot Application Public Key for interaction verification
-discord_public_key = "YOUR_DISCORD_BOT_PUBLIC_KEY"
 
 # Passcode required to wake up the server via the web portal (leave empty for no password)
 wakeup_passcode = "your-wakeup-passcode"
