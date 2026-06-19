@@ -170,9 +170,9 @@ The player hub is a dedicated page for your community. It reads the configuratio
 1. A friend enters their Minecraft username on your Player Portal page and clicks **Submit**.
 2. The page posts the request to the HTTP Cloud Function endpoint.
 3. The Cloud Function securely posts a rich message embed to your Discord channel.
-4. The Discord message includes three approval options:
-   - **Interactive Discord Buttons (Recommended)**: Click the **Approve Whitelist** or **Deny** buttons directly within your Discord client. This handles the request instantly, writes who approved it in-place, and removes the buttons so they cannot be clicked again. *Note: Requires setting up a Discord Application. See [discord_bot_setup_guide.md](discord_bot_setup_guide.md) for full instructions.*
-   - **One-Click Approval Link (Fallback)**: Click the `[🟢 Click here to Approve Whitelist]` hyperlink in the embed. GCF verifies the secure HMAC signature, appends the player to the GCE metadata, and **automatically deletes the webhook alert message from Discord** to keep your channel clean!
+4. The Discord message includes the following options for the server administrator:
+   - **🟢 Approve Request Link**: Click this link in the embed. GCF verifies the secure HMAC signature, appends the player to the GCE metadata (which syncs to the server in under 60 seconds), and **automatically deletes the webhook alert message from Discord** to keep your channel clean!
+   - **🔴 Deny & Dismiss Link**: Click this link to reject the request. The Cloud Function will delete the alert message from Discord immediately without adding the player.
    - **Manual SSH Command**: Copy/paste the pre-formatted command:
      ```bash
      gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
