@@ -24,9 +24,6 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 ## 🗺️ Master Roadmap & Status Tracker
 
 ### ⬜ Phase 1: Workspace & Repo Scaffolding
-* [ ] Initialize Git repository with proper `.gitignore` configuration.
-* [ ] Establish modular folder structure (`/terraform`, `/functions`, `/scripts`).
-* [ ] Configure local workstation authentication with the `gcloud` CLI.
 * [x] Initialize Git repository with proper `.gitignore` configuration.
 * [x] Establish modular folder structure (`/terraform`, `/functions`, `/scripts`).
 * [x] Configure local workstation authentication with the `gcloud` CLI.
@@ -49,7 +46,7 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Validate data persistence across clean instance lifecycles.
 * [x] Establish a hard Billing Budget alert notification in the GCP console at the $9.00 threshold.
 
-### ⬜ Phase 5: Monitoring & Administration (Active)
+### ⬜ Phase 5: Monitoring & Administration
 * [x] Implement public HTTP status endpoint Cloud Function.
 * [x] Add dynamic server status badge to GitHub Pages splash site.
 * [x] Embed glassmorphic whitelist request form on splash site.
@@ -58,20 +55,41 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 ### ⬜ Phase 6: Future Enhancements (Backlog)
 * [ ] Integrate "Deploy to Google Cloud" button for an automated browser-to-Cloud-Shell deployment wizard.
 * [ ] Implement bot-abuse prevention (passcode-protected webpage wakeup button + watchdog player check using RCON player count instead of port 25565 TCP count).
+* [ ] Implement the admin_auth module to validate an admin passcode via a web form.
+* [ ] Provide an admin interface to run any docker exec mc-send-to-rcon command.
+* [ ] Remove all secrets from source code and store them in Secret Manager.
+* [ ] Create a remote Terraform state backend using Cloud Storage.
+* [ ] Create a secure whitelist management dashboard on the Player Portal page.
+* [ ] Create a secure admin portal to view logs, restart server, manage whitelists, etc.
+* [ ] Implement automatic IP address updates in DNS.
+* [ ] Remove the 2FA module from the main branch as it is not needed.
+* [ ] Make the Minecraft server run as a non-root user.
+
+---
+
+### 📋 Phase 6: Architecture Upgrade Blueprint
+
+The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC SaaS Platform** (Premium Edition) have been extracted to a separate document.
+
+👉 **Read the full blueprint here:** [MULTI_TENANT_SAAS.md](MULTI_TENANT_SAAS.md)
 
 ---
 
 ## 📋 Active Scratchpad & Architecture Variables
-*This section will store configuration structures, log snippets, and variables as we build them out.*
+*This section stores configuration structures, log snippets, and variables as we build them out.*
 
 ### Proposed Directory Layout
 ```text
 ├── .github/workflows/
 ├── docs/
 │   ├── index.html
+│   ├── play.html
+│   ├── admin.html
+│   ├── images/
 │   ├── css/
 │   │   └── style.css
 │   └── js/
+│       ├── config.js
 │       ├── play.js
 │       └── admin.js
 ├── terraform/
