@@ -281,7 +281,8 @@
 
             let whitelistFormHtml = "";
             if (server.isPrivate) {
-                                   whitelistFormHtml = `
+                if (server.id === "primary") {
+                    whitelistFormHtml = `
                         <div class="whitelist-section">
                             <h4 class="section-title">Request Whitelist Access</h4>
                             <p class="section-desc">Submit your Minecraft username. The admin will get a notification on Discord to whitelist you.</p>
