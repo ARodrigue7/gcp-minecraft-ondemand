@@ -47,6 +47,12 @@ variable "machine_type" {
   default     = "e2-medium"
 }
 
+variable "minecraft_version" {
+  description = "The version of Minecraft server to run (e.g. 26.1.2 or LATEST)"
+  type        = string
+  default     = "26.1.2"
+}
+
 variable "idle_timeout_seconds" {
   description = "Idle timeout in seconds before the VM shuts down automatically"
   type        = number

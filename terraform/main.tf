@@ -30,7 +30,7 @@ provider "google" {
 
 resource "google_compute_disk" "minecraft_data" {
   name = "${var.instance_name}-data"
-  type = "pd-standard"
+  type = "pd-balanced"
   zone = var.zone
   size = var.disk_size_gb
 }
@@ -141,6 +141,7 @@ resource "google_compute_instance" "minecraft" {
     startup-script = templatefile("${path.module}/startup.sh", {
       idle_timeout_seconds = var.idle_timeout_seconds
       backups_bucket       = google_storage_bucket.minecraft_backups.name
+      minecraft_version    = var.minecraft_version
     })
     approved-whitelist = ""
     pending-commands   = ""
@@ -404,7 +405,7 @@ resource "google_cloud_run_service_iam_member" "status_invoker" {
 # Generate frontend config.js automatically on terraform apply
 resource "local_file" "frontend_config" {
   filename = "${path.module}/../docs/config.js"
-  content  = "window.serverConfig = ${jsonencode({
+  content = "window.serverConfig = ${jsonencode({
     statusUrl  = google_cloudfunctions2_function.minecraft_status.service_config[0].uri
     domainName = var.domain_name
   })};"

@@ -60,7 +60,7 @@ docker run -d \
   -v "$MOUNT_DIR/data:/data" \
   -e EULA=TRUE \
   -e TYPE=PAPER \
-  -e VERSION=LATEST \
+  -e VERSION=${minecraft_version} \
   -e MEMORY=3G \
   itzg/minecraft-server
 
