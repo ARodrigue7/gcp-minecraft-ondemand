@@ -441,7 +441,8 @@
 
                         const data = await res.json();
                         if (res.ok && data.success) {
-                            showFormMessage(formMessage, `Success! Whitelist request for <strong>${username}</strong> sent.`, "success");
+                            const displayMsg = data.message || `Success! Whitelist request for <strong>${username}</strong> sent.`;
+                            showFormMessage(formMessage, displayMsg, "success");
                             mcUsernameInput.value = "";
                         } else {
                             throw new Error(data.error || "Failed to submit whitelist request.");

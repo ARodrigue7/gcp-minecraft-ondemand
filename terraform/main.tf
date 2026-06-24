@@ -151,6 +151,7 @@ resource "google_compute_instance" "minecraft" {
       dns_api_token              = var.dns_api_token
     })
     approved-whitelist = ""
+    pending-whitelist  = ""
     pending-commands   = ""
     online-players     = ""
     backup-status      = ""
@@ -164,6 +165,7 @@ resource "google_compute_instance" "minecraft" {
   lifecycle {
     ignore_changes = [
       metadata["approved-whitelist"],
+      metadata["pending-whitelist"],
       metadata["pending-commands"],
       metadata["online-players"],
       metadata["backup-status"]
@@ -277,6 +279,13 @@ resource "google_project_iam_member" "cf_compute" {
   project = var.project_id
   role    = google_project_iam_custom_role.cf_compute_controller.id
   member  = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+# Grant Cloud Function service account user permission on the VM service account (required to update VM metadata)
+resource "google_service_account_iam_member" "cf_sa_user" {
+  service_account_id = google_service_account.minecraft_sa.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.cf_sa.email}"
 }
 
 # Grant Cloud Function permissions to update DNS A-Records

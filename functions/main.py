@@ -31,7 +31,10 @@ from admin_auth import check_admin_auth
 from whitelist_manager import (
     add_to_gce_metadata_whitelist,
     remove_from_gce_metadata_whitelist,
-    enqueue_admin_command
+    enqueue_admin_command,
+    get_whitelist_states,
+    add_to_gce_metadata_pending,
+    remove_from_gce_metadata_pending
 )
 from discord_webhook import send_discord_webhook
 
@@ -230,8 +233,9 @@ def get_status_http(request):
                     logger.warning(f"HMAC validation failed for GET whitelist approval link (username: {username}).")
                     return ("Authentication failed: Invalid signature.", 403)
                 
-                # Append to GCE VM approved-whitelist metadata
+                # Append to GCE VM approved-whitelist metadata and remove from pending
                 add_to_gce_metadata_whitelist(username)
+                remove_from_gce_metadata_pending(username)
                 
                 # Delete the Discord webhook message to keep the channel clean
                 if message_id:
@@ -270,6 +274,8 @@ def get_status_http(request):
                 if not hmac.compare_digest(sig, expected_sig):
                     logger.warning(f"HMAC validation failed for GET whitelist deny link (username: {username}).")
                     return ("Authentication failed: Invalid signature.", 403)
+                # Remove from GCE VM pending-whitelist metadata
+                remove_from_gce_metadata_pending(username)
                 
                 # Delete the Discord webhook message to keep the channel clean
                 if message_id:
@@ -357,14 +363,47 @@ def get_status_http(request):
             if not re.match(r'^[a-zA-Z0-9_]{3,16}$', username):
                 return (json.dumps({"error": "Invalid Minecraft username format. Usernames must be 3-16 characters long and contain only letters, numbers, and underscores."}), 400, headers)
 
+            # Fetch approved and pending lists to prevent duplicate requests
+            approved_players, pending_players = get_whitelist_states()
+            
+            username_lower = username.lower()
+            approved_lower = [p.lower() for p in approved_players]
+            pending_lower = [p.lower() for p in pending_players]
+            
+            if username_lower in approved_lower:
+                return (json.dumps({
+                    "success": True, 
+                    "status": "approved", 
+                    "message": f"'{username}' is already whitelisted! You can connect to the server."
+                }), 200, headers)
+                
+            if username_lower in pending_lower:
+                return (json.dumps({
+                    "success": True, 
+                    "status": "pending", 
+                    "message": f"A whitelist request for '{username}' is already pending approval from the administrator."
+                }), 200, headers)
+            
+            # Add to GCE VM pending-whitelist metadata
+            add_to_gce_metadata_pending(username)
+
             # Send whitelist request to Discord with the signature base URL
             status_url = request.base_url
             if status_url.endswith('/'):
                 status_url = status_url[:-1]
             success = send_discord_webhook(username, status_url)
             if success:
-                return (json.dumps({"success": True, "message": f"Whitelist request for '{username}' sent successfully to the server administrator!"}), 200, headers)
+                return (json.dumps({
+                    "success": True,
+                    "status": "submitted",
+                    "message": f"Whitelist request for '{username}' submitted successfully! Please wait for the administrator to approve it."
+                }), 200, headers)
             else:
+                # If webhook fails, clean up the pending state so they can try again later
+                try:
+                    remove_from_gce_metadata_pending(username)
+                except Exception as cleanup_err:
+                    logger.error(f"Failed to clean up pending list after webhook failure: {cleanup_err}")
                 return (json.dumps({"error": "Failed to route whitelist request. Please contact the administrator directly."}), 500, headers)
 
         except Exception as e:

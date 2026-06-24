@@ -76,6 +76,8 @@ docker run -d \
   -e TYPE=PAPER \
   -e VERSION=${minecraft_version} \
   -e MEMORY=3G \
+  -e ENABLE_WHITELIST=TRUE \
+  -e ENFORCE_WHITELIST=TRUE \
   itzg/minecraft-server
 
 
