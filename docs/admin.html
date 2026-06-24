@@ -17,16 +17,16 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-alert"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
             </div>
             <h1 class="title">Admin <span class="gradient-text">Portal</span></h1>
-            <p class="description" style="margin-bottom: 1.5rem;">Enter the administrative passcode to access the control panel.</p>
+            <p class="description mb-3">Enter the administrative passcode to access the control panel.</p>
             
-            <form id="login-form" style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 320px; margin: 0 auto;">
+            <form id="login-form" class="login-form-layout">
                 <div class="form-field">
-                    <input type="text" id="admin-username-input" placeholder="Minecraft Username" required autocomplete="off" style="text-align: center; font-size: 1.1rem; padding: 0.75rem 1rem; border-radius: 12px; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); color: var(--text-primary); outline: none;">
+                    <input type="text" id="admin-username-input" placeholder="Minecraft Username" required autocomplete="off" class="admin-login-input input-username">
                 </div>
                 <div class="form-field">
-                    <input type="password" id="admin-passcode-input" placeholder="Enter Admin Passcode..." required autocomplete="off" style="text-align: center; font-size: 1.2rem; letter-spacing: 0.1em; padding: 0.75rem 1rem; border-radius: 12px; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); color: var(--text-primary); outline: none;">
+                    <input type="password" id="admin-passcode-input" placeholder="Enter Admin Passcode..." required autocomplete="off" class="admin-login-input input-passcode">
                 </div>
-                <div id="login-alert" class="form-message error hidden" style="margin-top: 0;"></div>
+                <div id="login-alert" class="form-message error hidden mt-0"></div>
                 <button type="submit" class="btn btn-secondary btn-block">🔒 Access Control Panel</button>
             </form>
         </div>
@@ -43,21 +43,21 @@
         </div>
 
         <!-- Left Panel: Navigation Tabs -->
-        <div class="directory-panel directory-left" style="min-height: 520px;">
-            <div class="panel-title-group" style="margin-bottom: 1.5rem;">
+        <div class="directory-panel directory-left min-height-admin-panel">
+            <div class="panel-title-group mb-3">
                 <h3 class="panel-title">🛡️ Admin Console</h3>
-                <button id="logout-btn" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px;">Logout</button>
+                <button id="logout-btn" class="btn btn-primary btn-mini">Logout</button>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; flex: 1;">
-                <button class="btn btn-primary tab-btn active" data-tab="status-tab" style="justify-content: flex-start;">🖥️ Dashboard</button>
-                <button class="btn btn-primary tab-btn" data-tab="whitelist-tab" style="justify-content: flex-start;">📜 Whitelist Manager</button>
-                <button class="btn btn-primary tab-btn" data-tab="backups-tab" style="justify-content: flex-start;">💾 Backup Logs</button>
-                <button class="btn btn-primary tab-btn" data-tab="logs-tab" style="justify-content: flex-start;">🪵 Live Server Logs</button>
-                <button class="btn btn-primary tab-btn" data-tab="console-tab" style="justify-content: flex-start;">⌨️ RCON Console</button>
+            <div class="flex-column-gap">
+                <button class="btn btn-primary tab-btn active" data-tab="status-tab">🖥️ Dashboard</button>
+                <button class="btn btn-primary tab-btn" data-tab="whitelist-tab">📜 Whitelist Manager</button>
+                <button class="btn btn-primary tab-btn" data-tab="backups-tab">💾 Backup Logs</button>
+                <button class="btn btn-primary tab-btn" data-tab="logs-tab">🪵 Live Server Logs</button>
+                <button class="btn btn-primary tab-btn" data-tab="console-tab">⌨️ RCON Console</button>
             </div>
             
-            <div style="margin-top: 1.5rem; border-top: 2px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.25rem;">
+            <div class="admin-sidebar-info">
                 <div>GCP Project: <strong id="info-project">-</strong></div>
                 <div>VM Status: <strong id="info-status">-</strong></div>
                 <div>Server IP: <strong id="info-ip">-</strong></div>
@@ -65,111 +65,111 @@
         </div>
 
         <!-- Right Panel: Dynamic Details -->
-        <div class="directory-panel directory-right" style="min-height: 520px; background: rgba(9, 26, 16, 0.95);">
+        <div class="directory-panel directory-right admin-details-panel">
             <!-- 1. Dashboard Tab -->
             <div id="status-tab" class="tab-content">
-                <h3 class="panel-title" style="margin-bottom: 0.5rem; text-shadow: 2px 2px 0px var(--wood-border);">Server Status Dashboard</h3>
-                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Overview of live system metrics and connected players.</p>
+                <h3 class="panel-title title-spaced">Server Status Dashboard</h3>
+                <p class="panel-desc-spaced">Overview of live system metrics and connected players.</p>
                 
-                <div class="status-panel" style="margin-bottom: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--forest-border);">
-                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">VM STATE</div>
-                            <div id="state-text" style="font-weight: 700; font-size: 1.2rem; color: #f87171;">OFFLINE</div>
+                <div class="status-panel mb-3">
+                    <div class="dashboard-grid">
+                        <div class="dashboard-stat-card">
+                            <div class="stat-card-label">VM STATE</div>
+                            <div id="state-text" class="stat-card-value val-red">OFFLINE</div>
                         </div>
-                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--forest-border);">
-                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">ACTIVE PLAYERS</div>
-                            <div id="active-players-count" style="font-weight: 700; font-size: 1.2rem; color: #fbbf24;">0</div>
+                        <div class="dashboard-stat-card">
+                            <div class="stat-card-label">ACTIVE PLAYERS</div>
+                            <div id="active-players-count" class="stat-card-value val-gold">0</div>
                         </div>
-                        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--forest-border);">
-                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">CONNECTION</div>
-                            <div id="connection-address" style="font-weight: 700; font-size: 0.9rem; color: #34d399; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 0.25rem;">-</div>
+                        <div class="dashboard-stat-card">
+                            <div class="stat-card-label">CONNECTION</div>
+                            <div id="connection-address" class="stat-card-value val-address">-</div>
                         </div>
                     </div>
                     
                     <!-- VM Controls -->
-                    <div style="display: flex; gap: 0.75rem; border-top: 2px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button type="button" id="vm-start-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px;">⚡ Start VM</button>
-                        <button type="button" id="vm-stop-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; background: linear-gradient(to bottom, #ef4444, #dc2626); border-color: #991b1b;">🛑 Stop VM</button>
-                        <button type="button" id="vm-restart-btn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; background: linear-gradient(to bottom, #f59e0b, #d97706); border-color: #b45309;">🔄 Restart VM</button>
+                    <div class="panel-control-buttons">
+                        <button type="button" id="vm-start-btn" class="btn btn-secondary btn-vm-control">⚡ Start VM</button>
+                        <button type="button" id="vm-stop-btn" class="btn btn-primary btn-vm-control btn-red">🛑 Stop VM</button>
+                        <button type="button" id="vm-restart-btn" class="btn btn-primary btn-vm-control btn-gold">🔄 Restart VM</button>
                     </div>
                 </div>
 
-                <h4 style="margin-bottom: 0.75rem; font-size: 1.1rem; color: var(--text-primary);">Online Players</h4>
-                <div style="background: rgba(9, 26, 16, 0.4); border: 2px solid var(--forest-border); border-radius: 14px; min-height: 150px; display: flex; flex-direction: column; overflow: hidden;">
-                    <div id="online-players-list" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <h4 class="section-subtitle">Online Players</h4>
+                <div class="panel-list-wrapper height-150">
+                    <div id="online-players-list" class="panel-list-container">
                         <!-- Dynamically filled -->
-                        <div class="empty-state" style="padding: 2rem 1rem;">No players currently online.</div>
+                        <div class="empty-state empty-state-padded">No players currently online.</div>
                     </div>
                 </div>
             </div>
 
             <!-- 2. Whitelist Tab -->
             <div id="whitelist-tab" class="tab-content hidden">
-                <h3 class="panel-title" style="margin-bottom: 0.5rem; text-shadow: 2px 2px 0px var(--wood-border);">Whitelist Manager</h3>
-                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Review and authorize whitelist entries. Active VM will auto-sync changes.</p>
+                <h3 class="panel-title title-spaced">Whitelist Manager</h3>
+                <p class="panel-desc-spaced">Review and authorize whitelist entries. Active VM will auto-sync changes.</p>
                 
-                <form id="add-whitelist-form" style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem;">
-                    <input type="text" id="whitelist-user-input" placeholder="Enter Minecraft Username (e.g. Steve)" required autocomplete="off" style="flex: 1; background: rgba(9, 26, 16, 0.7); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-family: 'Fredoka', sans-serif; outline: none;">
-                    <button type="submit" class="btn btn-secondary" style="padding: 0.75rem 1.25rem;">➕ Add User</button>
+                <form id="add-whitelist-form" class="flex-gap-mb">
+                    <input type="text" id="whitelist-user-input" placeholder="Enter Minecraft Username (e.g. Steve)" required autocomplete="off" class="form-input-wood font-fredoka">
+                    <button type="submit" class="btn btn-secondary btn-med">➕ Add User</button>
                 </form>
 
-                <div style="background: rgba(9, 26, 16, 0.4); border: 2px solid var(--forest-border); border-radius: 14px; flex: 1; display: flex; flex-direction: column; overflow: hidden; max-height: 250px;">
-                    <div id="whitelist-table-body" style="flex: 1; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div class="panel-list-wrapper flex-1 height-max-250">
+                    <div id="whitelist-table-body" class="panel-list-container-small">
                         <!-- Whitelist items filled dynamically -->
-                        <div class="empty-state" style="padding: 2rem 1rem;">Whitelist is empty.</div>
+                        <div class="empty-state empty-state-padded">Whitelist is empty.</div>
                     </div>
                 </div>
             </div>
 
             <!-- 3. Backups Tab -->
             <div id="backups-tab" class="tab-content hidden">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div class="flex-between-align-start">
                     <div>
-                        <h3 class="panel-title" style="margin-bottom: 0.25rem; text-shadow: 2px 2px 0px var(--wood-border);">GCS Backup History</h3>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary);">GCS versioning keeps exactly the last 5 saves preserved indefinitely.</p>
+                        <h3 class="panel-title title-spaced-sm">GCS Backup History</h3>
+                        <p class="panel-desc-inline">GCS versioning keeps exactly the last 5 saves preserved indefinitely.</p>
                     </div>
-                    <button id="manual-backup-btn" class="btn btn-secondary" style="padding: 0.75rem 1rem; font-size: 0.9rem;">⚡ Trigger Backup</button>
+                    <button id="manual-backup-btn" class="btn btn-secondary btn-custom-action">⚡ Trigger Backup</button>
                 </div>
                 
-                <div style="background: rgba(9, 26, 16, 0.4); border: 2px solid var(--forest-border); border-radius: 14px; margin-top: 1.5rem; display: flex; flex-direction: column; overflow: hidden; min-height: 240px;">
-                    <div id="backups-list-container" style="flex: 1; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div class="panel-list-wrapper mt-4 height-240">
+                    <div id="backups-list-container" class="panel-list-container-small">
                         <!-- Backups loaded here -->
-                        <div class="empty-state" style="padding: 2rem 1rem;">No backups found in Google Cloud Storage.</div>
+                        <div class="empty-state empty-state-padded">No backups found in Google Cloud Storage.</div>
                     </div>
                 </div>
             </div>
 
             <!-- 4. Logs Tab -->
             <div id="logs-tab" class="tab-content hidden">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div class="flex-between-align-start">
                     <div>
-                        <h3 class="panel-title" style="margin-bottom: 0.25rem; text-shadow: 2px 2px 0px var(--wood-border);">Live Server Logs</h3>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary);">Recent container standard output fetched from GCP Cloud Logging.</p>
+                        <h3 class="panel-title title-spaced-sm">Live Server Logs</h3>
+                        <p class="panel-desc-inline">Recent container standard output fetched from GCP Cloud Logging.</p>
                     </div>
-                    <button id="refresh-logs-btn" class="btn btn-primary" style="padding: 0.75rem 1rem; font-size: 0.9rem;">🔄 Refresh Logs</button>
+                    <button id="refresh-logs-btn" class="btn btn-primary btn-custom-action">🔄 Refresh Logs</button>
                 </div>
 
-                <div id="logs-terminal" style="background: #040d08; border: 3px solid var(--wood-border); border-radius: 14px; padding: 1rem; font-family: monospace; font-size: 0.8rem; line-height: 1.4; color: #a7f3d0; height: 300px; overflow-y: auto; white-space: pre-wrap; margin-top: 1rem; box-shadow: inset 0 4px 10px rgba(0,0,0,0.8);">
+                <div id="logs-terminal" class="terminal-output">
                     Loading console logs...
                 </div>
             </div>
 
             <!-- 5. Console Tab -->
             <div id="console-tab" class="tab-content hidden">
-                <h3 class="panel-title" style="margin-bottom: 0.5rem; text-shadow: 2px 2px 0px var(--wood-border);">Command Console</h3>
-                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">Send RCON commands directly to the Minecraft container via VM metadata queue.</p>
+                <h3 class="panel-title title-spaced">Command Console</h3>
+                <p class="panel-desc-spaced">Send RCON commands directly to the Minecraft container via VM metadata queue.</p>
 
-                <div id="console-output" style="background: #040d08; border: 3px solid var(--wood-border); border-radius: 14px; padding: 1rem; font-family: monospace; font-size: 0.85rem; line-height: 1.4; color: #fbbf24; height: 240px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 1rem; box-shadow: inset 0 4px 10px rgba(0,0,0,0.8);">
+                <div id="console-output" class="terminal-output-gold">
 Welcome to the Minecraft Server RCON Console.
 Commands are enqueued to GCE metadata and executed by the VM watchdog script.
 Type a command below to begin.
 </div>
 
-                <form id="console-form" style="display: flex; gap: 0.75rem;">
-                    <span style="font-family: monospace; font-size: 1.2rem; color: var(--text-secondary); display: flex; align-items: center;">&gt;</span>
-                    <input type="text" id="console-command-input" placeholder="Type command (e.g. /say Hello players, /time set day)..." required autocomplete="off" style="flex: 1; background: rgba(9, 26, 16, 0.7); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-family: monospace; outline: none; font-size: 0.95rem;">
-                    <button type="submit" class="btn btn-secondary" style="padding: 0.75rem 1.25rem;">Send</button>
+                <form id="console-form" class="flex-gap">
+                    <span class="terminal-prompt-arrow">&gt;</span>
+                    <input type="text" id="console-command-input" placeholder="Type command (e.g. /say Hello players, /time set day)..." required autocomplete="off" class="form-input-monospace">
+                    <button type="submit" class="btn btn-secondary btn-med">Send</button>
                 </form>
             </div>
         </div>

@@ -23,7 +23,7 @@
         <div class="directory-panel directory-left">
             <div class="panel-title-group">
                 <h3 class="panel-title">Servers Directory</h3>
-                <a href="admin.html" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 8px; text-decoration: none;">⚙️ Admin</a>
+                <a href="admin.html" class="btn btn-primary btn-mini text-no-decoration">⚙️ Admin</a>
             </div>
             <div class="search-wrapper">
                 <input type="text" id="search-input" class="search-input" placeholder="🔍 Search servers..." autocomplete="off">
@@ -31,17 +31,17 @@
             <div class="server-list-scroll" id="server-list">
                 <!-- Dynamically populated -->
             </div>
-            <div class="directory-buttons" style="margin-top: 1rem; border-top: 2px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem; position: relative; z-index: 2;">
-                <button type="button" id="add-btn" class="btn btn-secondary" style="flex: 1;">➕ Add Server</button>
-                <button type="button" id="refresh-btn" class="btn btn-primary" style="flex: 1;">🔄 Refresh All</button>
+            <div class="directory-buttons panel-action-footer">
+                <button type="button" id="add-btn" class="btn btn-secondary flex-1">➕ Add Server</button>
+                <button type="button" id="refresh-btn" class="btn btn-primary flex-1">🔄 Refresh All</button>
             </div>
         </div>
 
         <!-- Right Panel: Details -->
         <div class="directory-panel directory-right" id="details-panel">
             <div class="empty-state">
-                <div style="font-size: 3rem; margin-bottom: 1.5rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">🎮</div>
-                <p style="font-size: 1.05rem; line-height: 1.6; max-width: 280px; margin: 0 auto;">Select a server from the directory list to view connection details, check status, or request whitelist access.</p>
+                <div class="empty-state-icon">🎮</div>
+                <p class="empty-state-text">Select a server from the directory list to view connection details, check status, or request whitelist access.</p>
             </div>
         </div>
     </main>
@@ -71,9 +71,9 @@
                     <input type="url" id="add-api-input" autocomplete="off" placeholder="For GCP On-Demand servers">
                 </div>
                 <div id="add-modal-alert" class="modal-alert hidden"></div>
-                <div class="directory-buttons" style="margin-top: 0.5rem;">
-                    <button type="submit" class="btn btn-secondary" style="padding: 0.75rem 1.25rem;">Add Server</button>
-                    <button type="button" id="close-add-btn" class="btn btn-primary" style="padding: 0.75rem 1.25rem;">Cancel</button>
+                <div class="directory-buttons mt-2">
+                    <button type="submit" class="btn btn-secondary btn-med">Add Server</button>
+                    <button type="button" id="close-add-btn" class="btn btn-primary btn-med">Cancel</button>
                 </div>
             </form>
         </div>
@@ -104,9 +104,9 @@
                     <input type="url" id="edit-api-input" autocomplete="off">
                 </div>
                 <div id="edit-modal-alert" class="modal-alert hidden"></div>
-                <div class="directory-buttons" style="margin-top: 0.5rem;">
-                    <button type="submit" class="btn btn-secondary" style="padding: 0.75rem 1.25rem;">Save Changes</button>
-                    <button type="button" id="close-edit-btn" class="btn btn-primary" style="padding: 0.75rem 1.25rem;">Cancel</button>
+                <div class="directory-buttons mt-2">
+                    <button type="submit" class="btn btn-secondary btn-med">Save Changes</button>
+                    <button type="button" id="close-edit-btn" class="btn btn-primary btn-med">Cancel</button>
                 </div>
             </form>
         </div>

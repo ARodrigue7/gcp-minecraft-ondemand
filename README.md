@@ -208,6 +208,22 @@ You can customize the Minecraft server settings by editing [terraform/startup.sh
 * `VERSION`: Set a specific version like `1.20.4` instead of `LATEST`.
 * `MEMORY`: Change the JVM memory allocation (e.g., `3G`).
 
+### 🌐 Dynamic DNS Configuration
+By default, this project uses **Google Cloud DNS** (`dns_provider = "google"`) to handle domain resolution and automatic IP updates on server boot. However, you can configure alternative providers in `terraform/terraform.tfvars`:
+
+* **Cloudflare** (`dns_provider = "cloudflare"`):
+  - Set `domain_name` to your subdomain (e.g., `mc.yourdomain.com`).
+  - Set `dns_api_token` to a Cloudflare API token (with Zone.DNS edit permissions).
+  - Set `cloudflare_zone_id` to your Cloudflare zone ID.
+* **DuckDNS** (`dns_provider = "duckdns"`):
+  - Set `domain_name` to your DuckDNS domain (e.g., `yoursubdomain.duckdns.org`).
+  - Set `dns_api_token` to your DuckDNS token.
+* **Dynu DNS** (`dns_provider = "dynu"`):
+  - Set `domain_name` to your Dynu hostname (e.g., `yourdomain.dynu.com`).
+  - Set `dns_api_token` to your Dynu IP update credential (API token or password).
+* **None** (`dns_provider = "none"`):
+  - Disables automatic dynamic DNS updates. Useful if you want to manage DNS updates manually.
+
 ---
 
 ## 🔮 Future Roadmap

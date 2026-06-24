@@ -93,7 +93,7 @@ def get_status_http(request):
         headers = {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-User',
             'Access-Control-Max-Age': '3600'
         }
         return ('', 204, headers)
@@ -101,6 +101,7 @@ def get_status_http(request):
     # Set CORS headers for the main request
     headers = {
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-User',
         'Content-Type': 'application/json'
     }
 
