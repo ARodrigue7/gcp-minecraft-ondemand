@@ -75,6 +75,8 @@ docker run -d \
   --log-driver=gcplogs \
   -p 25565:25565 \
   -v "$MOUNT_DIR/data:/data" \
+  -e UID=1000 \
+  -e GID=1000 \
   -e EULA=TRUE \
   -e TYPE=PAPER \
   -e VERSION=${minecraft_version} \

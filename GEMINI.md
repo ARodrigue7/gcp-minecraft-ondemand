@@ -59,13 +59,13 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Provide an admin interface to run any docker exec mc-send-to-rcon command.
 * [x] Fix RCON commands not executing correctly from the admin interface.
 * [x] Enforce dual-authentication (whitelisted player AND admin password) for accessing the admin portal and waking up the server.
-* [ ] Remove all secrets from source code and store them in Secret Manager.
-* [ ] Create a remote Terraform state backend using Cloud Storage.
+* [x] Remove all secrets from source code and store them in Secret Manager.
+* [/] Create a remote Terraform state backend using Cloud Storage. (Configured in backend.tf.example due to sandbox project billing restriction)
 * [x] Create a secure whitelist management dashboard on the Player Portal page.
 * [x] Create a secure admin portal to view logs, restart server, manage whitelists, etc.
-* [ ] Implement automatic IP address updates in DNS.
-* [ ] Remove the 2FA module from the main branch as it is not needed.
-* [ ] Make the Minecraft server run as a non-root user.
+* [x] Implement automatic IP address updates in DNS.
+* [x] Remove the 2FA module from the main branch as it is not needed.
+* [x] Make the Minecraft server run as a non-root user.
 * [x] Fix project landing back button disappearing on `play.html` when a server is selected and the details card expands.
 * [x] Prevent the "Join Server" button / double-click from initiating a wakeup request without prompts when the server is offline.
 

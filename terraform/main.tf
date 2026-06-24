@@ -323,6 +323,83 @@ resource "google_project_iam_member" "cf_event_receiver" {
   member  = "serviceAccount:${google_service_account.cf_sa.email}"
 }
 
+# ==========================================
+# 🔐 SECRET MANAGER (For Sensitive Configurations)
+# ==========================================
+
+resource "google_secret_manager_secret" "whitelist_secret" {
+  secret_id = "minecraft-whitelist-secret"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "whitelist_secret_val" {
+  secret      = google_secret_manager_secret.whitelist_secret.id
+  secret_data = random_id.whitelist_secret.hex
+}
+
+resource "google_secret_manager_secret" "admin_passcode" {
+  secret_id = "minecraft-admin-passcode"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "admin_passcode_val" {
+  secret      = google_secret_manager_secret.admin_passcode.id
+  secret_data = var.admin_passcode
+}
+
+resource "google_secret_manager_secret" "discord_webhook" {
+  secret_id = "minecraft-discord-webhook"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "discord_webhook_val" {
+  secret      = google_secret_manager_secret.discord_webhook.id
+  secret_data = var.discord_webhook_url
+}
+
+resource "google_secret_manager_secret" "dns_api_token" {
+  secret_id = "minecraft-dns-api-token"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "dns_api_token_val" {
+  secret      = google_secret_manager_secret.dns_api_token.id
+  secret_data = var.dns_api_token
+}
+
+# IAM Permissions for Service Account to access these secrets
+resource "google_secret_manager_secret_iam_member" "cf_sa_whitelist_accessor" {
+  secret_id = google_secret_manager_secret.whitelist_secret.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "cf_sa_admin_accessor" {
+  secret_id = google_secret_manager_secret.admin_passcode.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "cf_sa_discord_accessor" {
+  secret_id = google_secret_manager_secret.discord_webhook.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "cf_sa_dns_accessor" {
+  secret_id = google_secret_manager_secret.dns_api_token.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
 # Cloud Function resource triggered by DNS logs via Pub/Sub (2nd Gen)
 resource "google_cloudfunctions2_function" "minecraft_starter" {
   name        = "minecraft-starter"
@@ -354,8 +431,14 @@ resource "google_cloudfunctions2_function" "minecraft_starter" {
       DNS_ZONE_NAME      = var.dns_zone_name
       DOMAIN_NAME        = var.domain_name
       DNS_PROVIDER       = var.dns_provider
-      DNS_API_TOKEN      = var.dns_api_token
       CLOUDFLARE_ZONE_ID = var.cloudflare_zone_id
+    }
+
+    secret_environment_variables {
+      key        = "DNS_API_TOKEN"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.dns_api_token.secret_id
+      version    = "latest"
     }
   }
 
@@ -398,20 +481,44 @@ resource "google_cloudfunctions2_function" "minecraft_status" {
     service_account_email = google_service_account.cf_sa.email
 
     environment_variables = {
-      PROJECT_ID          = var.project_id
-      ZONE                = var.zone
-      INSTANCE_NAME       = var.instance_name
-      DNS_ZONE_NAME       = var.dns_zone_name
-      DOMAIN_NAME         = var.domain_name
-      DISCORD_WEBHOOK_URL = var.discord_webhook_url
-      WHITELIST_SECRET    = random_id.whitelist_secret.hex
-      FUNCTION_REGION     = var.region
-      ADMIN_PASSCODE      = var.admin_passcode
-      BACKUPS_BUCKET      = google_storage_bucket.minecraft_backups.name
-      INSTANCE_ID         = google_compute_instance.minecraft.instance_id
-      DNS_PROVIDER        = var.dns_provider
-      DNS_API_TOKEN       = var.dns_api_token
-      CLOUDFLARE_ZONE_ID  = var.cloudflare_zone_id
+      PROJECT_ID         = var.project_id
+      ZONE               = var.zone
+      INSTANCE_NAME      = var.instance_name
+      DNS_ZONE_NAME      = var.dns_zone_name
+      DOMAIN_NAME        = var.domain_name
+      FUNCTION_REGION    = var.region
+      BACKUPS_BUCKET     = google_storage_bucket.minecraft_backups.name
+      INSTANCE_ID        = google_compute_instance.minecraft.instance_id
+      DNS_PROVIDER       = var.dns_provider
+      CLOUDFLARE_ZONE_ID = var.cloudflare_zone_id
+    }
+
+    secret_environment_variables {
+      key        = "WHITELIST_SECRET"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.whitelist_secret.secret_id
+      version    = "latest"
+    }
+
+    secret_environment_variables {
+      key        = "ADMIN_PASSCODE"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.admin_passcode.secret_id
+      version    = "latest"
+    }
+
+    secret_environment_variables {
+      key        = "DISCORD_WEBHOOK_URL"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.discord_webhook.secret_id
+      version    = "latest"
+    }
+
+    secret_environment_variables {
+      key        = "DNS_API_TOKEN"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.dns_api_token.secret_id
+      version    = "latest"
     }
   }
 }

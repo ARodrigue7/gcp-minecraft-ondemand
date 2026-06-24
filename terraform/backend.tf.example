@@ -1,0 +1,10 @@
+# To enable remote state storage in Google Cloud Storage:
+# 1. Ensure your GCP project billing account is enabled and in good standing.
+# 2. Rename this file to backend.tf
+# 3. Run: terraform init -migrate-state
+terraform {
+  backend "gcs" {
+    bucket = "minecraft-ondemand-499002-tfstate"
+    prefix = "terraform/state"
+  }
+}
