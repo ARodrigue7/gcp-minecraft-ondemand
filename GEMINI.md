@@ -54,13 +54,13 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 
 ### ⬜ Phase 6: Future Enhancements (Backlog)
 * [ ] Integrate "Deploy to Google Cloud" button for an automated browser-to-Cloud-Shell deployment wizard.
-* [ ] Implement bot-abuse prevention (passcode-protected webpage wakeup button + watchdog player check using RCON player count instead of port 25565 TCP count).
-* [ ] Implement the admin_auth module to validate an admin passcode via a web form.
-* [ ] Provide an admin interface to run any docker exec mc-send-to-rcon command.
+* [x] Implement bot-abuse prevention (passcode-protected webpage wakeup button + watchdog player check using RCON player count instead of port 25565 TCP count).
+* [x] Implement the admin_auth module to validate an admin passcode via a web form.
+* [x] Provide an admin interface to run any docker exec mc-send-to-rcon command.
 * [ ] Remove all secrets from source code and store them in Secret Manager.
 * [ ] Create a remote Terraform state backend using Cloud Storage.
-* [ ] Create a secure whitelist management dashboard on the Player Portal page.
-* [ ] Create a secure admin portal to view logs, restart server, manage whitelists, etc.
+* [x] Create a secure whitelist management dashboard on the Player Portal page.
+* [x] Create a secure admin portal to view logs, restart server, manage whitelists, etc.
 * [ ] Implement automatic IP address updates in DNS.
 * [ ] Remove the 2FA module from the main branch as it is not needed.
 * [ ] Make the Minecraft server run as a non-root user.
@@ -120,11 +120,17 @@ The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC Saa
 ```
 
 🔄 Change Log & Active Focus
-Current Iteration: Phase 6 - Multi-Tenant BYOC SaaS Platform
+Current Iteration: Phase 6 - Stateful Whitelisting & Webhook Anti-Spam (GCP Minecraft On-Demand)
+
+Recent Changes:
+* Stateful Whitelisting: Added `pending-whitelist` metadata key to Compute Engine instance to securely check player whitelist status (Approved / Pending / Not Whitelisted) directly on the portal page, even when the VM is powered down.
+* Webhook Anti-Spam: Cloud Function now blocks duplicate whitelist requests for the same player, preventing Discord webhook spam.
+* IAM Permissions: Added `google_service_account_iam_member.cf_sa_user` to grant `roles/iam.serviceAccountUser` role to the Cloud Function service account, allowing it to perform metadata updates on the VM instance.
+* Dynamic Frontend: Updated portal Javascript to render dynamic responses directly from the Cloud Function.
 
 Active Blockers: None!
 
-Immediate Next Step: Implement the admin_auth module and prepare the Supabase DB schema for cryptographic vaulting.
+Immediate Next Step: Prepare the Multi-Tenant BYOC SaaS transition plan (MULTI_TENANT_SAAS.md).
 
 ---
 

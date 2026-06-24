@@ -87,7 +87,7 @@ terraform apply
 When prompted, type `yes` to confirm.
 
 > [!NOTE]
-> Upon successful application, Terraform automatically creates the configuration file **`docs/config.json`** for your website and prints the assigned DNS name servers to your console.
+> Upon successful application, Terraform automatically creates the configuration file **`docs/config.js`** for your website and prints the assigned DNS name servers to your console.
 
 ```text
 Outputs:
@@ -140,25 +140,8 @@ For each record:
 
 ## 🛡️ Whitelisting & Administration
 
-### 1. Enable Whitelisting in Terraform
-By default, the server allows anyone to connect. To restrict access to whitelisted players:
-1. Open [terraform/startup.sh](terraform/startup.sh).
-2. Find the `docker run` command around line 45.
-3. Add the whitelist environment variable `-e ENABLE_WHITELIST=TRUE`:
-   ```bash
-   docker run -d \
-     --name minecraft \
-     --restart always \
-     -p 25565:25565 \
-     -v "$MOUNT_DIR/data:/data" \
-     -e EULA=TRUE \
-     -e TYPE=PAPER \
-     -e VERSION=LATEST \
-     -e MEMORY=3G \
-     -e ENABLE_WHITELIST=TRUE \
-     itzg/minecraft-server
-   ```
-4. Run `terraform apply` to apply the update to the server.
+### 1. Enable Whitelisting
+Whitelisting is enabled by default in this deployment (pre-configured with `-e ENABLE_WHITELIST=TRUE` and `-e ENFORCE_WHITELIST=TRUE` in the container startup configuration). You do not need to perform any manual VM configurations to enable it.
 
 ### 2. Player Portal (`docs/play.html`)
 The player hub is a dedicated page for your community. It reads the configuration dynamically to:
@@ -166,13 +149,15 @@ The player hub is a dedicated page for your community. It reads the configuratio
 - Provide a **Copy Address** button to copy `mc.yourdomain.com` to the clipboard.
 - Provide a **Whitelist Request** form.
 
-#### Whitelist Request & One-Click Approval Flow:
-1. A friend enters their Minecraft username on your Player Portal page and clicks **Submit**.
-2. The page posts the request to the HTTP Cloud Function endpoint.
-3. The Cloud Function securely posts a rich message embed to your Discord channel.
-4. The Discord message includes the following options for the server administrator:
-   - **🟢 Approve Request Link**: Click this link in the embed. GCF verifies the secure HMAC signature, appends the player to the GCE metadata (which syncs to the server in under 60 seconds), and **automatically deletes the webhook alert message from Discord** to keep your channel clean!
-   - **🔴 Deny & Dismiss Link**: Click this link to reject the request. The Cloud Function will delete the alert message from Discord immediately without adding the player.
+#### Whitelist Request, Offline Checks, & One-Click Approval Flow:
+1. **Offline Status Check & Anti-Spam**: A player enters their Minecraft username on the Player Portal and clicks **Submit**. The Cloud Function queries the VM's metadata attributes (`approved-whitelist` and `pending-whitelist`) even if the VM is shut down.
+   - If they are already approved, they receive a prompt: *"Username is already whitelisted!"*
+   - If their request is already pending, they receive a prompt: *"Whitelist request is already pending approval."* This prevents threat actors from spamming the Discord webhook.
+   - If it is a new request, they are added to `pending-whitelist` and the Discord notification is sent.
+2. **Discord Notification**: The Cloud Function securely posts a rich message embed to your Discord channel.
+3. **One-Click Actions**:
+   - **🟢 Approve Request Link**: Click this link in the embed. The Cloud Function verifies the secure HMAC signature, appends the player to `approved-whitelist`, removes them from `pending-whitelist`, and **automatically deletes the webhook alert message from Discord** to keep your channel clean.
+   - **🔴 Deny & Dismiss Link**: Click this to reject the request. The Cloud Function removes the player from `pending-whitelist` and deletes the alert message from Discord immediately.
    - **Manual SSH Command**: Copy/paste the pre-formatted command:
      ```bash
      gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
@@ -196,7 +181,7 @@ If other developers clone or fork this project, they do not need to rebuild or h
 ```text
 https://your-username.github.io/gcp-minecraft-ondemand/play.html?api=https://YOUR_FUNCTION_URL&domain=YOUR_DOMAIN
 ```
-Visiting this link **once** will automatically save the custom `api` and `domain` parameters to the browser's `localStorage` and persist them for all future visits! Otherwise, the page defaults to reading the local `docs/config.json`.
+Visiting this link **once** will automatically save the custom `api` and `domain` parameters to the browser's `localStorage` and persist them for all future visits! Otherwise, the page defaults to reading the local `docs/config.js`.
 
 ---
 
