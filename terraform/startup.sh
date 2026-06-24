@@ -65,6 +65,9 @@ if docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
   docker rm minecraft || true
 fi
 
+# Sync approved whitelist from GCE instance metadata on startup
+APPROVED_WHITELIST=$(curl -s -f -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/approved-whitelist || echo "")
+
 echo "Starting fresh Minecraft server container..."
 docker run -d \
   --name minecraft \
@@ -78,6 +81,7 @@ docker run -d \
   -e MEMORY=3G \
   -e ENABLE_WHITELIST=TRUE \
   -e ENFORCE_WHITELIST=TRUE \
+  -e WHITELIST="$${APPROVED_WHITELIST}" \
   itzg/minecraft-server
 
 

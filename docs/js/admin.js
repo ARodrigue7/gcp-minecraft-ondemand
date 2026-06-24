@@ -116,17 +116,28 @@
                     return;
                 }
 
-                showToast(`⏳ Enqueueing whitelist add for: ${username}...`, "starting");
+                showToast(`⏳ Adding player '${username}' to whitelist...`, "starting");
                 whitelistUserInput.value = "";
                 
                 try {
-                    const success = await sendAdminCommand(`whitelist add ${username}`);
-                    if (success) {
-                        showToast(`✓ Whitelist add command enqueued for '${username}'`, "success");
+                    const res = await fetch(`${statusUrl}?action=admin_whitelist_add`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${adminPasscode}`
+                        },
+                        body: JSON.stringify({ username })
+                    });
+                    
+                    if (res.ok) {
+                        showToast(`✓ Player '${username}' added to whitelist.`, "success");
                         loadDashboardData();
+                    } else {
+                        const data = await res.json();
+                        throw new Error(data.error || "Failed to add player.");
                     }
                 } catch (err) {
-                    showToast(`❌ Command failed: ${err.message}`, "error");
+                    showToast(`❌ Failed to add player: ${err.message}`, "error");
                 }
             });
 

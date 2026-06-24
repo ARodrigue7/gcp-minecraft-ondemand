@@ -34,7 +34,8 @@ from whitelist_manager import (
     enqueue_admin_command,
     get_whitelist_states,
     add_to_gce_metadata_pending,
-    remove_from_gce_metadata_pending
+    remove_from_gce_metadata_pending,
+    update_whitelist_state
 )
 from discord_webhook import send_discord_webhook
 
@@ -105,7 +106,7 @@ def get_status_http(request):
 
     # Handle Admin endpoints
     action = request.args.get('action')
-    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_remove', 'admin_download_backup', 'admin_power']:
+    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_add', 'admin_whitelist_remove', 'admin_download_backup', 'admin_power']:
         is_auth = False
         if action == 'admin_download_backup':
             passcode = request.args.get('passcode')
@@ -181,13 +182,22 @@ def get_status_http(request):
                     enqueue_admin_command(command)
                     return (json.dumps({"success": True, "message": f"Command '{command}' enqueued successfully."}), 200, headers)
                     
+                elif action == 'admin_whitelist_add':
+                    username = request_json.get('username')
+                    if not username:
+                        return (json.dumps({"error": "Missing username in payload"}), 400, headers)
+                    
+                    # Single atomic call for approved-whitelist addition, pending-whitelist removal, and command enqueuing
+                    update_whitelist_state(username, 'approve', enqueue_cmd=f"whitelist add {username}")
+                    return (json.dumps({"success": True, "message": f"Player '{username}' added to whitelist."}), 200, headers)
+                    
                 elif action == 'admin_whitelist_remove':
                     username = request_json.get('username')
                     if not username:
                         return (json.dumps({"error": "Missing username in payload"}), 400, headers)
                     
-                    remove_from_gce_metadata_whitelist(username)
-                    enqueue_admin_command(f"whitelist remove {username}")
+                    # Single atomic call for approved-whitelist removal and command enqueuing
+                    update_whitelist_state(username, 'remove', enqueue_cmd=f"whitelist remove {username}")
                     return (json.dumps({"success": True, "message": f"Player '{username}' removed from whitelist."}), 200, headers)
                     
                 elif action == 'admin_power':
@@ -233,9 +243,8 @@ def get_status_http(request):
                     logger.warning(f"HMAC validation failed for GET whitelist approval link (username: {username}).")
                     return ("Authentication failed: Invalid signature.", 403)
                 
-                # Append to GCE VM approved-whitelist metadata and remove from pending
+                # Append to GCE VM approved-whitelist metadata and remove from pending (done atomically inside wrapper)
                 add_to_gce_metadata_whitelist(username)
-                remove_from_gce_metadata_pending(username)
                 
                 # Delete the Discord webhook message to keep the channel clean
                 if message_id:
