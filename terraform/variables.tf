@@ -24,21 +24,39 @@ variable "instance_name" {
 }
 
 variable "domain_name" {
-  description = "The fully qualified domain name for the Minecraft server (e.g. mc.yourdomain.com)"
+  description = "The domain name for the Minecraft server (e.g. mc.yourdomain.com or yourname.duckdns.org)"
   type        = string
-  default     = "mc.yourdomain.com"
+  default     = ""
 }
 
 variable "dns_zone_name" {
-  description = "The name of the Cloud DNS managed zone"
+  description = "The name of the Google Cloud DNS managed zone (only needed if using 'google' DNS provider)"
   type        = string
-  default     = "mc-yourdomain-com"
+  default     = ""
 }
 
 variable "disk_size_gb" {
   description = "Size of the persistent data disk in GB"
   type        = number
-  default     = 10
+  default     = 20
+}
+
+variable "disk_auto_expand" {
+  description = "Enable automatic persistent disk scaling when usage is high"
+  type        = bool
+  default     = true
+}
+
+variable "disk_auto_expand_max_gb" {
+  description = "Maximum size in GB the persistent disk can automatically scale to"
+  type        = number
+  default     = 25
+}
+
+variable "disk_auto_expand_threshold" {
+  description = "Percentage of disk space usage that triggers auto-expansion"
+  type        = number
+  default     = 80
 }
 
 variable "machine_type" {
@@ -48,9 +66,9 @@ variable "machine_type" {
 }
 
 variable "minecraft_version" {
-  description = "The version of Minecraft server to run (e.g. 26.1.2 or LATEST)"
+  description = "The version of Minecraft server to run (e.g. 26.2 or LATEST)"
   type        = string
-  default     = "26.1.2"
+  default     = "LATEST"
 }
 
 variable "idle_timeout_seconds" {
@@ -64,7 +82,6 @@ variable "discord_webhook_url" {
   type        = string
   sensitive   = true
 }
-
 
 variable "wakeup_passcode" {
   description = "Passcode required to wake up the server via the web portal (leave empty to allow wake up without a password check)"
@@ -80,8 +97,27 @@ variable "admin_passcode" {
 }
 
 variable "enable_dns_autostart" {
-  description = "Enable autostarting the server whenever the domain is queried/resolved. Set to false to require manual portal starts."
+  description = "Enable autostarting the server whenever the domain is queried/resolved. Only applicable if dns_provider is 'google'."
   type        = bool
   default     = true
+}
+
+variable "dns_provider" {
+  description = "Dynamic DNS provider to use. Supported: 'google', 'cloudflare', 'duckdns', 'dynu', or 'none'."
+  type        = string
+  default     = "google"
+}
+
+variable "dns_api_token" {
+  description = "API token or credentials for the dynamic DNS service (Cloudflare, DuckDNS, or Dynu)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "cloudflare_zone_id" {
+  description = "Zone ID for Cloudflare DNS (only needed if using 'cloudflare' DNS provider)"
+  type        = string
+  default     = ""
 }
 

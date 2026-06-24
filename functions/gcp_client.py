@@ -10,6 +10,9 @@ from config import (
     DOMAIN_NAME,
     BACKUPS_BUCKET,
     INSTANCE_ID,
+    DNS_PROVIDER,
+    DNS_API_TOKEN,
+    CLOUDFLARE_ZONE_ID,
     logger
 )
 
@@ -45,59 +48,159 @@ def start_instance():
     return request.execute()
 
 def update_dns_record(new_ip):
-    """Updates the Cloud DNS A-record to point to the new IP address."""
-    # Ensure domain ends with a period for Cloud DNS API
-    record_name = f"{DOMAIN_NAME}." if not DOMAIN_NAME.endswith('.') else DOMAIN_NAME
+    """Updates either Google Cloud DNS, Cloudflare, DuckDNS, or Dynu to point to the new IP address."""
+    provider = DNS_PROVIDER.lower()
     
-    logger.info(f"Checking existing DNS record sets for {record_name}...")
-    request = dns.resourceRecordSets().list(
-        project=PROJECT_ID,
-        managedZone=DNS_ZONE_NAME,
-        name=record_name,
-        type='A'
-    )
-    response = request.execute()
-    records = response.get('rrsets', [])
-    
-    old_ip = None
-    existing_record = None
-    if records:
-        existing_record = records[0]
-        rrdatas = existing_record.get('rrdatas', [])
-        if rrdatas:
-            old_ip = rrdatas[0]
-            
-    # If the record already points to the correct IP, skip update
-    if old_ip == new_ip:
-        logger.info(f"DNS record for {record_name} already matches new IP {new_ip}. No update needed.")
+    if provider == 'none':
+        logger.info("DNS provider is 'none'. Skipping dynamic DNS update.")
         return
+
+    elif provider == 'google':
+        # Ensure domain ends with a period for Cloud DNS API
+        record_name = f"{DOMAIN_NAME}." if not DOMAIN_NAME.endswith('.') else DOMAIN_NAME
         
-    change_body = {}
-    additions = [
-        {
-            "name": record_name,
-            "type": "A",
-            "ttl": 60,  # 60s TTL
-            "rrdatas": [new_ip]
+        logger.info(f"Checking existing Google Cloud DNS record sets for {record_name}...")
+        try:
+            request = dns.resourceRecordSets().list(
+                project=PROJECT_ID,
+                managedZone=DNS_ZONE_NAME,
+                name=record_name,
+                type='A'
+            )
+            response = request.execute()
+            records = response.get('rrsets', [])
+            
+            old_ip = None
+            existing_record = None
+            if records:
+                existing_record = records[0]
+                rrdatas = existing_record.get('rrdatas', [])
+                if rrdatas:
+                    old_ip = rrdatas[0]
+                    
+            # If the record already points to the correct IP, skip update
+            if old_ip == new_ip:
+                logger.info(f"Google DNS record for {record_name} already matches new IP {new_ip}. No update needed.")
+                return
+                
+            change_body = {}
+            additions = [
+                {
+                    "name": record_name,
+                    "type": "A",
+                    "ttl": 60,  # 60s TTL
+                    "rrdatas": [new_ip]
+                }
+            ]
+            deletions = []
+            
+            if existing_record:
+                deletions.append(existing_record)
+                
+            change_body["additions"] = additions
+            if deletions:
+                change_body["deletions"] = deletions
+                
+            logger.info(f"Updating Google DNS for {record_name}: changing from {old_ip} to {new_ip}")
+            request = dns.changes().create(
+                project=PROJECT_ID,
+                managedZone=DNS_ZONE_NAME,
+                body=change_body
+            )
+            request.execute()
+            logger.info("Google DNS record successfully updated.")
+        except Exception as e:
+            logger.error(f"Failed to update Google Cloud DNS: {e}")
+            raise e
+
+    elif provider == 'cloudflare':
+        headers = {
+            "Authorization": f"Bearer {DNS_API_TOKEN}",
+            "Content-Type": "application/json"
         }
-    ]
-    deletions = []
-    
-    if existing_record:
-        deletions.append(existing_record)
         
-    change_body["additions"] = additions
-    if deletions:
-        change_body["deletions"] = deletions
-        
-    logger.info(f"Updating DNS for {record_name}: changing from {old_ip} to {new_ip}")
-    request = dns.changes().create(
-        project=PROJECT_ID,
-        managedZone=DNS_ZONE_NAME,
-        body=change_body
-    )
-    request.execute()
-    logger.info("DNS record successfully updated.")
+        # 1. Fetch existing A record to get record_id and check current IP
+        url = f"https://api.cloudflare.com/client/v4/zones/{CLOUDFLARE_ZONE_ID}/dns_records?name={DOMAIN_NAME}&type=A"
+        try:
+            req = urllib.request.Request(url, headers=headers, method="GET")
+            with urllib.request.urlopen(req) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                
+            records = res_data.get("result", [])
+            record_id = None
+            old_ip = None
+            if records:
+                record_id = records[0].get("id")
+                old_ip = records[0].get("content")
+                
+            if old_ip == new_ip:
+                logger.info(f"Cloudflare DNS record for {DOMAIN_NAME} already matches IP {new_ip}. No update needed.")
+                return
+                
+            body = {
+                "type": "A",
+                "name": DOMAIN_NAME,
+                "content": new_ip,
+                "ttl": 60,
+                "proxied": False
+            }
+            data = json.dumps(body).encode('utf-8')
+            
+            if record_id:
+                # Update existing record
+                logger.info(f"Updating existing Cloudflare record {record_id} to IP {new_ip}...")
+                update_url = f"https://api.cloudflare.com/client/v4/zones/{CLOUDFLARE_ZONE_ID}/dns_records/{record_id}"
+                req = urllib.request.Request(update_url, data=data, headers=headers, method="PUT")
+            else:
+                # Create new record
+                logger.info(f"Creating new Cloudflare record with IP {new_ip}...")
+                create_url = f"https://api.cloudflare.com/client/v4/zones/{CLOUDFLARE_ZONE_ID}/dns_records"
+                req = urllib.request.Request(create_url, data=data, headers=headers, method="POST")
+                
+            with urllib.request.urlopen(req) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                if res_data.get("success"):
+                    logger.info(f"Cloudflare DNS record updated successfully to {new_ip}.")
+                else:
+                    logger.error(f"Cloudflare API returned error: {res_data}")
+                    raise Exception("Cloudflare API error.")
+        except Exception as e:
+            logger.error(f"Failed to update Cloudflare DNS: {e}")
+            raise e
+
+    elif provider == 'duckdns':
+        subdomain = DOMAIN_NAME.split('.')[0]
+        url = f"https://www.duckdns.org/update?domains={subdomain}&token={DNS_API_TOKEN}&ip={new_ip}"
+        logger.info(f"Updating DuckDNS domain '{DOMAIN_NAME}' (subdomain: '{subdomain}') to {new_ip}...")
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'GCP-Minecraft-On-Demand-Updater'})
+            with urllib.request.urlopen(req) as response:
+                res = response.read().decode('utf-8').strip()
+                if res == "OK":
+                    logger.info(f"DuckDNS domain '{DOMAIN_NAME}' updated successfully to {new_ip}.")
+                else:
+                    raise Exception(f"DuckDNS update returned status: {res}")
+        except Exception as e:
+            logger.error(f"Failed to update DuckDNS: {e}")
+            raise e
+
+    elif provider == 'dynu':
+        url = f"https://api.dynu.com/nic/update?hostname={DOMAIN_NAME}&password={DNS_API_TOKEN}&myip={new_ip}"
+        logger.info(f"Updating Dynu domain '{DOMAIN_NAME}' to {new_ip}...")
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'GCP-Minecraft-On-Demand-Updater'})
+            with urllib.request.urlopen(req) as response:
+                res = response.read().decode('utf-8').strip()
+                if res.startswith("good") or res.startswith("nochg"):
+                    logger.info(f"Dynu domain '{DOMAIN_NAME}' updated successfully to {new_ip} (status: {res}).")
+                else:
+                    raise Exception(f"Dynu update returned status: {res}")
+        except Exception as e:
+            logger.error(f"Failed to update Dynu DNS: {e}")
+            raise e
+
+    else:
+        logger.error(f"Unsupported DNS provider configuration: '{DNS_PROVIDER}'")
 
 def is_minecraft_ready(ip, port=25565, timeout=1.0):
     """Checks if the Minecraft server is actually listening on the given IP and port."""

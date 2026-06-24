@@ -24,6 +24,11 @@ WAKEUP_PASSCODE = os.environ.get('WAKEUP_PASSCODE')
 BACKUPS_BUCKET = os.environ.get('BACKUPS_BUCKET')
 INSTANCE_ID = os.environ.get('INSTANCE_ID')
 
+# Generic Dynamic DNS configurations
+DNS_PROVIDER = os.environ.get('DNS_PROVIDER', 'google')
+DNS_API_TOKEN = os.environ.get('DNS_API_TOKEN')
+CLOUDFLARE_ZONE_ID = os.environ.get('CLOUDFLARE_ZONE_ID')
+
 def validate_config():
     """Validates that all critical configuration variables are loaded.
     Fails fast by raising a ValueError if required config is missing.
@@ -32,13 +37,20 @@ def validate_config():
         'PROJECT_ID': PROJECT_ID,
         'ZONE': ZONE,
         'INSTANCE_NAME': INSTANCE_NAME,
-        'DNS_ZONE_NAME': DNS_ZONE_NAME,
-        'DOMAIN_NAME': DOMAIN_NAME
     }
     
+    if DNS_PROVIDER == 'google':
+        required['DNS_ZONE_NAME'] = DNS_ZONE_NAME
+        required['DOMAIN_NAME'] = DOMAIN_NAME
+    elif DNS_PROVIDER in ['cloudflare', 'duckdns', 'dynu']:
+        required['DOMAIN_NAME'] = DOMAIN_NAME
+        required['DNS_API_TOKEN'] = DNS_API_TOKEN
+        if DNS_PROVIDER == 'cloudflare':
+            required['CLOUDFLARE_ZONE_ID'] = CLOUDFLARE_ZONE_ID
+            
     missing = [k for k, v in required.items() if not v]
     if missing:
-        msg = f"Missing required configuration environment variables: {', '.join(missing)}"
+        msg = f"Missing required configuration environment variables for DNS provider '{DNS_PROVIDER}': {', '.join(missing)}"
         logger.error(msg)
         raise ValueError(msg)
         

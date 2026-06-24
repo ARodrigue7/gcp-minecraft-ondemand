@@ -139,9 +139,16 @@ resource "google_compute_instance" "minecraft" {
   metadata = {
     # Render the startup script template containing the watchdog configuration
     startup-script = templatefile("${path.module}/startup.sh", {
-      idle_timeout_seconds = var.idle_timeout_seconds
-      backups_bucket       = google_storage_bucket.minecraft_backups.name
-      minecraft_version    = var.minecraft_version
+      idle_timeout_seconds       = var.idle_timeout_seconds
+      backups_bucket             = google_storage_bucket.minecraft_backups.name
+      minecraft_version          = var.minecraft_version
+      instance_name              = var.instance_name
+      disk_auto_expand           = var.disk_auto_expand
+      disk_auto_expand_max_gb    = var.disk_auto_expand_max_gb
+      disk_auto_expand_threshold = var.disk_auto_expand_threshold
+      dns_provider               = var.dns_provider
+      domain_name                = var.domain_name
+      dns_api_token              = var.dns_api_token
     })
     approved-whitelist = ""
     pending-commands   = ""
@@ -168,8 +175,9 @@ resource "google_compute_instance" "minecraft" {
 # 🌐 CLOUD DNS CONFIGURATION
 # ==========================================
 
-# Managed Public DNS Zone for mc.yourdomain.com
+# Managed Public DNS Zone for mc.yourdomain.com (conditional)
 resource "google_dns_managed_zone" "minecraft_zone" {
+  count       = var.dns_provider == "google" ? 1 : 0
   name        = var.dns_zone_name
   dns_name    = "${var.domain_name}."
   description = "Managed zone for Minecraft server on-demand resolution"
@@ -180,10 +188,11 @@ resource "google_dns_managed_zone" "minecraft_zone" {
   }
 }
 
-# Placeholder A-Record pointing to 127.0.0.1 initially (updated dynamically by Cloud Function)
+# Placeholder A-Record pointing to 127.0.0.1 initially (conditional)
 resource "google_dns_record_set" "minecraft_a_record" {
-  name         = google_dns_managed_zone.minecraft_zone.dns_name
-  managed_zone = google_dns_managed_zone.minecraft_zone.name
+  count        = var.dns_provider == "google" ? 1 : 0
+  name         = google_dns_managed_zone.minecraft_zone[0].dns_name
+  managed_zone = google_dns_managed_zone.minecraft_zone[0].name
   type         = "A"
   ttl          = 60
   rrdatas      = ["127.0.0.1"]
@@ -204,7 +213,7 @@ resource "google_pubsub_topic" "dns_query_topic" {
 
 # Log Sink to route DNS query logs for mc.yourdomain.com to the Pub/Sub topic
 resource "google_logging_project_sink" "dns_query_sink" {
-  count                  = var.enable_dns_autostart ? 1 : 0
+  count                  = (var.enable_dns_autostart && var.dns_provider == "google") ? 1 : 0
   name                   = "minecraft-dns-query-sink"
   destination            = "pubsub.googleapis.com/${google_pubsub_topic.dns_query_topic.id}"
   filter                 = "resource.type=\"dns_query\" AND jsonPayload.queryName=\"${var.domain_name}.\""
@@ -213,7 +222,7 @@ resource "google_logging_project_sink" "dns_query_sink" {
 
 # IAM policy to allow the Log Sink to publish events to Pub/Sub
 resource "google_pubsub_topic_iam_member" "dns_query_sink_publisher" {
-  count  = var.enable_dns_autostart ? 1 : 0
+  count  = (var.enable_dns_autostart && var.dns_provider == "google") ? 1 : 0
   topic  = google_pubsub_topic.dns_query_topic.name
   role   = "roles/pubsub.publisher"
   member = google_logging_project_sink.dns_query_sink[0].writer_identity
@@ -330,11 +339,14 @@ resource "google_cloudfunctions2_function" "minecraft_starter" {
     service_account_email = google_service_account.cf_sa.email
 
     environment_variables = {
-      PROJECT_ID    = var.project_id
-      ZONE          = var.zone
-      INSTANCE_NAME = var.instance_name
-      DNS_ZONE_NAME = var.dns_zone_name
-      DOMAIN_NAME   = var.domain_name
+      PROJECT_ID         = var.project_id
+      ZONE               = var.zone
+      INSTANCE_NAME      = var.instance_name
+      DNS_ZONE_NAME      = var.dns_zone_name
+      DOMAIN_NAME        = var.domain_name
+      DNS_PROVIDER       = var.dns_provider
+      DNS_API_TOKEN      = var.dns_api_token
+      CLOUDFLARE_ZONE_ID = var.cloudflare_zone_id
     }
   }
 
@@ -389,6 +401,9 @@ resource "google_cloudfunctions2_function" "minecraft_status" {
       ADMIN_PASSCODE      = var.admin_passcode
       BACKUPS_BUCKET      = google_storage_bucket.minecraft_backups.name
       INSTANCE_ID         = google_compute_instance.minecraft.instance_id
+      DNS_PROVIDER        = var.dns_provider
+      DNS_API_TOKEN       = var.dns_api_token
+      CLOUDFLARE_ZONE_ID  = var.cloudflare_zone_id
     }
   }
 }

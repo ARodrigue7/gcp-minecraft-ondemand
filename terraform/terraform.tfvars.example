@@ -32,3 +32,17 @@ wakeup_passcode = "your-wakeup-passcode"
 
 # Set to false to disable DNS autostart (forcing manual passcode entry on portal)
 enable_dns_autostart = false
+
+# Minecraft Version to run (e.g. 26.2 or LATEST)
+minecraft_version = "LATEST"
+
+# Elastic Storage Settings
+disk_auto_expand           = true
+disk_auto_expand_max_gb    = 25
+disk_auto_expand_threshold = 80
+
+# Dynamic DNS Provider Setup
+# Supported providers: "google", "cloudflare", "duckdns", "dynu", or "none"
+dns_provider       = "google"
+dns_api_token      = "your-dns-provider-api-token-if-needed"
+cloudflare_zone_id = "your-cloudflare-zone-id-if-using-cloudflare"

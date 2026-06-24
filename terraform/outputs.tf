@@ -11,8 +11,8 @@ output "region" {
 }
 
 output "dns_name_servers" {
-  value       = google_dns_managed_zone.minecraft_zone.name_servers
-  description = "The name servers assigned to the Cloud DNS zone. Add NS records in Cloudflare pointing to these."
+  value       = length(google_dns_managed_zone.minecraft_zone) > 0 ? google_dns_managed_zone.minecraft_zone[0].name_servers : null
+  description = "The name servers assigned to the Cloud DNS zone. Add NS records in your registrar pointing to these."
 }
 
 output "vm_instance_name" {
