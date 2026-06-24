@@ -163,17 +163,8 @@ The player hub is a dedicated page for your community. It reads the configuratio
      gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft rcon-cli whitelist add <username>"
      ```
 
-### 3. Wake Up Protection (Passcode Protection)
-To prevent unauthorized users or automated web scrapers from spawning wakeup loops, you can enable a passcode lock on the **Wake Up Server** action:
-1. Open `terraform/terraform.tfvars`.
-2. Add a value for `wakeup_passcode`:
-   ```hcl
-   wakeup_passcode = "your-super-secret-password"
-   ```
-3. Run `terraform apply`.
-4. The portal (`play.html`) will now automatically display a **Server Passcode** field whenever the server is offline. Clicking the **Wake Up Server** button will prompt for this passcode, preventing bot wakeups.
 
-### 4. RCON Watchdog Player Check
+### 3. RCON Watchdog Player Check
 Instead of checking raw TCP connection sockets (which can be tricked into keeping the VM online by automated server lists, scanner bots, or simple TCP pings), the watchdog script uses the Minecraft RCON client to query the exact player count (`rcon-cli list`). If the active player count remains at `0` for your configured timeout (default `600` seconds / 10 minutes), the VM is shut down gracefully.
 
 #### 🌐 Dynamic Configuration for Cloners/Forks:

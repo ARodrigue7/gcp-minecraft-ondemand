@@ -83,12 +83,7 @@ variable "discord_webhook_url" {
   sensitive   = true
 }
 
-variable "wakeup_passcode" {
-  description = "Passcode required to wake up the server via the web portal (leave empty to allow wake up without a password check)"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
+
 
 variable "admin_passcode" {
   description = "Passcode required to access the admin portal and run console commands"

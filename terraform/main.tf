@@ -406,7 +406,6 @@ resource "google_cloudfunctions2_function" "minecraft_status" {
       DISCORD_WEBHOOK_URL = var.discord_webhook_url
       WHITELIST_SECRET    = random_id.whitelist_secret.hex
       FUNCTION_REGION     = var.region
-      WAKEUP_PASSCODE     = var.wakeup_passcode
       ADMIN_PASSCODE      = var.admin_passcode
       BACKUPS_BUCKET      = google_storage_bucket.minecraft_backups.name
       INSTANCE_ID         = google_compute_instance.minecraft.instance_id

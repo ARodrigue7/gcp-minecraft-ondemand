@@ -20,7 +20,6 @@ DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 
 # New config variables for Admin Panel, backups, and wakeup control
 ADMIN_PASSCODE = os.environ.get('ADMIN_PASSCODE')
-WAKEUP_PASSCODE = os.environ.get('WAKEUP_PASSCODE')
 BACKUPS_BUCKET = os.environ.get('BACKUPS_BUCKET')
 INSTANCE_ID = os.environ.get('INSTANCE_ID')
 
@@ -59,7 +58,6 @@ def validate_config():
     # Log warnings for missing optional parameters to help debug
     optional = {
         'ADMIN_PASSCODE': ADMIN_PASSCODE,
-        'WAKEUP_PASSCODE': WAKEUP_PASSCODE,
         'BACKUPS_BUCKET': BACKUPS_BUCKET,
         'INSTANCE_ID': INSTANCE_ID,
         'WHITELIST_SECRET': WHITELIST_SECRET,

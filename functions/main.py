@@ -11,7 +11,6 @@ from config import (
     INSTANCE_NAME,
     DOMAIN_NAME,
     DISCORD_WEBHOOK_URL,
-    WAKEUP_PASSCODE,
     ADMIN_PASSCODE,
     logger
 )
@@ -354,10 +353,7 @@ def get_status_http(request):
                 passcode = request_json.get('passcode')
                 username = request_json.get('username')
                 
-                # Enforce passcode check (admin passcode)
-                if not passcode or passcode != ADMIN_PASSCODE:
-                    return (json.dumps({"error": "Invalid passcode. Wake up request denied."}), 403, headers)
-                
+
                 # Enforce Minecraft username check
                 if not username:
                     return (json.dumps({"error": "Missing Minecraft username. Wake up request denied."}), 400, headers)

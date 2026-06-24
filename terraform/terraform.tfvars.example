@@ -27,8 +27,6 @@ zone   = "us-central1-a"
 discord_webhook_url = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
 
 
-# Passcode required to wake up the server via the web portal (leave empty for no password)
-wakeup_passcode = "your-wakeup-passcode"
 
 # Set to false to disable DNS autostart (forcing manual passcode entry on portal)
 enable_dns_autostart = false

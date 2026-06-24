@@ -329,10 +329,6 @@
                         <label for="server-username" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Minecraft Username</label>
                         <input type="text" id="server-username" placeholder="e.g. Steve" style="width: 100%; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none; margin-bottom: 0.5rem;">
                     </div>
-                    <div class="form-field" style="margin-bottom: 1rem;">
-                        <label for="server-passcode" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Server Passcode</label>
-                        <input type="password" id="server-passcode" placeholder="Enter passcode to wake up..." style="width: 100%; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none;">
-                    </div>
                 `;
             } else if (state.status === "STARTING" || state.status === "PROVISIONING" || state.status === "STAGING") {
                 joinBtnText = "⏳ Booting up...";
@@ -418,11 +414,9 @@
             });
 
             mainJoinBtn.addEventListener("click", () => {
-                const passcodeEl = document.getElementById("server-passcode");
-                const passcode = passcodeEl ? passcodeEl.value.trim() : "";
                 const usernameEl = document.getElementById("server-username");
                 const username = usernameEl ? usernameEl.value.trim() : "";
-                triggerJoin(server, passcode, username);
+                triggerJoin(server, "", username);
             });
 
             if (whitelistForm) {
