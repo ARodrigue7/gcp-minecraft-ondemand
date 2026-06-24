@@ -110,7 +110,12 @@ def get_status_http(request):
         is_auth = False
         if action == 'admin_download_backup':
             passcode = request.args.get('passcode')
-            is_auth = (passcode == ADMIN_PASSCODE)
+            username = request.args.get('username')
+            is_auth = False
+            if passcode == ADMIN_PASSCODE and username:
+                approved_players, _ = get_whitelist_states()
+                if username.lower() in [p.lower() for p in approved_players]:
+                    is_auth = True
         else:
             is_auth = check_admin_auth(request)
             
@@ -346,10 +351,20 @@ def get_status_http(request):
             # 1. Wake Up / Start Server action
             if action == 'start':
                 passcode = request_json.get('passcode')
+                username = request_json.get('username')
                 
-                # Enforce passcode check if configured
-                if WAKEUP_PASSCODE and passcode != WAKEUP_PASSCODE:
+                # Enforce passcode check (admin passcode)
+                if not passcode or passcode != ADMIN_PASSCODE:
                     return (json.dumps({"error": "Invalid passcode. Wake up request denied."}), 403, headers)
+                
+                # Enforce Minecraft username check
+                if not username:
+                    return (json.dumps({"error": "Missing Minecraft username. Wake up request denied."}), 400, headers)
+                
+                # Verify that the player is whitelisted
+                approved_players, _ = get_whitelist_states()
+                if username.lower() not in [p.lower() for p in approved_players]:
+                    return (json.dumps({"error": f"Player '{username}' is not whitelisted. Wake up request denied."}), 403, headers)
                 
                 # Check status and start if stopped
                 status, ip = get_instance_status_and_ip()

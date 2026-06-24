@@ -1,5 +1,6 @@
 // State
         let adminPasscode = sessionStorage.getItem("mcod_admin_passcode") || "";
+        let adminUsername = sessionStorage.getItem("mcod_admin_username") || "";
         let statusUrl = "";
         let serverDomain = "";
         let pollInterval = null;
@@ -8,6 +9,7 @@
         const loginContainer = document.getElementById("login-container");
         const loginForm = document.getElementById("login-form");
         const passcodeInput = document.getElementById("admin-passcode-input");
+        const usernameInput = document.getElementById("admin-username-input");
         const loginAlert = document.getElementById("login-alert");
 
         const adminDashboard = document.getElementById("admin-dashboard");
@@ -70,8 +72,8 @@
         function init() {
             initConfig();
             
-            if (adminPasscode) {
-                verifyAndShowDashboard(adminPasscode);
+            if (adminPasscode && adminUsername) {
+                verifyAndShowDashboard(adminPasscode, adminUsername);
             } else {
                 loginContainer.classList.remove("hidden");
             }
@@ -93,13 +95,16 @@
 
             loginForm.addEventListener("submit", (e) => {
                 e.preventDefault();
+                const username = usernameInput.value.trim();
                 const passcode = passcodeInput.value.trim();
-                verifyAndShowDashboard(passcode);
+                verifyAndShowDashboard(passcode, username);
             });
 
             logoutBtn.addEventListener("click", () => {
                 sessionStorage.removeItem("mcod_admin_passcode");
+                sessionStorage.removeItem("mcod_admin_username");
                 adminPasscode = "";
+                adminUsername = "";
                 adminDashboard.classList.add("hidden");
                 loginContainer.classList.remove("hidden");
                 if (pollInterval) clearInterval(pollInterval);
@@ -124,7 +129,8 @@
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": `Bearer ${adminPasscode}`
+                            "Authorization": `Bearer ${adminPasscode}`,
+                            "X-Admin-User": adminUsername
                         },
                         body: JSON.stringify({ username })
                     });
@@ -198,17 +204,22 @@
             });
         }
 
-        async function verifyAndShowDashboard(passcode) {
+        async function verifyAndShowDashboard(passcode, username) {
             loginAlert.classList.add("hidden");
             
             try {
                 const res = await fetch(`${statusUrl}?action=admin_status`, {
-                    headers: { "Authorization": `Bearer ${passcode}` }
+                    headers: { 
+                        "Authorization": `Bearer ${passcode}`,
+                        "X-Admin-User": username
+                    }
                 });
 
                 if (res.ok) {
                     adminPasscode = passcode;
+                    adminUsername = username;
                     sessionStorage.setItem("mcod_admin_passcode", passcode);
+                    sessionStorage.setItem("mcod_admin_username", username);
                     
                     loginContainer.classList.add("hidden");
                     adminDashboard.classList.remove("hidden");
@@ -216,22 +227,27 @@
                     loadDashboardData();
                     pollInterval = setInterval(loadDashboardData, 10000);
                 } else {
-                    throw new Error("Invalid admin passcode.");
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || "Invalid admin credentials.");
                 }
             } catch (err) {
                 console.error(err);
-                loginAlert.textContent = "❌ Access Denied: Invalid admin passcode.";
+                loginAlert.textContent = `❌ Access Denied: ${err.message}`;
                 loginAlert.classList.remove("hidden");
                 sessionStorage.removeItem("mcod_admin_passcode");
+                sessionStorage.removeItem("mcod_admin_username");
             }
         }
 
         async function loadDashboardData() {
-            if (!adminPasscode || !statusUrl) return;
+            if (!adminPasscode || !adminUsername || !statusUrl) return;
 
             try {
                 const res = await fetch(`${statusUrl}?action=admin_status`, {
-                    headers: { "Authorization": `Bearer ${adminPasscode}` }
+                    headers: { 
+                        "Authorization": `Bearer ${adminPasscode}`,
+                        "X-Admin-User": adminUsername
+                    }
                 });
 
                 if (!res.ok) {
@@ -327,7 +343,7 @@
                 const date = new Date(b.timeCreated).toLocaleString();
                 const sizeMb = (b.size / (1024 * 1024)).toFixed(2);
                 
-                const downloadUrl = `${statusUrl}?action=admin_download_backup&generation=${b.generation}&passcode=${adminPasscode}`;
+                const downloadUrl = `${statusUrl}?action=admin_download_backup&generation=${b.generation}&passcode=${adminPasscode}&username=${adminUsername}`;
 
                 const item = document.createElement("div");
                 item.className = "server-row-item";
@@ -350,7 +366,10 @@
 
             try {
                 const res = await fetch(`${statusUrl}?action=admin_logs`, {
-                    headers: { "Authorization": `Bearer ${adminPasscode}` }
+                    headers: { 
+                        "Authorization": `Bearer ${adminPasscode}`,
+                        "X-Admin-User": adminUsername
+                    }
                 });
 
                 if (res.ok) {
@@ -382,7 +401,8 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${adminPasscode}`
+                    "Authorization": `Bearer ${adminPasscode}`,
+                    "X-Admin-User": adminUsername
                 },
                 body: JSON.stringify({ command: cmd })
             });
@@ -405,7 +425,8 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${adminPasscode}`
+                        "Authorization": `Bearer ${adminPasscode}`,
+                        "X-Admin-User": adminUsername
                     },
                     body: JSON.stringify({ command: powerAction })
                 });
@@ -447,7 +468,8 @@
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${adminPasscode}`
+                        "Authorization": `Bearer ${adminPasscode}`,
+                        "X-Admin-User": adminUsername
                     },
                     body: JSON.stringify({ username: player })
                 });

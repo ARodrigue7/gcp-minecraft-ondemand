@@ -21,7 +21,10 @@
             
             <form id="login-form" style="display: flex; flex-direction: column; gap: 1.25rem; max-width: 320px; margin: 0 auto;">
                 <div class="form-field">
-                    <input type="password" id="admin-passcode-input" placeholder="Enter Admin Passcode..." required autocomplete="off" style="text-align: center; font-size: 1.2rem; letter-spacing: 0.1em;">
+                    <input type="text" id="admin-username-input" placeholder="Minecraft Username" required autocomplete="off" style="text-align: center; font-size: 1.1rem; padding: 0.75rem 1rem; border-radius: 12px; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); color: var(--text-primary); outline: none;">
+                </div>
+                <div class="form-field">
+                    <input type="password" id="admin-passcode-input" placeholder="Enter Admin Passcode..." required autocomplete="off" style="text-align: center; font-size: 1.2rem; letter-spacing: 0.1em; padding: 0.75rem 1rem; border-radius: 12px; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); color: var(--text-primary); outline: none;">
                 </div>
                 <div id="login-alert" class="form-message error hidden" style="margin-top: 0;"></div>
                 <button type="submit" class="btn btn-secondary btn-block">🔒 Access Control Panel</button>

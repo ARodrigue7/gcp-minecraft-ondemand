@@ -319,6 +319,10 @@
                 joinBtnText = "⚡ Wake Up Server";
                 passcodeBoxHtml = `
                     <div class="form-field" style="margin-bottom: 1rem;">
+                        <label for="server-username" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Minecraft Username</label>
+                        <input type="text" id="server-username" placeholder="e.g. Steve" style="width: 100%; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none; margin-bottom: 0.5rem;">
+                    </div>
+                    <div class="form-field" style="margin-bottom: 1rem;">
                         <label for="server-passcode" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Server Passcode</label>
                         <input type="password" id="server-passcode" placeholder="Enter passcode to wake up..." style="width: 100%; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none;">
                     </div>
@@ -409,7 +413,9 @@
             mainJoinBtn.addEventListener("click", () => {
                 const passcodeEl = document.getElementById("server-passcode");
                 const passcode = passcodeEl ? passcodeEl.value.trim() : "";
-                triggerJoin(server, passcode);
+                const usernameEl = document.getElementById("server-username");
+                const username = usernameEl ? usernameEl.value.trim() : "";
+                triggerJoin(server, passcode, username);
             });
 
             if (whitelistForm) {
@@ -568,7 +574,7 @@
             });
         }
 
-        async function triggerJoin(server, passcode = "") {
+        async function triggerJoin(server, passcode = "", username = "") {
             const state = statuses[server.id] || {};
 
             if (server.statusUrl && state.status === "TERMINATED") {
@@ -581,7 +587,7 @@
                     const res = await fetch(server.statusUrl, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "start", passcode: passcode })
+                        body: JSON.stringify({ action: "start", passcode: passcode, username: username })
                     });
                     
                     const data = await res.json();
