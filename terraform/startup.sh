@@ -171,15 +171,15 @@ create_backup() {
   echo "Starting Minecraft backup sequence..."
   if docker ps --format '{{.Names}}' | grep -Eq "^minecraft$"; then
     echo "Freezing auto-saves..."
-    docker exec minecraft mc-send-to-rcon save-off >/dev/null 2>&1 || true
-    docker exec minecraft mc-send-to-rcon save-all flush >/dev/null 2>&1 || true
+    docker exec minecraft rcon-cli save-off >/dev/null 2>&1 || true
+    docker exec minecraft rcon-cli save-all flush >/dev/null 2>&1 || true
     sleep 2
     
     echo "Creating world archive..."
     tar -czf /tmp/rolling_backup.tar.gz -C /mnt/disks/minecraft-data/data world world_nether world_the_end >/dev/null 2>&1 || true
     
     echo "Resuming auto-saves..."
-    docker exec minecraft mc-send-to-rcon save-on >/dev/null 2>&1 || true
+    docker exec minecraft rcon-cli save-on >/dev/null 2>&1 || true
     
     if [ -f /tmp/rolling_backup.tar.gz ]; then
       echo "Uploading backup to GCS..."
@@ -205,7 +205,7 @@ if [ -n "$APPROVED_WHITELIST" ]; then
     for player in "$${PLAYERS[@]}"; do
       if [ -n "$player" ]; then
         echo "Syncing whitelist for player: $player"
-        docker exec minecraft mc-send-to-rcon whitelist add "$player" >/dev/null 2>&1 || true
+        docker exec minecraft rcon-cli whitelist add "$player" >/dev/null 2>&1 || true
       fi
     done
   fi
@@ -223,7 +223,9 @@ if [ -n "$PENDING_COMMANDS" ]; then
       if [ "$cmd" = "backup" ]; then
         create_backup
       else
-        docker exec minecraft mc-send-to-rcon "$cmd" >/dev/null 2>&1 || true
+        set -f
+        docker exec minecraft rcon-cli $cmd >/dev/null 2>&1 || true
+        set +f
       fi
     fi
   done
@@ -248,7 +250,7 @@ fi
 ONLINE_PLAYERS=0
 PLAYER_LIST="none"
 if docker ps --format '{{.Names}}' | grep -Eq "^minecraft$"; then
-  RCON_OUT=$(docker exec minecraft mc-send-to-rcon list 2>/dev/null || echo "")
+  RCON_OUT=$(docker exec minecraft rcon-cli list 2>/dev/null || echo "")
   if [[ "$RCON_OUT" =~ There\ are\ ([0-9]+) ]]; then
     ONLINE_PLAYERS="$${BASH_REMATCH[1]}"
   fi
@@ -306,7 +308,7 @@ cat <<'EOF' > /etc/systemd/system/minecraft-watchdog.timer
 Description=Run Minecraft Idle Watchdog every minute
 
 [Timer]
-OnBootSec=5min
+OnBootSec=1min
 OnUnitActiveSec=1min
 
 [Install]

@@ -160,7 +160,7 @@ The player hub is a dedicated page for your community. It reads the configuratio
    - **🔴 Deny & Dismiss Link**: Click this to reject the request. The Cloud Function removes the player from `pending-whitelist` and deletes the alert message from Discord immediately.
    - **Manual SSH Command**: Copy/paste the pre-formatted command:
      ```bash
-     gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft mc-send-to-rcon whitelist add <username>"
+     gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft rcon-cli whitelist add <username>"
      ```
 
 ### 3. Wake Up Protection (Passcode Protection)
@@ -174,7 +174,7 @@ To prevent unauthorized users or automated web scrapers from spawning wakeup loo
 4. The portal (`play.html`) will now automatically display a **Server Passcode** field whenever the server is offline. Clicking the **Wake Up Server** button will prompt for this passcode, preventing bot wakeups.
 
 ### 4. RCON Watchdog Player Check
-Instead of checking raw TCP connection sockets (which can be tricked into keeping the VM online by automated server lists, scanner bots, or simple TCP pings), the watchdog script uses the Minecraft RCON client to query the exact player count (`mc-send-to-rcon list`). If the active player count remains at `0` for your configured timeout (default `600` seconds / 10 minutes), the VM is shut down gracefully.
+Instead of checking raw TCP connection sockets (which can be tricked into keeping the VM online by automated server lists, scanner bots, or simple TCP pings), the watchdog script uses the Minecraft RCON client to query the exact player count (`rcon-cli list`). If the active player count remains at `0` for your configured timeout (default `600` seconds / 10 minutes), the VM is shut down gracefully.
 
 #### 🌐 Dynamic Configuration for Cloners/Forks:
 If other developers clone or fork this project, they do not need to rebuild or host their own website to test the player portal. They can pass their variables directly in the URL:

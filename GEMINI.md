@@ -57,6 +57,8 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Implement bot-abuse prevention (passcode-protected webpage wakeup button + watchdog player check using RCON player count instead of port 25565 TCP count).
 * [x] Implement the admin_auth module to validate an admin passcode via a web form.
 * [x] Provide an admin interface to run any docker exec mc-send-to-rcon command.
+* [x] Fix RCON commands not executing correctly from the admin interface.
+* [ ] Enforce dual-authentication (whitelisted player AND admin password) for accessing the admin portal and waking up the server.
 * [ ] Remove all secrets from source code and store them in Secret Manager.
 * [ ] Create a remote Terraform state backend using Cloud Storage.
 * [x] Create a secure whitelist management dashboard on the Player Portal page.

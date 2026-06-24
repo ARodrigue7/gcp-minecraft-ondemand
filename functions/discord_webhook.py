@@ -30,7 +30,7 @@ def send_discord_webhook(username, status_url):
                     },
                     {
                         "name": "Manual SSH Command",
-                        "value": f"```bash\ngcloud compute ssh {INSTANCE_NAME} --zone={ZONE} --command=\"docker exec minecraft mc-send-to-rcon whitelist add {username}\"\n```",
+                        "value": f"```bash\ngcloud compute ssh {INSTANCE_NAME} --zone={ZONE} --command=\"docker exec minecraft rcon-cli whitelist add {username}\"\n```",
                         "inline": False
                     }
                 ],
