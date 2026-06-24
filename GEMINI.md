@@ -127,6 +127,8 @@ Recent Changes:
 * Webhook Anti-Spam: Cloud Function now blocks duplicate whitelist requests for the same player, preventing Discord webhook spam.
 * IAM Permissions: Added `google_service_account_iam_member.cf_sa_user` to grant `roles/iam.serviceAccountUser` role to the Cloud Function service account, allowing it to perform metadata updates on the VM instance.
 * Dynamic Frontend: Updated portal Javascript to render dynamic responses directly from the Cloud Function.
+* Whitelist Race Condition Resolution: Fixed the GCE metadata update conflict (`412 Supplied fingerprint does not match current metadata fingerprint`) by implementing a unified, atomic metadata transaction function `update_whitelist_state` in the Cloud Function.
+* Manual Whitelisting: Successfully whitelisted player `ArodPlayerLocal`, moving them from pending to approved list and queuing the RCON command.
 
 Active Blockers: None!
 
