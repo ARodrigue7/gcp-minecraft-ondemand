@@ -257,7 +257,14 @@
         window.triggerJoinById = function(id) {
             const list = getMasterList();
             const server = list.find(s => s.id === id);
-            if (server) triggerJoin(server);
+            if (server) {
+                const state = statuses[server.id] || {};
+                if (state.status === "TERMINATED") {
+                    selectServer(server.id);
+                } else {
+                    triggerJoin(server);
+                }
+            }
         };
 
         function renderSelectedServerDetails(server) {

@@ -66,6 +66,8 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [ ] Implement automatic IP address updates in DNS.
 * [ ] Remove the 2FA module from the main branch as it is not needed.
 * [ ] Make the Minecraft server run as a non-root user.
+* [x] Fix project landing back button disappearing on `play.html` when a server is selected and the details card expands.
+* [x] Prevent the "Join Server" button / double-click from initiating a wakeup request without prompts when the server is offline.
 
 ---
 
