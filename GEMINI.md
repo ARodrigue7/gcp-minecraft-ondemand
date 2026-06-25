@@ -60,7 +60,7 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Fix RCON commands not executing correctly from the admin interface.
 * [x] Enforce dual-authentication (whitelisted player AND admin password) for accessing the admin portal and waking up the server.
 * [x] Remove all secrets from source code and store them in Secret Manager.
-* [/] Create a remote Terraform state backend using Cloud Storage. (Configured in backend.tf.example due to sandbox project billing restriction)
+* [x] Create a remote Terraform state backend using Cloud Storage.
 * [x] Create a secure whitelist management dashboard on the Player Portal page.
 * [x] Create a secure admin portal to view logs, restart server, manage whitelists, etc.
 * [x] Implement automatic IP address updates in DNS.
