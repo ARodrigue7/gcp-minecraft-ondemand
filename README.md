@@ -86,6 +86,14 @@ terraform apply
 ```
 When prompted, type `yes` to confirm.
 
+> [!IMPORTANT]
+> **If you are cloning or forking this repository:**
+> The project includes a remote GCS backend configured in `terraform/backend.tf` pointing to a specific state bucket. 
+> To deploy in your own GCP project:
+> * **Local Backend (easiest):** Simply delete the `terraform/backend.tf` file. Terraform will default to local state storage (`terraform.tfstate`).
+> * **Remote GCS Backend:** Create a private bucket in your own GCP project (with Object Versioning enabled) and update the `bucket` parameter in `terraform/backend.tf` to match your GCS bucket name before running `terraform init`.
+
+
 > [!NOTE]
 > Upon successful application, Terraform automatically creates the configuration file **`docs/config.js`** for your website and prints the assigned DNS name servers to your console.
 
