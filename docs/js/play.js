@@ -234,8 +234,8 @@
                         <div class="row-domain">${server.domain}</div>
                     </div>
                     <div class="row-status">
-                        <div class="${statusClass}">
-                            <span class="pulse-dot-mini"></span>
+                        <div class="${statusClass}" role="status" aria-label="Server status: ${motdText}">
+                            <span class="pulse-dot-mini" aria-hidden="true"></span>
                         </div>
                     </div>
                 `;
@@ -356,9 +356,9 @@
                         <div class="status-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1rem;">
                             <span class="status-label" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Server Status</span>
                             <div class="badge-status-wrap">
-                                <div class="${badgeClass}">
-                                    <span class="pulse-dot"></span>
-                                    <span>${badgeText}</span>
+                                <div class="${badgeClass}" role="status" aria-label="Server status: ${badgeText}">
+                                    <span class="pulse-dot" aria-hidden="true"></span>
+                                    <span aria-hidden="true">${badgeText}</span>
                                 </div>
                             </div>
                         </div>
