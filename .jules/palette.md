@@ -1,0 +1,3 @@
+## 2024-07-04 - Screen Reader Compatibility for Status Badges
+**Learning:** Screen readers often struggle to convey the meaning of dynamic visual status indicators (like pulsing dots) when their state changes frequently or when they lack explicit context. A pulsing dot alone does not convey meaning to a non-visual user.
+**Action:** Always add `role="status"` and a descriptive `aria-label` to dynamic status containers. Explicitly hide decorative or redundant visual status indicators (e.g., pulsing dots) with `aria-hidden="true"` so they do not clutter the screen reader's output or cause confusion.
