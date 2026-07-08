@@ -26,6 +26,9 @@ zone   = "us-central1-a"
 # Discord Webhook URL for whitelist requests
 discord_webhook_url = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
 
+# Admin Passcode for accessing the web admin portal
+admin_passcode = "your-secure-admin-password"
+
 
 
 # Set to false to disable DNS autostart (forcing manual passcode entry on portal)

@@ -1,123 +1,231 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Hub - GCP Minecraft On-Demand</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>GCP Minecraft On-Demand - Player Portal</title>
     <meta name="description" content="Check server status, copy connection details, and request whitelisting for the on-demand Minecraft server.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Be+Vietnam+Pro:wght@400;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/theme.js"></script>
+    <style>
+        body {
+            background-color: #05110a;
+            background-image: linear-gradient(rgba(5, 17, 10, 0.85), rgba(5, 17, 10, 0.85)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s');
+            background-attachment: fixed;
+            background-position: center;
+            background-size: cover;
+            overflow-x: hidden;
+        }
+
+        .pixel-border-outer {
+            border: 1px solid rgba(161, 141, 122, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .wood-plank {
+            background-color: #f39c12;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-bottom: 2px solid #865300;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            border-radius: 0.125rem;
+        }
+        .wood-plank:hover {
+            background-color: #ffbe70;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
+        }
+        .wood-plank:active {
+            border-bottom-width: 1px;
+            transform: translateY(1px);
+        }
+
+        .stone-card {
+            background-color: rgba(21, 34, 27, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(161, 141, 122, 0.15);
+            border-top: 2px solid #F39C12;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+
+        .input-field {
+            background-color: rgba(5, 17, 10, 0.7);
+            border: 1px solid rgba(52, 94, 55, 0.5);
+            color: #d7e6db;
+            padding: 8px 12px;
+            appearance: none;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #F39C12;
+            background-color: rgba(5, 17, 10, 0.9);
+            box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+        }
+
+        .experience-bar-bg {
+            background-color: rgba(5, 17, 10, 0.5);
+            height: 3px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .experience-bar-fill {
+            height: 100%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(9, 22, 15, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #F39C12;
+            border-radius: 2px;
+        }
+    </style>
 </head>
-<body>
-    <main class="container directory-container fade-in">
-        <!-- Back to Project Landing -->
-        <div class="back-link-wrapper">
-            <a href="index.html" class="back-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                Project Landing
-            </a>
-        </div>
+<body class="font-body-md text-on-surface min-h-screen">
+    <!-- TopNavBar Container -->
+    <div id="global-navbar" data-active-tab="servers"></div>
 
-        <!-- Left Sidebar: Server List -->
-        <div class="directory-panel directory-left">
-            <div class="panel-title-group">
-                <h3 class="panel-title">Servers Directory</h3>
-                <a href="admin.html" class="btn btn-primary btn-mini text-no-decoration">⚙️ Admin</a>
-            </div>
-            <div class="search-wrapper">
-                <input type="text" id="search-input" class="search-input" placeholder="🔍 Search servers..." autocomplete="off">
-            </div>
-            <div class="server-list-scroll" id="server-list">
-                <!-- Dynamically populated -->
-            </div>
-            <div class="directory-buttons panel-action-footer">
-                <button type="button" id="add-btn" class="btn btn-secondary flex-1">➕ Add Server</button>
-                <button type="button" id="refresh-btn" class="btn btn-primary flex-1">🔄 Refresh All</button>
-            </div>
-        </div>
+    <!-- Persistent Back Link Row (Resolves the bug where the back button disappears) -->
+    <div class="max-w-container-max mx-auto px-margin pt-4">
+        <a href="index.html" class="inline-flex items-center gap-2 text-primary hover:text-gold-accent font-label-lg uppercase transition-colors">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            Project Landing
+        </a>
+    </div>
 
-        <!-- Right Panel: Details -->
-        <div class="directory-panel directory-right" id="details-panel">
-            <div class="empty-state">
-                <div class="empty-state-icon">🎮</div>
-                <p class="empty-state-text">Select a server from the directory list to view connection details, check status, or request whitelist access.</p>
+    <!-- Main Grid Content -->
+    <main class="max-w-container-max mx-auto px-margin py-base grid grid-cols-1 md:grid-cols-12 gap-gutter mt-2 mb-24">
+        <!-- Left Column: Servers Directory -->
+        <aside class="md:col-span-4 space-y-6">
+            <div class="stone-card p-6 flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-headline-lg text-headline-lg-mobile text-white uppercase tracking-tight">Servers</h2>
+                    <a href="admin.html" class="wood-plank px-3 py-1 flex items-center gap-1 text-no-decoration text-white font-label-lg text-label-lg">
+                        <span class="material-symbols-outlined text-sm">settings</span>
+                        <span>ADMIN</span>
+                    </a>
+                </div>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                    <input id="search-input" class="input-field w-full pl-10 font-label-lg" placeholder="Search servers..." type="text"/>
+                </div>
+                <!-- Server list scroll container -->
+                <div class="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-2" id="server-list">
+                    <!-- Dynamically populated by play.js -->
+                </div>
+                <div class="grid grid-cols-2 gap-3 pt-4 border-t-2 border-on-secondary-fixed-variant">
+                    <button id="add-btn" class="wood-plank w-full py-3 flex items-center justify-center gap-2 text-white">
+                        <span class="material-symbols-outlined">add</span>
+                        <span class="font-label-lg text-label-lg uppercase">Add</span>
+                    </button>
+                    <button id="refresh-btn" class="bg-surface-variant text-on-surface border-b-4 border-surface-container-high w-full py-3 flex items-center justify-center gap-2 hover:bg-surface-bright transition-all">
+                        <span class="material-symbols-outlined">refresh</span>
+                        <span class="font-label-lg text-label-lg uppercase">Refresh</span>
+                    </button>
+                </div>
             </div>
-        </div>
+        </aside>
+
+        <!-- Right Column: Detail View & Dynamic Bento Grid -->
+        <section class="md:col-span-8 space-y-6" id="details-panel">
+            <!-- Dynamically populated by play.js -->
+            <div class="stone-card p-margin flex flex-col items-center justify-center text-center py-20">
+                <div class="w-16 h-16 bg-surface-container-high pixel-card flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-4xl text-primary animate-pulse">sports_esports</span>
+                </div>
+                <p class="font-title-md text-on-surface max-w-sm">
+                    Select a server from the directory list to view connection details, check status, or request whitelist access.
+                </p>
+            </div>
+        </section>
     </main>
 
     <!-- Modals -->
     <!-- Add Server Modal -->
-    <div id="add-modal" class="wood-modal hidden">
-        <div class="wood-modal-content">
-            <div class="wood-modal-header">
-                <h3>Add Custom Server</h3>
+    <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="stone-card w-full max-w-md p-6 flex flex-col gap-4 m-4">
+            <div class="flex justify-between items-center border-b-2 border-on-secondary-fixed-variant pb-2">
+                <h3 class="font-headline-lg text-title-md text-white uppercase">Add Custom Server</h3>
             </div>
-            <form id="add-form" class="wood-modal-body">
-                <div class="form-field">
-                    <label for="add-name-input">Server Name *</label>
-                    <input type="text" id="add-name-input" required autocomplete="off">
+            <form id="add-form" class="flex flex-col gap-4">
+                <div class="space-y-1">
+                    <label for="add-name-input" class="block font-label-lg text-on-surface-variant uppercase">Server Name *</label>
+                    <input type="text" id="add-name-input" class="input-field w-full font-label-lg" required autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <label for="add-domain-input">Connection Address (IP/Domain) *</label>
-                    <input type="text" id="add-domain-input" required autocomplete="off">
+                <div class="space-y-1">
+                    <label for="add-domain-input" class="block font-label-lg text-on-surface-variant uppercase">Connection Address *</label>
+                    <input type="text" id="add-domain-input" class="input-field w-full font-label-lg" required autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <label for="add-desc-input">Short Description</label>
-                    <input type="text" id="add-desc-input" autocomplete="off">
+                <div class="space-y-1">
+                    <label for="add-desc-input" class="block font-label-lg text-on-surface-variant uppercase">Short Description</label>
+                    <input type="text" id="add-desc-input" class="input-field w-full font-label-lg" autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <label for="add-api-input">Status API URL (Optional)</label>
-                    <input type="url" id="add-api-input" autocomplete="off" placeholder="For GCP On-Demand servers">
+                <div class="space-y-1">
+                    <label for="add-api-input" class="block font-label-lg text-on-surface-variant uppercase">Status API URL (Optional)</label>
+                    <input type="url" id="add-api-input" class="input-field w-full font-label-lg" autocomplete="off" placeholder="https://...">
                 </div>
-                <div id="add-modal-alert" class="modal-alert hidden"></div>
-                <div class="directory-buttons mt-2">
-                    <button type="submit" class="btn btn-secondary btn-med">Add Server</button>
-                    <button type="button" id="close-add-btn" class="btn btn-primary btn-med">Cancel</button>
+                <div class="grid grid-cols-2 gap-3 pt-4 border-t-2 border-on-secondary-fixed-variant/50">
+                    <button type="submit" class="wood-plank w-full py-3 flex items-center justify-center gap-2 text-white">
+                        <span class="font-label-lg text-label-lg uppercase">Add Server</span>
+                    </button>
+                    <button type="button" id="close-add-btn" class="bg-surface-variant text-on-surface border-b-4 border-surface-container-high w-full py-3 flex items-center justify-center hover:bg-surface-bright transition-all">
+                        <span class="font-label-lg text-label-lg uppercase">Cancel</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Edit Server Modal -->
-    <div id="edit-modal" class="wood-modal hidden">
-        <div class="wood-modal-content">
-            <div class="wood-modal-header">
-                <h3>Edit Custom Server</h3>
+    <div id="edit-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="stone-card w-full max-w-md p-6 flex flex-col gap-4 m-4">
+            <div class="flex justify-between items-center border-b-2 border-on-secondary-fixed-variant pb-2">
+                <h3 class="font-headline-lg text-title-md text-white uppercase">Edit Custom Server</h3>
             </div>
-            <form id="edit-form" class="wood-modal-body">
+            <form id="edit-form" class="flex flex-col gap-4">
                 <input type="hidden" id="edit-id-input">
-                <div class="form-field">
-                    <label for="edit-name-input">Server Name *</label>
-                    <input type="text" id="edit-name-input" required autocomplete="off">
+                <div class="space-y-1">
+                    <label for="edit-name-input" class="block font-label-lg text-on-surface-variant uppercase">Server Name *</label>
+                    <input type="text" id="edit-name-input" class="input-field w-full font-label-lg" required autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <label for="edit-domain-input">Connection Address (IP/Domain) *</label>
-                    <input type="text" id="edit-domain-input" required autocomplete="off">
+                <div class="space-y-1">
+                    <label for="edit-domain-input" class="block font-label-lg text-on-surface-variant uppercase">Connection Address *</label>
+                    <input type="text" id="edit-domain-input" class="input-field w-full font-label-lg" required autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <label for="edit-desc-input">Short Description</label>
-                    <input type="text" id="edit-desc-input" autocomplete="off">
+                <div class="space-y-1">
+                    <label for="edit-desc-input" class="block font-label-lg text-on-surface-variant uppercase">Short Description</label>
+                    <input type="text" id="edit-desc-input" class="input-field w-full font-label-lg" autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <label for="edit-api-input">Status API URL (Optional)</label>
-                    <input type="url" id="edit-api-input" autocomplete="off">
+                <div class="space-y-1">
+                    <label for="edit-api-input" class="block font-label-lg text-on-surface-variant uppercase">Status API URL (Optional)</label>
+                    <input type="url" id="edit-api-input" class="input-field w-full font-label-lg" autocomplete="off">
                 </div>
-                <div id="edit-modal-alert" class="modal-alert hidden"></div>
-                <div class="directory-buttons mt-2">
-                    <button type="submit" class="btn btn-secondary btn-med">Save Changes</button>
-                    <button type="button" id="close-edit-btn" class="btn btn-primary btn-med">Cancel</button>
+                <div class="grid grid-cols-2 gap-3 pt-4 border-t-2 border-on-secondary-fixed-variant/50">
+                    <button type="submit" class="wood-plank w-full py-3 flex items-center justify-center gap-2 text-white">
+                        <span class="font-label-lg text-label-lg uppercase">Save</span>
+                    </button>
+                    <button type="button" id="close-edit-btn" class="bg-surface-variant text-on-surface border-b-4 border-surface-container-high w-full py-3 flex items-center justify-center hover:bg-surface-bright transition-all">
+                        <span class="font-label-lg text-label-lg uppercase">Cancel</span>
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Global Toast Alert (Woodland styled) -->
-    <div id="global-toast" class="dir-alert-toast hidden"></div>
+    <!-- Global Toast Alert -->
+    <div id="global-toast" class="hidden"></div>
 
-    <!-- Script that loads our GCP Primary Server Config -->
+    <!-- Config scripts -->
     <script src="js/config.js"></script>
-
+    <script src="js/toast.js"></script>
+    <script src="js/navbar.js"></script>
     <script src="js/play.js"></script>
 </body>
 </html>

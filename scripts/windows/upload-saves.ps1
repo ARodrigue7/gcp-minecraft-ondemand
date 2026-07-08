@@ -4,8 +4,8 @@
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$TerraformDir = Join-Path $ScriptDir "..\terraform"
-$SavesDir = Join-Path $ScriptDir "..\saves"
+$TerraformDir = Join-Path $ScriptDir "..\..\terraform"
+$SavesDir = Join-Path $ScriptDir "..\..\saves"
 
 Write-Host "=== Minecraft On-Demand: Upload Saves ===" -ForegroundColor Cyan
 

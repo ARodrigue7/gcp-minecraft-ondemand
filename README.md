@@ -1,5 +1,7 @@
 # 🎮 GCP Minecraft On-Demand (Scale-to-Zero)
 
+[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand&cloudshell_tutorial=tutorial.md)
+
 An event-driven, cost-optimized infrastructure deployment that hosts a containerized Minecraft server on Google Cloud Platform (GCP). The architecture scales to **zero** compute usage when no players are online and automatically wakes up on-demand when a connection or DNS resolution is initiated.
 
 This implementation acts as a cloud-native GCP equivalent to AWS on-demand server architectures, bringing down operational costs to a bare minimum (~$0.40/month for storage + ~$0.03/hour of active play).
@@ -41,8 +43,29 @@ Before deploying, ensure you have:
 
 ### Phase 1: Google Cloud Platform (GCP) Preparation
 
-#### 1. Enable Required APIs
-Run the following command using the `gcloud` CLI to enable the necessary APIs in your GCP project:
+#### Method A: Interactive Setup Wizard (Recommended)
+We've included an automated script that checks your dependencies, authenticates you, prompts you for your configuration variables, and enables all required GCP APIs automatically.
+
+**Mac/Linux:**
+```bash
+# Make the script executable
+chmod +x scripts/linux/setup.sh
+# Run the interactive wizard
+./scripts/linux/setup.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\scripts\windows\setup.ps1
+```
+
+#### Method B: Manual Setup
+If you prefer to configure things manually, ensure your local terminal has Application Default Credentials configured:
+```bash
+gcloud auth application-default login
+```
+
+Then, manually enable the required APIs in your GCP project:
 ```bash
 gcloud services enable \
   compute.googleapis.com \
@@ -54,17 +77,13 @@ gcloud services enable \
   artifactregistry.googleapis.com
 ```
 
-#### 2. Authenticate Local Environment
-Ensure your local terminal has Application Default Credentials configured so Terraform can deploy resources:
-```bash
-gcloud auth application-default login
-```
-
 ---
 
 ### Phase 2: Configure & Apply Terraform
 
 #### 1. Set Up Variables
+*(If you used Method A, this is already done for you! You can skip to step 2).*
+
 Copy the example variables file to your active configuration:
 ```bash
 cp terraform/terraform.tfvars.example terraform/terraform.tfvars
@@ -75,6 +94,7 @@ Open `terraform/terraform.tfvars` and configure the values:
 * `domain_name`: The subdomain players will use (e.g., `mc.yourdomain.com`).
 * `dns_zone_name`: Logical name for the zone inside GCP (e.g., `mc-yourdomain-com`).
 * `discord_webhook_url`: Your private Discord Webhook URL.
+* `admin_passcode`: Your secure password for accessing the admin portal.
 * `idle_timeout_seconds`: Inactivity seconds before auto-shutdown (e.g., `600` for 10 minutes).
 
 #### 2. Deploy Infrastructure
@@ -88,10 +108,15 @@ When prompted, type `yes` to confirm.
 
 > [!IMPORTANT]
 > **If you are cloning or forking this repository:**
-> The project includes a remote GCS backend configured in `terraform/backend.tf` pointing to a specific state bucket. 
-> To deploy in your own GCP project:
-> * **Local Backend (easiest):** Simply delete the `terraform/backend.tf` file. Terraform will default to local state storage (`terraform.tfstate`).
-> * **Remote GCS Backend:** Create a private bucket in your own GCP project (with Object Versioning enabled) and update the `bucket` parameter in `terraform/backend.tf` to match your GCS bucket name before running `terraform init`.
+> The default configuration stores Terraform state locally (`terraform.tfstate`), which is the easiest way to deploy DIY.
+> 
+> **To use a Remote GCS Backend (Optional):**
+> 1. Create a private GCS bucket in your own GCP project (with Object Versioning enabled).
+> 2. Copy the example backend configuration:
+>    ```bash
+>    cp terraform/backend.tf.example terraform/backend.tf
+>    ```
+> 3. Update the `bucket` parameter in `terraform/backend.tf` to match your GCS bucket name before running `terraform init`.
 
 
 > [!NOTE]
@@ -190,13 +215,13 @@ This repository includes helper scripts to easily upload and download your world
 
 ### Download World Data from Server
 Downloads the current Minecraft world from the cloud to your local `saves/` directory.
-* **Mac/Linux:** `./scripts/download-saves.sh`
-* **Windows (PowerShell):** `.\scripts\download-saves.ps1`
+* **Mac/Linux:** `./scripts/linux/download-saves.sh`
+* **Windows (PowerShell):** `.\scripts\windows\download-saves.ps1`
 
 ### Upload Local World Data to Server
 Uploads your local files in the `saves/` directory back up to the cloud.
-* **Mac/Linux:** `./scripts/upload-saves.sh`
-* **Windows (PowerShell):** `.\scripts\upload-saves.ps1`
+* **Mac/Linux:** `./scripts/linux/upload-saves.sh`
+* **Windows (PowerShell):** `.\scripts\windows\upload-saves.ps1`
 
 ---
 

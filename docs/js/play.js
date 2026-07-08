@@ -10,7 +10,7 @@
         const detailsPanel = document.getElementById("details-panel");
         const addBtn = document.getElementById("add-btn");
         const refreshBtn = document.getElementById("refresh-btn");
-        const globalToast = document.getElementById("global-toast");
+
 
         // Modals
         const addModal = document.getElementById("add-modal");
@@ -133,7 +133,7 @@
             });
         }
 
-        function renderServers() {
+            function renderServers() {
             const query = searchInput.value.toLowerCase().trim();
             let list = getMasterList();
 
@@ -163,7 +163,7 @@
 
             if (list.length === 0) {
                 serverList.innerHTML = `
-                    <div class="empty-state" style="padding: 2rem 1rem;">
+                    <div class="empty-state text-on-surface-variant font-mono text-center py-6">
                         No servers found.
                     </div>
                 `;
@@ -175,69 +175,75 @@
                 const isFav = favorites.includes(server.id) || server.id === "primary";
                 const state = statuses[server.id] || { status: "checking" };
 
-                let statusClass = "status-offline";
+                let statusBadgeHtml = "";
                 let motdText = server.description;
 
                 if (state.status === "checking") {
-                    statusClass = "status-starting";
+                    statusBadgeHtml = `<span class="w-3 h-3 bg-on-surface-variant rounded-full animate-pulse"></span>`;
                     motdText = "Checking status...";
                 } else if (state.status === "RUNNING") {
-                    statusClass = "status-online";
+                    statusBadgeHtml = `<span class="w-3 h-3 bg-secondary rounded-full"></span>`;
                     motdText = "Online - Click to view connection info";
                 } else if (state.status === "TERMINATED") {
-                    statusClass = "status-offline";
+                    statusBadgeHtml = `<span class="w-3 h-3 bg-error rounded-full"></span>`;
                     motdText = "Offline - Click to start server";
                 } else if (["PROVISIONING", "STAGING", "STARTING"].includes(state.status)) {
-                    statusClass = "status-starting";
+                    statusBadgeHtml = `<span class="w-3 h-3 bg-primary rounded-full animate-pulse"></span>`;
                     motdText = "Starting server instance...";
                 } else {
                     if (!server.statusUrl) {
-                        statusClass = "status-online";
+                        statusBadgeHtml = `<span class="w-3 h-3 bg-secondary rounded-full"></span>`;
                         motdText = server.description;
+                    } else {
+                        statusBadgeHtml = `<span class="w-3 h-3 bg-error rounded-full"></span>`;
+                        motdText = "Offline";
                     }
                 }
 
-                const starredClass = isFav ? "star-btn starred" : "star-btn";
+                const starText = isFav ? "★" : "☆";
+                const starColor = isFav ? "text-gold-accent" : "text-on-surface-variant hover:text-gold-accent";
                 
                 let badgesHtml = "";
                 if (server.id === "primary") {
-                    badgesHtml += `<span class="badge-tag primary">Primary</span> `;
+                    badgesHtml += `<span class="bg-primary text-on-primary-fixed px-2 py-0.5 text-[10px] font-bold uppercase">PRIMARY</span> `;
                 }
                 if (server.isPrivate) {
-                    badgesHtml += `<span class="badge-tag private">Private</span> `;
+                    badgesHtml += `<span class="bg-grass-deep text-secondary px-2 py-0.5 text-[10px] font-bold uppercase border border-secondary">PRIVATE</span> `;
                 } else {
-                    badgesHtml += `<span class="badge-tag public">Public</span> `;
+                    badgesHtml += `<span class="bg-surface-variant text-on-surface-variant px-2 py-0.5 text-[10px] font-bold uppercase border border-on-surface-variant">PUBLIC</span> `;
                 }
 
                 const li = document.createElement("div");
-                li.className = `server-row-item ${isSelected ? "selected" : ""}`;
+                li.className = isSelected 
+                    ? `bg-primary/10 border border-primary/50 p-4 rounded-sm relative group cursor-pointer transition-all hover:bg-primary/15`
+                    : `bg-background/60 border border-white/10 p-4 rounded-sm hover:border-primary/40 transition-all cursor-pointer hover:bg-surface-variant/40`;
                 
                 li.addEventListener("click", (e) => {
-                    if (!e.target.classList.contains("star-btn")) {
+                    if (!e.target.closest(".star-btn")) {
                         selectServer(server.id);
                     }
                 });
                 li.addEventListener("dblclick", (e) => {
-                    if (!e.target.classList.contains("star-btn")) {
+                    if (!e.target.closest(".star-btn")) {
                         triggerJoinById(server.id);
                     }
                 });
 
                 li.innerHTML = `
-                    <button type="button" class="${starredClass}" onclick="event.stopPropagation(); toggleStar('${server.id}')" title="Toggle Favorite">★</button>
-                    <div class="row-details">
-                        <div class="row-name-group">
-                            <span class="row-name">${server.name}</span>
-                            ${badgesHtml}
+                    <div class="flex justify-between items-start">
+                        <div class="flex gap-2 items-center">
+                            <button type="button" class="star-btn font-bold text-lg focus:outline-none ${starColor}" onclick="event.stopPropagation(); toggleStar('${server.id}')" title="Toggle Favorite">
+                                ${starText}
+                            </button>
+                            <h3 class="font-title-md ${isSelected ? 'text-white' : 'text-on-surface-variant'}">${server.name}</h3>
                         </div>
-                        <div class="row-motd">${motdText}</div>
-                        <div class="row-domain">${server.domain}</div>
+                        ${statusBadgeHtml}
                     </div>
-                    <div class="row-status">
-                        <div class="${statusClass}">
-                            <span class="pulse-dot-mini"></span>
-                        </div>
+                    <div class="flex gap-2 mt-2">
+                        ${badgesHtml}
                     </div>
+                    <p class="text-on-surface-variant text-label-sm mt-2 font-mono ${isSelected ? 'italic' : ''}">${server.domain}</p>
+                    <p class="text-xs mt-1 font-bold ${state.status === 'RUNNING' ? 'text-secondary' : 'text-error'}">${motdText}</p>
                 `;
                 serverList.appendChild(li);
             });
@@ -270,119 +276,208 @@
         function renderSelectedServerDetails(server) {
             const state = statuses[server.id] || { status: "checking" };
             
-            let badgeClass = "badge loading";
-            let badgeText = "Checking...";
+            let badgeClass = "bg-error-container/20 text-error border border-error/40 rounded-full";
+            let dotClass = "bg-error shadow-[0_0_6px_rgba(255,180,171,0.5)]";
+            let badgeText = "OFFLINE";
             if (state.status === "RUNNING") {
-                badgeClass = "badge online";
-                badgeText = "Online";
-            } else if (state.status === "TERMINATED") {
-                badgeClass = "badge offline";
-                badgeText = "Offline";
+                badgeClass = "bg-secondary-container/20 text-secondary border border-secondary/40 rounded-full";
+                dotClass = "bg-secondary shadow-[0_0_6px_rgba(163,210,161,0.5)]";
+                badgeText = "ONLINE";
+            } else if (state.status === "checking") {
+                badgeClass = "bg-primary-container/20 text-primary border border-primary/40 rounded-full";
+                dotClass = "bg-primary animate-pulse shadow-[0_0_6px_rgba(255,190,112,0.5)]";
+                badgeText = "CHECKING...";
             } else if (["PROVISIONING", "STAGING", "STARTING"].includes(state.status)) {
-                badgeClass = "badge starting";
-                badgeText = "Starting...";
+                badgeClass = "bg-primary-container/20 text-primary border border-primary/40 rounded-full";
+                dotClass = "bg-primary animate-pulse shadow-[0_0_6px_rgba(255,190,112,0.5)]";
+                badgeText = "STARTING...";
             } else if (state.status === "unknown" && !server.statusUrl) {
-                badgeClass = "badge online";
-                badgeText = "Online";
+                badgeClass = "bg-secondary-container/20 text-secondary border border-secondary/40 rounded-full";
+                dotClass = "bg-secondary shadow-[0_0_6px_rgba(163,210,161,0.5)]";
+                badgeText = "ONLINE";
             }
 
             let whitelistFormHtml = "";
             if (server.isPrivate) {
                 if (server.id === "primary") {
                     whitelistFormHtml = `
-                        <div class="whitelist-section">
-                            <h4 class="section-title">Request Whitelist Access</h4>
-                            <p class="section-desc">Submit your Minecraft username. The admin will get a notification on Discord to whitelist you.</p>
-                            <form id="whitelist-form" class="whitelist-form">
-                                <div class="form-field" style="margin-bottom: 1rem;">
-                                    <label for="mc-username" class="field-label" style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 600;">Minecraft Username <span class="required" aria-hidden="true" style="color: #ef4444;">*</span></label>
-                                    <input type="text" id="mc-username" placeholder="e.g. Steve" required aria-required="true" aria-describedby="username-hint" autocomplete="off" style="width: 100%; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none;">
-                                    <p id="username-hint" class="field-hint" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.4rem; opacity: 0.8;">Enter your exact in-game name (3-16 characters).</p>
+                        <div class="mt-10 pt-8 border-t border-white/10">
+                            <h3 class="font-headline-lg text-sm text-white uppercase mb-2 tracking-widest">Request Whitelist</h3>
+                            <p class="text-on-surface text-[11px] mb-4 opacity-80">Submit your username for manual cloud-identity verification.</p>
+                            <form id="whitelist-form" class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1">
+                                    <input class="input-field w-full font-label-lg text-sm rounded-sm" id="mc-username" placeholder="In-game Name..." type="text" required autocomplete="off"/>
                                 </div>
-                                <button type="submit" id="submit-btn" class="btn btn-secondary btn-block" style="padding: 0.75rem; width: 100%;">Submit Whitelist Request</button>
+                                <button type="submit" id="submit-btn" class="bg-surface-variant hover:bg-surface-bright text-on-surface px-8 py-2.5 rounded-sm border border-white/10 font-label-lg text-xs uppercase tracking-widest transition-all">
+                                    <span class="font-label-lg text-xs uppercase tracking-widest">Submit</span>
+                                </button>
                             </form>
-                            <div id="form-message" class="form-message hidden" role="alert" aria-live="polite" style="margin-top: 1rem; padding: 0.75rem; border-radius: 10px; font-size: 0.85rem;"></div>
+                            <div id="form-message" class="hidden mt-4 p-4 text-sm font-label-lg border-2"></div>
                         </div>
                     `;
                 } else {
                     whitelistFormHtml = `
-                        <div class="whitelist-section" style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
+                        <div class="mt-10 pt-8 border-t border-white/10 text-on-surface text-[11px] opacity-80">
                             🛡️ This server is private. To request whitelisting, please contact the server administrator directly.
                         </div>
                     `;
                 }
             } else {
                 whitelistFormHtml = `
-                    <div class="whitelist-section" style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;">
+                    <div class="mt-10 pt-8 border-t border-white/10 text-on-surface text-[11px] opacity-80">
                         🌳 This server is public! Anyone can join immediately. No whitelisting required.
                     </div>
                 `;
             }
 
-            let joinBtnText = "🎮 Join Server";
+            let joinBtnText = "Join Server";
             let passcodeBoxHtml = "";
             let joinBtnDisabled = "";
+            let mainBtnIcon = "sports_esports";
             if (server.statusUrl && state.status === "TERMINATED") {
-                joinBtnText = "⚡ Wake Up Server";
+                joinBtnText = "Wake Up Cluster";
+                mainBtnIcon = "bolt";
                 passcodeBoxHtml = `
-                    <div class="form-field" style="margin-bottom: 1rem;">
-                        <label for="server-username" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Minecraft Username</label>
-                        <input type="text" id="server-username" placeholder="e.g. Steve" style="width: 100%; background: rgba(9, 26, 16, 0.6); border: 3px solid var(--wood-border); border-radius: 12px; color: var(--text-primary); padding: 0.75rem 1rem; font-size: 0.95rem; outline: none; margin-bottom: 0.5rem;">
+                    <div class="space-y-4">
+                        <div class="space-y-2">
+                            <label for="server-username" class="block font-label-lg text-on-surface uppercase text-[10px] tracking-widest opacity-80">Minecraft Username</label>
+                            <input class="input-field w-full font-label-lg text-sm rounded-sm" id="server-username" placeholder="e.g. Steve" type="text" autocomplete="off"/>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="server-passcode" class="block font-label-lg text-on-surface uppercase text-[10px] tracking-widest opacity-80">Access Passcode</label>
+                            <input class="input-field w-full font-label-lg text-sm rounded-sm" id="server-passcode" placeholder="Enter code..." type="password" autocomplete="off"/>
+                        </div>
                     </div>
                 `;
             } else if (state.status === "STARTING" || state.status === "PROVISIONING" || state.status === "STAGING") {
-                joinBtnText = "⏳ Booting up...";
+                joinBtnText = "Booting up...";
+                mainBtnIcon = "hourglass_empty";
                 joinBtnDisabled = "disabled";
             }
 
             let customActionsHtml = "";
             if (server.isCustom) {
                 customActionsHtml = `
-                    <div class="directory-buttons" style="margin-top: 1rem; border-top: 2px dashed rgba(255, 255, 255, 0.08); padding-top: 1rem;">
-                        <button type="button" id="edit-btn" class="btn btn-primary" style="flex: 1;">✏️ Edit Details</button>
-                        <button type="button" id="delete-btn" class="btn btn-primary" style="flex: 1; background: linear-gradient(to bottom, #f87171, #ef4444); border-color: #b91c1c; border-bottom-color: #991b1b;">🗑️ Delete</button>
+                    <div class="flex gap-4 mt-6 border-t border-white/10 pt-4">
+                        <button type="button" id="edit-btn" class="wood-plank px-6 py-2.5 flex-1 flex items-center justify-center gap-2 text-white">
+                            <span class="material-symbols-outlined text-base">edit</span>
+                            <span class="font-label-lg text-xs uppercase tracking-widest">Edit Details</span>
+                        </button>
+                        <button type="button" id="delete-btn" class="px-6 py-2.5 flex-1 flex items-center justify-center gap-2 transition-all duration-100 text-white font-label-lg uppercase bg-red-800 border border-red-950 rounded-sm hover:bg-red-700">
+                            <span class="material-symbols-outlined text-base">delete</span>
+                            <span class="font-label-lg text-xs uppercase tracking-widest" id="delete-btn-text">Delete</span>
+                        </button>
                     </div>
                 `;
             }
 
+            // Dynamic Bento Grid Metrics based on Status
+            let uptimeVal = "0.0%";
+            let uptimeFillWidth = "w-0";
+            let activePlayersVal = "0 / 20";
+            let activePlayersFillWidth = "w-0";
+            let ramVal = "0.0 GB";
+            let ramFillWidth = "w-[5%]";
+
+            if (state.status === "RUNNING") {
+                uptimeVal = "99.8%";
+                uptimeFillWidth = "w-[99%]";
+                activePlayersVal = "Active";
+                activePlayersFillWidth = "w-[50%]";
+                ramVal = "3.2 GB";
+                ramFillWidth = "w-[80%]";
+            } else if (state.status === "STARTING" || state.status === "PROVISIONING" || state.status === "STAGING") {
+                uptimeVal = "Staging...";
+                uptimeFillWidth = "w-[30%] animate-pulse";
+                activePlayersVal = "Booting";
+                activePlayersFillWidth = "w-0";
+                ramVal = "Allocating";
+                ramFillWidth = "w-[20%] animate-pulse";
+            }
+
             detailsPanel.innerHTML = `
-                <div class="details-wrapper">
-                    <div>
-                        <h3 class="panel-title" style="margin-bottom: 0.5rem; text-shadow: 2px 2px 0px var(--wood-border);">${server.name}</h3>
-                        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">${server.description}</p>
+                <div class="stone-card p-6 md:p-8 mb-4">
+                    <div class="flex flex-col gap-1.5 mb-8">
+                        <h1 class="font-display-lg text-headline-lg text-white uppercase tracking-tighter leading-none">${server.name}</h1>
+                        <p class="text-secondary font-mono text-sm tracking-tight flex items-center gap-2">
+                            <span class="w-1 h-1 bg-secondary rounded-full"></span>
+                            Cluster: main-scale-zero | Cloud: GCP-US-CENTRAL1
+                        </p>
                     </div>
                     
-                    <div class="status-panel" style="margin-bottom: 0; padding: 1.5rem; background: rgba(9, 26, 16, 0.45); border: 2px solid var(--forest-border); border-radius: 20px;">
-                        <div class="status-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed rgba(255,255,255,0.08); padding-bottom: 0.75rem; margin-bottom: 1rem;">
-                            <span class="status-label" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase;">Server Status</span>
-                            <div class="badge-status-wrap">
-                                <div class="${badgeClass}">
-                                    <span class="pulse-dot"></span>
-                                    <span>${badgeText}</span>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Connection Profile -->
+                        <div class="bg-surface/60 p-5 border border-white/5 rounded-sm relative">
+                            <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
+                                <span class="font-label-lg text-on-surface uppercase text-[10px] tracking-[0.2em] font-bold">CONNECTION PROFILE</span>
+                                <div class="flex items-center gap-2 px-3 py-1 ${badgeClass}">
+                                    <span class="w-1.5 h-1.5 ${dotClass} rounded-full"></span>
+                                    <span class="font-bold text-[10px] tracking-widest">${badgeText}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <label class="block font-label-lg text-on-surface uppercase text-[10px] tracking-widest opacity-80">SERVER IP</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="server-ip" class="bg-background/90 flex-1 px-4 py-2.5 border border-grass-lush/40 rounded-sm font-mono text-gold-accent select-all overflow-hidden text-ellipsis text-xs font-bold focus:outline-none" value="${server.domain}" readonly>
+                                    <button id="copy-btn" class="bg-surface-variant hover:bg-surface-bright p-2.5 flex items-center justify-center rounded-sm border border-white/10 transition-all">
+                                        <span class="material-symbols-outlined text-base" id="copy-icon">content_copy</span>
+                                        <span class="hidden" id="copy-text">Copy</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="connection-box">
-                            <div class="connection-label">Server Address</div>
-                            <div class="connection-input-group">
-                                <input type="text" id="server-ip" value="${server.domain}" readonly>
-                                <button id="copy-btn" class="btn btn-primary" title="Copy Address">
-                                    <span id="copy-icon">📋</span>
-                                    <span id="copy-text">Copy</span>
-                                </button>
-                            </div>
-                        </div>
+                        
+                        <!-- Inputs Section -->
+                        ${passcodeBoxHtml || `<div class="flex items-center justify-center bg-surface/40 p-5 border border-dashed border-white/10 text-on-surface-variant font-mono text-center text-xs rounded-sm">No configuration inputs required while server is online.</div>`}
                     </div>
-
-                    ${passcodeBoxHtml}
-
-                    <button type="button" id="main-join-btn" class="btn btn-secondary" style="width: 100%; font-size: 1.1rem; padding: 1rem;" ${joinBtnDisabled}>
-                        ${joinBtnText}
-                    </button>
-
+ 
+                    <div class="mt-8">
+                        <button class="wood-plank w-full py-4 flex items-center justify-center gap-3 group text-white focus:outline-none" id="main-join-btn" ${joinBtnDisabled}>
+                            <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">${mainBtnIcon}</span>
+                            <span class="font-display-lg text-title-md uppercase tracking-[0.15em]">${joinBtnText}</span>
+                        </button>
+                        <p class="text-center text-on-surface text-[11px] mt-4 italic opacity-80 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-xs">info</span>
+                            Est. wake: ~45s. GCP Instance autosleeps after 15m idle.
+                        </p>
+                    </div>
+ 
                     ${whitelistFormHtml}
                     ${customActionsHtml}
+                </div>
+ 
+                <!-- Stats Mini-Bento -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="stone-card p-4 border-t-primary/60">
+                        <div class="flex items-center gap-2 text-primary mb-1">
+                            <span class="material-symbols-outlined text-base">query_stats</span>
+                            <span class="font-label-lg uppercase text-[10px] tracking-[0.2em] font-bold">UPTIME</span>
+                        </div>
+                        <div class="font-display-lg text-title-md text-white">${uptimeVal}</div>
+                        <div class="experience-bar-bg mt-2.5 rounded-full">
+                            <div class="experience-bar-fill ${uptimeFillWidth} bg-primary"></div>
+                        </div>
+                    </div>
+                    <div class="stone-card p-4 border-t-secondary/60">
+                        <div class="flex items-center gap-2 text-secondary mb-1">
+                            <span class="material-symbols-outlined text-base">group</span>
+                            <span class="font-label-lg uppercase text-[10px] tracking-[0.2em] font-bold">ACTIVE</span>
+                        </div>
+                        <div class="font-display-lg text-title-md text-white">${activePlayersVal}</div>
+                        <div class="experience-bar-bg mt-2.5 rounded-full">
+                            <div class="experience-bar-fill ${activePlayersFillWidth} bg-secondary"></div>
+                        </div>
+                    </div>
+                    <div class="stone-card p-4 border-t-gold-accent/60">
+                        <div class="flex items-center gap-2 text-gold-accent mb-1">
+                            <span class="material-symbols-outlined text-base">memory</span>
+                            <span class="font-label-lg uppercase text-[10px] tracking-[0.2em] font-bold">MEMORY</span>
+                        </div>
+                        <div class="font-display-lg text-title-md text-white">${ramVal}</div>
+                        <div class="experience-bar-bg mt-2.5 rounded-full">
+                            <div class="experience-bar-fill ${ramFillWidth} bg-gold-accent"></div>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -403,12 +498,10 @@
                 navigator.clipboard.writeText(serverIpInput.value)
                     .then(() => {
                         copyText.textContent = "Copied!";
-                        copyIcon.textContent = "✅";
-                        copyBtn.classList.add("copied");
+                        copyIcon.textContent = "check";
                         setTimeout(() => {
                             copyText.textContent = "Copy";
-                            copyIcon.textContent = "📋";
-                            copyBtn.classList.remove("copied");
+                            copyIcon.textContent = "content_copy";
                         }, 2000);
                     });
             });
@@ -416,7 +509,9 @@
             mainJoinBtn.addEventListener("click", () => {
                 const usernameEl = document.getElementById("server-username");
                 const username = usernameEl ? usernameEl.value.trim() : "";
-                triggerJoin(server, "", username);
+                const passcodeEl = document.getElementById("server-passcode");
+                const passcode = passcodeEl ? passcodeEl.value.trim() : "";
+                triggerJoin(server, passcode, username);
             });
 
             if (whitelistForm) {
@@ -484,13 +579,13 @@
                 deleteBtn.addEventListener("click", () => {
                     if (!deleteBtn.classList.contains("confirming")) {
                         deleteBtn.classList.add("confirming");
-                        deleteBtn.innerHTML = "⚠️ Confirm Delete";
-                        deleteBtn.style.background = "#991b1b";
+                        document.getElementById("delete-btn-text").innerHTML = "Confirm Delete";
+                        deleteBtn.style.background = "#5c0d12";
                         
                         deleteTimeout = setTimeout(() => {
                             deleteBtn.classList.remove("confirming");
-                            deleteBtn.innerHTML = "🗑️ Delete";
-                            deleteBtn.style.background = "linear-gradient(to bottom, #f87171, #ef4444)";
+                            document.getElementById("delete-btn-text").innerHTML = "Delete";
+                            deleteBtn.style.background = "#990000";
                         }, 4000);
                     } else {
                         clearTimeout(deleteTimeout);
@@ -505,7 +600,11 @@
 
         function showFormMessage(element, text, type) {
             element.innerHTML = text;
-            element.className = `form-message ${type}`;
+            if (type === "success") {
+                element.className = "mt-4 p-4 text-sm font-label-lg bg-secondary-container text-secondary border-2 border-secondary";
+            } else {
+                element.className = "mt-4 p-4 text-sm font-label-lg bg-error-container text-error border-2 border-error";
+            }
             element.classList.remove("hidden");
         }
 
@@ -559,9 +658,13 @@
         function refreshAll() {
             selectedServerId = null;
             detailsPanel.innerHTML = `
-                <div class="empty-state">
-                    <div style="font-size: 3rem; margin-bottom: 1.5rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));">🎮</div>
-                    <p style="font-size: 1.05rem; line-height: 1.6; max-width: 280px; margin: 0 auto;">Select a server from the directory list to view connection details, check status, or request whitelist access.</p>
+                <div class="stone-card p-margin flex flex-col items-center justify-center text-center py-20">
+                    <div class="w-16 h-16 bg-surface-container-high pixel-card flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-4xl text-primary animate-pulse">sports_esports</span>
+                    </div>
+                    <p class="font-title-md text-on-surface max-w-sm">
+                        Select a server from the directory list to view connection details, check status, or request whitelist access.
+                    </p>
                 </div>
             `;
             statuses = {};
@@ -650,15 +753,7 @@
                 });
         }
 
-        function showToast(message, type) {
-            globalToast.textContent = message;
-            globalToast.className = `dir-alert-toast ${type}`;
-            globalToast.classList.remove("hidden");
-            
-            setTimeout(() => {
-                globalToast.classList.add("hidden");
-            }, 5000);
-        }
+
 
         // Initialize!
         setupEventListeners();

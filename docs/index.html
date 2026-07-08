@@ -1,50 +1,160 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>GCP Minecraft On-Demand</title>
     <meta name="description" content="An open-source, scale-to-zero Minecraft server architecture for Google Cloud Platform.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/theme.js"></script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pixel-bg {
+            background-image: linear-gradient(rgba(9, 22, 15, 0.9), rgba(9, 22, 15, 0.9)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCYPY4DQQQPb-sSIQL7UFYDmzqILn32Rk7qW4oXHs_vcT2LjhLCEFs7tlRlAl2YS6uM2CFC8uHtsSeH8GnpEm0gikc8M3Hi3wIWz1Lx9G3QxGcWUIsZBPQ-YuQnRZ5Dw3KFWjzN1TyUkLTPUcZImSHfmpoYLbR-V-rnRUzHDtm7DF8ZqkZq0NSoALnhEhIbxiVvg9o7rWuKq5qBucIeNXAelneSrSF2ITIxfeJon5C4RQJ_ejhwU8tBH3EzJL4mL6VdtLI_6fga5c8');
+            background-size: cover;
+            background-position: center;
+        }
+        .sleek-button {
+            border: 1px solid rgba(161, 141, 122, 0.3);
+            border-bottom: 2px solid rgba(161, 141, 122, 0.5);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sleek-button:active {
+            transform: translateY(1px);
+            border-bottom-width: 1px;
+        }
+        .primary-action {
+            background-color: #f39c12;
+            border-color: #d68910;
+            border-bottom-color: #b9770e;
+        }
+        .tactical-panel {
+            background-color: rgba(21, 34, 27, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(243, 156, 18, 0.2);
+        }
+        .refined-border {
+            border: 1px solid rgba(161, 141, 122, 0.2);
+        }
+        .active-tab {
+            position: relative;
+        }
+        .active-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #f39c12;
+        }
+    </style>
 </head>
-<body>
-    <main class="container">
-        <div class="glass-card fade-in">
-            <div class="icon-wrapper">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-lightning"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"/><path d="m13 12-3 5h4l-3 5"/></svg>
+<body class="bg-background text-on-surface font-body-md min-h-screen selection:bg-gold-accent selection:text-black">
+    <!-- TopNavBar Container -->
+    <div id="global-navbar" data-active-tab="landing"></div>
+    <main class="pixel-bg min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4" style="background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s'); background-size: cover; background-position: center;">
+        <!-- Tactical Content Container -->
+        <div class="tactical-panel w-full max-w-2xl p-8 relative">
+            <!-- Minimal Corner Accents -->
+            <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-gold-accent"></div>
+            <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-gold-accent"></div>
+            <div class="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-gold-accent"></div>
+            <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-gold-accent"></div>
+            <div class="flex flex-col items-center text-center space-y-6">
+                <!-- Branding Icon -->
+                <div class="w-16 h-16 bg-surface-container-high rounded-none flex items-center justify-center refined-border mb-2">
+                    <span class="material-symbols-outlined text-gold-accent text-3xl" style="font-variation-settings: 'FILL' 0;">cloud</span>
+                </div>
+                <div class="space-y-3">
+                    <h1 class="font-headline-lg text-headline-lg md:text-display-lg text-text-white uppercase tracking-tight">
+                        GCP Minecraft <span class="text-gold-accent">On-Demand</span>
+                    </h1>
+                    <div class="flex items-center justify-center gap-3">
+                        <span class="bg-secondary-container/30 text-secondary px-3 py-0.5 font-label-sm text-label-sm uppercase border border-secondary/20 flex items-center gap-1.5 animate-pulse">
+                            <span class="w-1.5 h-1.5 bg-secondary rounded-full"></span> Scale to Zero
+                        </span>
+                        <span class="bg-surface-container-highest/50 text-on-surface-variant px-3 py-0.5 font-label-sm text-label-sm uppercase border refined-border">DIY Edition</span>
+                    </div>
+                </div>
+                <p class="font-body-lg text-body-md md:text-body-lg text-on-surface-variant leading-relaxed max-w-lg opacity-90">
+                    A highly optimized, event-driven architecture that scales your Minecraft server to <span class="text-primary font-bold">absolute zero</span> compute when idle. Automatically wakes the moment you ping the domain.
+                </p>
+                <!-- Refined Tactical Grid for Specs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-px w-full max-w-md bg-outline/10 p-px">
+                    <div class="flex items-center gap-3 bg-surface-container p-3">
+                        <span class="material-symbols-outlined text-gold-accent/70 text-xl">savings</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase tracking-wider">Scale-to-Zero Costs</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-surface-container p-3">
+                        <span class="material-symbols-outlined text-gold-accent/70 text-xl">bolt</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase tracking-wider">Event-Driven Wakeup</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-surface-container p-3">
+                        <span class="material-symbols-outlined text-gold-accent/70 text-xl">terminal</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase tracking-wider">100% Terraform</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-surface-container p-3">
+                        <span class="material-symbols-outlined text-gold-accent/70 text-xl">cloud_done</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase tracking-wider">GCP Cloud Native</span>
+                    </div>
+                </div>
+                <!-- Action Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full pt-8">
+                    <button class="sleek-button primary-action flex flex-col items-center justify-center p-4 gap-2 h-28 group" onclick="window.location.href='play.html'">
+                        <span class="material-symbols-outlined text-black text-2xl group-hover:scale-110 transition-transform">sports_esports</span>
+                        <span class="font-label-lg text-label-sm text-black font-bold uppercase text-center leading-tight">Join Server</span>
+                    </button>
+                    <button class="sleek-button bg-surface-container-highest/40 hover:bg-surface-container-highest flex flex-col items-center justify-center p-4 gap-2 h-28 group" onclick="window.location.href='admin.html'">
+                        <span class="material-symbols-outlined text-gold-accent text-2xl">admin_panel_settings</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase text-center leading-tight">Admin Portal</span>
+                    </button>
+                    <button class="sleek-button bg-surface-container-highest/40 hover:bg-surface-container-highest flex flex-col items-center justify-center p-4 gap-2 h-28 group" onclick="window.open('https://github.com/ARodrigue7/gcp-minecraft-ondemand', '_blank')">
+                        <span class="material-symbols-outlined text-gold-accent text-2xl">code</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase text-center leading-tight">View GitHub</span>
+                    </button>
+                    <button class="sleek-button bg-surface-container-highest/40 hover:bg-surface-container-highest flex flex-col items-center justify-center p-4 gap-2 h-28 group" onclick="window.open('https://ko-fi.com/arodrigue7', '_blank')">
+                        <span class="material-symbols-outlined text-gold-accent text-2xl">coffee</span>
+                        <span class="font-label-lg text-label-sm text-on-surface uppercase text-center leading-tight">Support</span>
+                    </button>
+                </div>
             </div>
-            
-            <h1 class="title">GCP Minecraft <span class="gradient-text">On-Demand</span></h1>
-            
-            <p class="description">
-                A highly optimized, event-driven architecture that scales your Minecraft server to <strong>absolute zero</strong> compute when idle. 
-                It automatically wakes up the moment you ping the domain, bringing hosting costs down to pennies a month.
-            </p>
-
-            <div class="features">
-                <div class="feature-tag">💸 Scale-to-Zero Costs</div>
-                <div class="feature-tag">⚡ Event-Driven Wakeup</div>
-                <div class="feature-tag">🛠️ 100% Terraform</div>
-                <div class="feature-tag">🔒 GCP Cloud Native</div>
-            </div>
-
-            <div class="actions">
-                <a href="play.html" class="btn btn-secondary">
-                    🎮 Join Server
-                </a>
-                <a href="admin.html" class="btn btn-primary">
-                    ⚙️ Admin Portal
-                </a>
-                <a href="https://github.com/ARodrigue7/gcp-minecraft-ondemand" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                    📁 View GitHub
-                </a>
-                <a href="https://ko-fi.com/arodrigue7" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                    ☕ Support Project
-                </a>
+            <!-- Footer Stats -->
+            <div class="mt-12 flex flex-wrap justify-between items-center gap-y-4 gap-x-8 text-on-surface-variant font-label-sm text-[11px] border-t refined-border pt-6 uppercase tracking-widest opacity-70">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[14px]">location_on</span>
+                    <span>Region: Multi-Zone</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[14px]">update</span>
+                    <span>Uptime: On-Demand</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[14px]">monitoring</span>
+                    <span>Direct GCP SSH API</span>
+                </div>
             </div>
         </div>
     </main>
+    <!-- BottomNavBar (Mobile Only) -->
+    <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center h-16 md:hidden bg-surface-container-lowest border-t refined-border z-50">
+        <a class="flex flex-col items-center justify-center text-primary transition-transform duration-100 active:scale-95" href="index.html">
+            <span class="material-symbols-outlined">dns</span>
+            <span class="font-label-sm text-[10px] uppercase">Landing</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-100 active:scale-95" href="play.html">
+            <span class="material-symbols-outlined">sports_esports</span>
+            <span class="font-label-sm text-[10px] uppercase">Servers</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-100 active:scale-95" href="admin.html">
+            <span class="material-symbols-outlined">admin_panel_settings</span>
+            <span class="font-label-sm text-[10px] uppercase">Admin</span>
+        </a>
+    </nav>
+    <script src="js/navbar.js"></script>
 </body>
 </html>

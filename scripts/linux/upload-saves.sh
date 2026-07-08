@@ -5,8 +5,8 @@ set -euo pipefail
 
 # Get directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TERRAFORM_DIR="$SCRIPT_DIR/../terraform"
-SAVES_DIR="$SCRIPT_DIR/../saves"
+TERRAFORM_DIR="$SCRIPT_DIR/../../terraform"
+SAVES_DIR="$SCRIPT_DIR/../../saves"
 
 echo "=== Minecraft On-Demand: Upload Saves ==="
 

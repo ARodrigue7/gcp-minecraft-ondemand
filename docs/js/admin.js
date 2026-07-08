@@ -46,7 +46,7 @@
         const consoleCommandInput = document.getElementById("console-command-input");
         const consoleOutput = document.getElementById("console-output");
 
-        const globalToast = document.getElementById("global-toast");
+
 
         // Initialize Config
         function initConfig() {
@@ -80,10 +80,21 @@
 
             tabButtons.forEach(btn => {
                 btn.addEventListener("click", () => {
-                    tabButtons.forEach(b => b.classList.remove("active"));
+                    tabButtons.forEach(b => {
+                        b.className = "tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left";
+                        const icon = b.querySelector(".material-symbols-outlined");
+                        if (icon) {
+                            icon.className = "material-symbols-outlined text-[18px] group-hover:text-primary";
+                        }
+                    });
                     tabContents.forEach(c => c.classList.add("hidden"));
 
-                    btn.classList.add("active");
+                    btn.className = "tab-btn w-full bg-primary/10 text-primary border-l border-primary px-3 py-2 flex items-center gap-2 transition-colors duration-200 text-left";
+                    const activeIcon = btn.querySelector(".material-symbols-outlined");
+                    if (activeIcon) {
+                        activeIcon.className = "material-symbols-outlined text-[18px] text-primary";
+                    }
+
                     const targetId = btn.getAttribute("data-tab");
                     document.getElementById(targetId).classList.remove("hidden");
 
@@ -265,7 +276,13 @@
                 infoIp.textContent = data.ip || "None";
                 
                 stateText.textContent = data.status;
-                stateText.className = data.status === 'RUNNING' ? 'status-online' : (['STARTING', 'PROVISIONING', 'STAGING'].includes(data.status) ? 'status-starting' : 'status-offline');
+                if (data.status === 'RUNNING') {
+                    stateText.className = 'font-headline-lg uppercase drop-shadow-sm text-secondary';
+                } else if (['STARTING', 'PROVISIONING', 'STAGING'].includes(data.status)) {
+                    stateText.className = 'font-headline-lg uppercase drop-shadow-sm text-primary animate-pulse';
+                } else {
+                    stateText.className = 'font-headline-lg uppercase drop-shadow-sm text-error';
+                }
                 
                 connectionAddress.textContent = data.ip ? `${data.ip} (or ${serverDomain})` : "Server Offline";
                 
@@ -284,27 +301,27 @@
         function renderOnlinePlayers(playersRaw, status) {
             onlinePlayersList.innerHTML = "";
             if (status !== 'RUNNING') {
-                onlinePlayersList.innerHTML = `<div class="empty-state">Minecraft server VM is currently offline/stopped.</div>`;
+                onlinePlayersList.innerHTML = `<div class="empty-state text-on-surface-variant font-mono text-center">Minecraft server VM is currently offline/stopped.</div>`;
                 return;
             }
 
             if (playersRaw === 'none' || !playersRaw) {
-                onlinePlayersList.innerHTML = `<div class="empty-state">No players currently online.</div>`;
+                onlinePlayersList.innerHTML = `<div class="empty-state text-on-surface-variant font-mono text-center py-4 text-xs">No players currently online.</div>`;
                 return;
             }
 
             const players = playersRaw.split(',');
             players.forEach(player => {
                 const item = document.createElement("div");
-                item.className = "server-row-item";
+                item.className = "flex justify-between items-center bg-surface-container/40 border border-white/5 px-3 py-2 rounded-sm mb-1 hover:bg-surface-container/60 transition-colors";
                 item.style.cursor = "default";
                 item.innerHTML = `
                     <div class="row-details">
-                        <div class="row-name" style="font-size: 1.1rem; color: #fffbeb;">${player}</div>
+                        <div class="font-label-lg text-white font-bold text-xs">${player}</div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: linear-gradient(to bottom, #f59e0b, #d97706); border-color: #b45309;" onclick="triggerPlayerCmd('kick', '${player}')">🥾 Kick</button>
-                        <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: linear-gradient(to bottom, #ef4444, #dc2626); border-color: #991b1b;" onclick="triggerPlayerCmd('ban', '${player}')">🔨 Ban</button>
+                    <div class="flex gap-2">
+                        <button class="px-2 py-1 text-[10px] bg-yellow-600/90 hover:bg-yellow-500 text-white font-label-lg uppercase wood-button transition-all" onclick="triggerPlayerCmd('kick', '${player}')">Kick</button>
+                        <button class="px-2 py-1 text-[10px] bg-red-700/90 hover:bg-red-600 text-white font-label-lg uppercase wood-button transition-all" onclick="triggerPlayerCmd('ban', '${player}')">Ban</button>
                     </div>
                 `;
                 onlinePlayersList.appendChild(item);
@@ -314,19 +331,22 @@
         function renderWhitelist(whitelist) {
             whitelistTableBody.innerHTML = "";
             if (!whitelist || whitelist.length === 0) {
-                whitelistTableBody.innerHTML = `<div class="empty-state" style="padding: 2rem 1rem;">Whitelist is empty.</div>`;
+                whitelistTableBody.innerHTML = `<div class="empty-state text-on-surface-variant font-mono text-center py-4 text-xs">Whitelist is empty.</div>`;
                 return;
             }
 
             whitelist.forEach(player => {
                 const item = document.createElement("div");
-                item.className = "server-row-item";
+                item.className = "flex justify-between items-center bg-surface-container/40 border border-white/5 px-3 py-2 rounded-sm mb-1 hover:bg-surface-container/60 transition-colors";
                 item.style.cursor = "default";
                 item.innerHTML = `
-                    <div class="row-details">
-                        <span class="row-name" style="font-weight: 600;">${player}</span>
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 border border-primary/20 bg-surface-container-high overflow-hidden rounded-sm">
+                            <img alt="Player Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuByJ1bAYWdpQajf9qdq4IGwFujPizMnlbUErdYKaZxOYSNNsZksblDhYq2GbBPnvAbDo8gN-qnOo3JtqC9DZ7RCfXXszPNFCfSRUhyUVSdDeRDYLEbtwzVGCkRQrxcbOQPqrx7QunEUayzAhiiM1WRTXT9vucQTPSoSVU6jxgwYVox9siZx2koF3S8tC-ivIIynI7MVE2CI_R_V-Pmv1T5dYf5FWbd-S6LX9cLuF2FjRsD1UQV_r5EpSmOHAVvFmucTyZgXbMgzHRI"/>
+                        </div>
+                        <span class="font-label-lg text-white font-mono text-xs">${player}</span>
                     </div>
-                    <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: linear-gradient(to bottom, #ef4444, #dc2626); border-color: #991b1b;" onclick="removePlayerFromWhitelist('${player}')">❌ Remove</button>
+                    <button class="px-2.5 py-1 text-[10px] bg-red-700/90 hover:bg-red-600 text-white font-label-lg uppercase wood-button transition-all" onclick="removePlayerFromWhitelist('${player}')">Remove</button>
                 `;
                 whitelistTableBody.appendChild(item);
             });
@@ -335,7 +355,7 @@
         function renderBackups(backups) {
             backupsListContainer.innerHTML = "";
             if (!backups || backups.length === 0) {
-                backupsListContainer.innerHTML = `<div class="empty-state" style="padding: 2rem 1rem;">No backups found in Google Cloud Storage.</div>`;
+                backupsListContainer.innerHTML = `<div class="empty-state text-on-surface-variant font-mono text-center py-4 text-xs">No backups found in Google Cloud Storage.</div>`;
                 return;
             }
 
@@ -346,14 +366,17 @@
                 const downloadUrl = `${statusUrl}?action=admin_download_backup&generation=${b.generation}&passcode=${adminPasscode}&username=${adminUsername}`;
 
                 const item = document.createElement("div");
-                item.className = "server-row-item";
+                item.className = "flex justify-between items-center bg-surface-container/40 border border-white/5 px-3 py-2 rounded-sm mb-1 hover:bg-surface-container/60 transition-colors";
                 item.style.cursor = "default";
                 item.innerHTML = `
-                    <div class="row-details">
-                        <div class="row-name" style="font-size: 0.9rem; font-family: monospace;">rolling_backup (Gen: ${b.generation})</div>
-                        <div class="row-motd" style="font-size: 0.8rem;">Size: ${sizeMb} MB | Created: ${date}</div>
+                    <div>
+                        <div class="font-label-lg text-white font-mono text-xs">rolling_backup (Gen: ${b.generation})</div>
+                        <div class="text-[10px] text-on-surface-variant font-mono mt-0.5">Size: ${sizeMb} MB | Created: ${date}</div>
                     </div>
-                    <a href="${downloadUrl}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; text-decoration: none;">📥 Download</a>
+                    <a href="${downloadUrl}" class="px-3 py-1 bg-surface-container-highest hover:bg-surface-bright text-on-surface border border-outline-variant/30 wood-button rounded-sm text-no-decoration flex items-center gap-1 text-[10px]">
+                        <span class="material-symbols-outlined text-[12px]">download</span>
+                        Download
+                    </a>
                 `;
                 backupsListContainer.appendChild(item);
             });
@@ -491,14 +514,6 @@
             consoleOutput.scrollTop = consoleOutput.scrollHeight;
         }
 
-        function showToast(message, type) {
-            globalToast.textContent = message;
-            globalToast.className = `dir-alert-toast ${type}`;
-            globalToast.classList.remove("hidden");
-            
-            setTimeout(() => {
-                globalToast.classList.add("hidden");
-            }, 5000);
-        }
+
 
         init();

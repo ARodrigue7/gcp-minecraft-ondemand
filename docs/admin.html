@@ -1,184 +1,372 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - GCP Minecraft On-Demand</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>GCP Minecraft On-Demand - Admin Console</title>
     <meta name="description" content="Secure administrative console for the on-demand Minecraft server.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="js/theme.js"></script>
+    <style>
+        body {
+            background-color: #05110a;
+            background-image: linear-gradient(rgba(5, 17, 10, 0.85), rgba(5, 17, 10, 0.85)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .wood-button {
+            box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.2);
+            transition: all 0.1s ease;
+            position: relative;
+            border-bottom-width: 1px;
+        }
+        .wood-button:active {
+            transform: translateY(0.5px);
+            box-shadow: none;
+        }
+        .pixel-card {
+            border: 1px solid rgba(161, 141, 122, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 20;
+            vertical-align: middle;
+        }
+        .stone-card {
+            background-color: rgba(21, 34, 27, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(161, 141, 122, 0.15);
+            border-top: 2px solid #F39C12;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        .input-field {
+            background-color: rgba(5, 17, 10, 0.7);
+            border: 1px solid rgba(52, 94, 55, 0.5);
+            color: #d7e6db;
+            padding: 8px 12px;
+            appearance: none;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #F39C12;
+            background-color: rgba(5, 17, 10, 0.9);
+            box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+        }
+        
+    </style>
 </head>
-<body>
-    <!-- Login Screen -->
-    <div id="login-container" class="container">
-        <div class="glass-card fade-in">
-            <div class="icon-wrapper">
-                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-alert"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+<body class="text-on-surface font-body-md selection:bg-primary selection:text-on-primary min-h-screen">
+
+    <!-- 1. Passcode Login Container -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center p-base hidden">
+        <div class="stone-card max-w-md w-full p-gutter flex flex-col gap-4 text-center">
+            <div class="w-16 h-16 bg-grass-lush pixel-card flex items-center justify-center mx-auto border-2 border-gold-accent mb-2">
+                <span class="material-symbols-outlined text-gold-accent text-3xl">security</span>
             </div>
-            <h1 class="title">Admin <span class="gradient-text">Portal</span></h1>
-            <p class="description mb-3">Enter the administrative passcode to access the control panel.</p>
+            <h1 class="font-headline-lg text-display-lg text-primary uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">Admin Portal</h1>
+            <p class="font-body-md text-on-surface-variant">Enter the administrative passcode to access the control panel.</p>
             
-            <form id="login-form" class="login-form-layout">
-                <div class="form-field">
-                    <input type="text" id="admin-username-input" placeholder="Minecraft Username" required autocomplete="off" class="admin-login-input input-username">
+            <form id="login-form" class="flex flex-col gap-4 text-left mt-2">
+                <div class="space-y-1">
+                    <label for="admin-username-input" class="block font-label-sm text-on-surface-variant uppercase">Admin Username</label>
+                    <input type="text" id="admin-username-input" class="input-field w-full font-label-lg" placeholder="Minecraft Username" required autocomplete="off">
                 </div>
-                <div class="form-field">
-                    <input type="password" id="admin-passcode-input" placeholder="Enter Admin Passcode..." required autocomplete="off" class="admin-login-input input-passcode">
+                <div class="space-y-1">
+                    <label for="admin-passcode-input" class="block font-label-sm text-on-surface-variant uppercase">Passcode</label>
+                    <input type="password" id="admin-passcode-input" class="input-field w-full font-label-lg" placeholder="Enter Admin Passcode..." required autocomplete="off">
                 </div>
-                <div id="login-alert" class="form-message error hidden mt-0"></div>
-                <button type="submit" class="btn btn-secondary btn-block">🔒 Access Control Panel</button>
+                <div id="login-alert" class="hidden mt-2 p-3 text-sm font-label-lg text-error bg-error-container border border-error"></div>
+                <button type="submit" class="w-full bg-wood-bark wood-button text-white py-3 font-label-lg uppercase tracking-widest mt-2 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">lock</span>
+                    Access Control Panel
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Main Admin Dashboard (Hidden by default) -->
-    <main id="admin-dashboard" class="container directory-container fade-in hidden">
-        <!-- Back Link -->
-        <div class="back-link-wrapper">
-            <a href="play.html" class="back-link">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                Return to Player Portal
-            </a>
-        </div>
-
-        <!-- Left Panel: Navigation Tabs -->
-        <div class="directory-panel directory-left min-height-admin-panel">
-            <div class="panel-title-group mb-3">
-                <h3 class="panel-title">🛡️ Admin Console</h3>
-                <button id="logout-btn" class="btn btn-primary btn-mini">Logout</button>
+    <!-- 2. Dashboard Container -->
+    <div id="admin-dashboard" class="hidden">
+        <!-- Desktop Sidebar -->
+        <aside class="hidden md:flex flex-col h-screen w-56 fixed left-0 top-0 bg-surface-container-lowest/95 backdrop-blur-xl border-r border-outline-variant/30 z-40">
+            <div class="p-base mt-2 flex items-center gap-2">
+                <div class="w-10 h-10 bg-surface-container-high pixel-card flex items-center justify-center border border-primary/20">
+                    <span class="material-symbols-outlined text-primary scale-75">security</span>
+                </div>
+                <div>
+                    <h2 class="font-headline-lg text-[16px] text-primary uppercase tracking-tighter">Admin Portal</h2>
+                    <p class="font-label-sm text-on-surface-variant opacity-70">GCP Minecraft</p>
+                </div>
             </div>
             
-            <div class="flex-column-gap">
-                <button class="btn btn-primary tab-btn active" data-tab="status-tab">🖥️ Dashboard</button>
-                <button class="btn btn-primary tab-btn" data-tab="whitelist-tab">📜 Whitelist Manager</button>
-                <button class="btn btn-primary tab-btn" data-tab="backups-tab">💾 Backup Logs</button>
-                <button class="btn btn-primary tab-btn" data-tab="logs-tab">🪵 Live Server Logs</button>
-                <button class="btn btn-primary tab-btn" data-tab="console-tab">⌨️ RCON Console</button>
-            </div>
-            
-            <div class="admin-sidebar-info">
-                <div>GCP Project: <strong id="info-project">-</strong></div>
-                <div>VM Status: <strong id="info-status">-</strong></div>
-                <div>Server IP: <strong id="info-ip">-</strong></div>
-            </div>
-        </div>
+            <!-- Side Tab Switcher buttons -->
+            <nav class="flex-1 mt-4 px-2 space-y-0.5" id="admin-tabs">
+                <button class="tab-btn w-full bg-primary/10 text-primary border-l border-primary px-3 py-2 flex items-center gap-2 transition-colors duration-200 text-left" data-tab="status-tab">
+                    <span class="material-symbols-outlined text-[18px]">dashboard</span>
+                    <span class="font-label-lg">Dashboard</span>
+                </button>
+                <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="whitelist-tab">
+                    <span class="material-symbols-outlined text-[18px] group-hover:text-primary">security</span>
+                    <span class="font-label-lg">Whitelist</span>
+                </button>
+                <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="backups-tab">
+                    <span class="material-symbols-outlined text-[18px] group-hover:text-primary">history</span>
+                    <span class="font-label-lg">Backups</span>
+                </button>
+                <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="logs-tab">
+                    <span class="material-symbols-outlined text-[18px] group-hover:text-primary">terminal</span>
+                    <span class="font-label-lg">Logs</span>
+                </button>
+                <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="console-tab">
+                    <span class="material-symbols-outlined text-[18px] group-hover:text-primary">settings_remote</span>
+                    <span class="font-label-lg">RCON</span>
+                </button>
+            </nav>
 
-        <!-- Right Panel: Dynamic Details -->
-        <div class="directory-panel directory-right admin-details-panel">
+            <div class="p-2 border-t border-outline-variant/20 bg-surface-container-lowest/50">
+                <div class="p-2 mb-2 font-mono text-xs text-on-surface-variant space-y-1">
+                    <div>Project: <strong id="info-project" class="text-white">-</strong></div>
+                    <div>VM Status: <strong id="info-status" class="text-secondary">-</strong></div>
+                    <div>IP: <strong id="info-ip" class="text-gold-accent">-</strong></div>
+                </div>
+                <button id="logout-btn" class="w-full bg-surface-container-highest hover:bg-surface-bright text-on-surface py-2 font-label-lg uppercase tracking-widest flex items-center justify-center gap-1 text-[11px] border border-outline-variant/30 wood-button rounded-sm">
+                    <span class="material-symbols-outlined text-[16px]">logout</span>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Top Bar Mobile -->
+        <header class="md:hidden fixed top-0 left-0 w-full h-14 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 z-50 flex items-center justify-between px-base">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary scale-90">shield</span>
+                <h1 class="font-headline-lg-mobile text-primary uppercase tracking-tighter">GCP Minecraft</h1>
+            </div>
+            <div class="flex gap-2">
+                <a href="play.html" class="p-2 text-on-surface flex items-center"><span class="material-symbols-outlined scale-90">dns</span></a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="md:ml-56 pt-16 md:pt-6 pb-20 md:pb-6 px-4 max-w-container-max mx-auto">
+            <!-- Tight & Tactical Layout: High Density Headers -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3">
+                <div class="bg-surface-container/60 backdrop-blur-md p-3 pixel-card inline-block border-l-2 border-l-primary">
+                    <a class="inline-flex items-center gap-1 text-primary hover:underline mb-0.5 font-label-sm uppercase" href="play.html">
+                        <span class="material-symbols-outlined text-xs">arrow_back</span>
+                        Player Portal
+                    </a>
+                    <h1 class="font-headline-lg text-headline-lg text-primary uppercase leading-none">GCP ON-DEMAND</h1>
+                    <p class="font-body-md text-on-surface opacity-70 text-xs mt-1">Live system telemetry.</p>
+                </div>
+                <div class="bg-surface-container/80 backdrop-blur-md p-2 px-3 pixel-card inline-flex flex-col gap-0 border-t border-primary/20 min-w-[200px]">
+                    <span class="text-[9px] font-label-sm text-on-surface-variant uppercase">GCP Active Connection</span>
+                    <code id="connection-address" class="text-secondary font-label-sm text-xs truncate">Checking...</code>
+                </div>
+            </div>
+
+            <!-- TABS CONTENT SECTIONS -->
+
             <!-- 1. Dashboard Tab -->
-            <div id="status-tab" class="tab-content">
-                <h3 class="panel-title title-spaced">Server Status Dashboard</h3>
-                <p class="panel-desc-spaced">Overview of live system metrics and connected players.</p>
-                
-                <div class="status-panel mb-3">
-                    <div class="dashboard-grid">
-                        <div class="dashboard-stat-card">
-                            <div class="stat-card-label">VM STATE</div>
-                            <div id="state-text" class="stat-card-value val-red">OFFLINE</div>
+            <div id="status-tab" class="tab-content space-y-4">
+                <!-- Metric Bento Grid - Compact -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <!-- VM State -->
+                    <div class="bg-surface-container/90 backdrop-blur-md pixel-card p-3 flex flex-col justify-between h-24 hover:bg-surface-container-high transition-colors">
+                        <div class="flex justify-between items-start">
+                            <span class="material-symbols-outlined text-on-surface-variant scale-75">dns</span>
+                            <span class="text-[8px] font-label-sm text-on-surface-variant uppercase bg-surface-container-highest px-1.5 py-0.5">M01</span>
                         </div>
-                        <div class="dashboard-stat-card">
-                            <div class="stat-card-label">ACTIVE PLAYERS</div>
-                            <div id="active-players-count" class="stat-card-value val-gold">0</div>
-                        </div>
-                        <div class="dashboard-stat-card">
-                            <div class="stat-card-label">CONNECTION</div>
-                            <div id="connection-address" class="stat-card-value val-address">-</div>
+                        <div>
+                            <h3 class="font-label-sm text-on-surface-variant uppercase tracking-widest text-[10px] mb-0">VM State</h3>
+                            <p id="state-text" class="font-headline-lg text-error uppercase text-lg">OFFLINE</p>
                         </div>
                     </div>
-                    
-                    <!-- VM Controls -->
-                    <div class="panel-control-buttons">
-                        <button type="button" id="vm-start-btn" class="btn btn-secondary btn-vm-control">⚡ Start VM</button>
-                        <button type="button" id="vm-stop-btn" class="btn btn-primary btn-vm-control btn-red">🛑 Stop VM</button>
-                        <button type="button" id="vm-restart-btn" class="btn btn-primary btn-vm-control btn-gold">🔄 Restart VM</button>
+                    <!-- Active Players -->
+                    <div class="bg-surface-container/90 backdrop-blur-md pixel-card p-3 flex flex-col justify-between h-24 hover:bg-surface-container-high transition-colors border-t border-t-primary/20">
+                        <div class="flex justify-between items-start">
+                            <span class="material-symbols-outlined text-on-surface-variant scale-75">groups</span>
+                            <span class="text-[8px] font-label-sm text-on-surface-variant uppercase bg-surface-container-highest px-1.5 py-0.5">M02</span>
+                        </div>
+                        <div>
+                            <h3 class="font-label-sm text-on-surface-variant uppercase tracking-widest text-[10px] mb-0">Players</h3>
+                            <p id="active-players-count" class="font-headline-lg text-primary text-lg">0 <span class="text-xs font-normal opacity-50">/ 20</span></p>
+                        </div>
+                    </div>
+                    <!-- Connection -->
+                    <div class="bg-surface-container/90 backdrop-blur-md pixel-card p-3 flex flex-col justify-between h-24 hover:bg-surface-container-high transition-colors">
+                        <div class="flex justify-between items-start">
+                            <span class="material-symbols-outlined text-on-surface-variant scale-75">leak_add</span>
+                            <span class="text-[8px] font-label-sm text-on-surface-variant uppercase bg-surface-container-highest px-1.5 py-0.5">M03</span>
+                        </div>
+                        <div>
+                            <h3 class="font-label-sm text-on-surface-variant uppercase tracking-widest text-[10px] mb-0">Network</h3>
+                            <p id="sync-text" class="font-headline-lg text-on-surface-variant opacity-40 uppercase text-lg">Offline</p>
+                        </div>
                     </div>
                 </div>
 
-                <h4 class="section-subtitle">Online Players</h4>
-                <div class="panel-list-wrapper height-150">
-                    <div id="online-players-list" class="panel-list-container">
-                        <!-- Dynamically filled -->
-                        <div class="empty-state empty-state-padded">No players currently online.</div>
+                <!-- Action Control Center - Sleek Minimalist Buttons -->
+                <section class="bg-surface-container/80 backdrop-blur-md pixel-card mb-4 overflow-hidden">
+                    <div class="bg-surface-container-highest/40 px-3 py-1.5 border-b border-outline-variant/20 flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                        <span class="text-[9px] font-label-lg uppercase text-on-surface-variant tracking-wider">Critical Override</span>
                     </div>
-                </div>
+                    <div class="p-3">
+                        <div class="flex flex-wrap gap-3">
+                            <button id="vm-start-btn" class="group px-4 py-3 bg-wood-bark/90 text-white wood-button flex items-center gap-2 flex-1 min-w-[120px] justify-center hover:bg-wood-bark border-wood-bark/30 rounded-sm">
+                                <span class="material-symbols-outlined text-xl">play_arrow</span>
+                                <span class="font-label-lg uppercase tracking-widest text-xs">Start VM</span>
+                            </button>
+                            <button id="vm-stop-btn" class="group px-4 py-3 bg-red-800 wood-button flex items-center gap-2 flex-1 min-w-[120px] justify-center hover:bg-red-700 border-red-950/30 rounded-sm text-white">
+                                <span class="material-symbols-outlined text-xl">stop</span>
+                                <span class="font-label-lg uppercase tracking-widest text-xs">Stop VM</span>
+                            </button>
+                            <button id="vm-restart-btn" class="group px-4 py-3 bg-primary/90 wood-button flex items-center gap-2 flex-1 min-w-[120px] justify-center hover:bg-primary border-primary/20 rounded-sm text-white">
+                                <span class="material-symbols-outlined text-xl">cached</span>
+                                <span class="font-label-lg uppercase tracking-widest text-xs">Restart</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Connected players list -->
+                <section class="bg-surface-container/80 backdrop-blur-md pixel-card">
+                    <div class="px-3 py-2 border-b border-outline-variant/20 flex items-center justify-between">
+                        <h3 class="font-headline-lg text-primary text-[12px] uppercase">Online Users</h3>
+                        <span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 text-[8px] font-label-sm uppercase" id="online-users-badge">0 Connected</span>
+                    </div>
+                    <!-- Player rows container -->
+                    <div class="p-3 space-y-2 max-h-[300px] overflow-y-auto" id="online-players-list">
+                        <div class="empty-state text-on-surface-variant font-mono text-center py-4 text-xs">No players currently online.</div>
+                    </div>
+                </section>
             </div>
 
             <!-- 2. Whitelist Tab -->
-            <div id="whitelist-tab" class="tab-content hidden">
-                <h3 class="panel-title title-spaced">Whitelist Manager</h3>
-                <p class="panel-desc-spaced">Review and authorize whitelist entries. Active VM will auto-sync changes.</p>
-                
-                <form id="add-whitelist-form" class="flex-gap-mb">
-                    <input type="text" id="whitelist-user-input" placeholder="Enter Minecraft Username (e.g. Steve)" required autocomplete="off" class="form-input-wood font-fredoka">
-                    <button type="submit" class="btn btn-secondary btn-med">➕ Add User</button>
-                </form>
+            <div id="whitelist-tab" class="tab-content hidden space-y-4">
+                <!-- Title Header Widget -->
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3">
+                    <div class="bg-surface-container/60 backdrop-blur-md p-3 pixel-card inline-block border-l-2 border-l-primary">
+                        <h1 class="font-headline-lg text-headline-lg text-primary uppercase leading-none">Whitelist Manager</h1>
+                        <p class="font-body-md text-on-surface opacity-70 text-xs mt-1">Review whitelist entries. Active VM will auto-sync changes.</p>
+                    </div>
+                </div>
 
-                <div class="panel-list-wrapper flex-1 height-max-250">
-                    <div id="whitelist-table-body" class="panel-list-container-small">
-                        <!-- Whitelist items filled dynamically -->
-                        <div class="empty-state empty-state-padded">Whitelist is empty.</div>
+                <!-- Two-Column Grid Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <!-- Left Column: Add Entry Widget -->
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="stone-card p-4">
+                            <h3 class="font-headline-lg text-[13px] text-primary uppercase border-b border-white/10 pb-2 mb-3">Add Entry</h3>
+                            <form id="add-whitelist-form" class="space-y-3">
+                                <div class="space-y-1">
+                                    <label for="whitelist-user-input" class="block font-label-sm text-[9px] text-on-surface-variant uppercase tracking-wider">Minecraft Username</label>
+                                    <input type="text" id="whitelist-user-input" placeholder="e.g. Steve" required autocomplete="off" class="input-field w-full px-3 py-2 font-label-lg text-xs">
+                                </div>
+                                <button type="submit" class="bg-wood-bark wood-button text-white w-full py-2.5 font-label-lg uppercase tracking-wider flex items-center justify-center gap-1.5 text-xs">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                    Add User
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Whitelist Table -->
+                    <div class="lg:col-span-8 space-y-4">
+                        <div class="stone-card p-4">
+                            <h3 class="font-headline-lg text-[13px] text-white uppercase border-b border-white/10 pb-2 mb-3">Authorized Players</h3>
+                            
+                            <!-- Table Header Frame -->
+                            <div class="flex justify-between items-center px-4 py-2 bg-surface-container-highest/60 border border-white/10 border-b-0 rounded-t-sm font-label-lg text-[9px] text-on-surface-variant uppercase tracking-wider">
+                                <span>Player</span>
+                                <span>Action</span>
+                            </div>
+                            <div class="border border-white/10 rounded-b-sm max-h-[480px] overflow-y-auto p-2" id="whitelist-table-body">
+                                <div class="empty-state text-on-surface-variant font-mono text-center py-6">Whitelist is empty.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- 3. Backups Tab -->
-            <div id="backups-tab" class="tab-content hidden">
-                <div class="flex-between-align-start">
-                    <div>
-                        <h3 class="panel-title title-spaced-sm">GCS Backup History</h3>
-                        <p class="panel-desc-inline">GCS versioning keeps exactly the last 5 saves preserved indefinitely.</p>
+            <div id="backups-tab" class="tab-content hidden space-y-4">
+                <div class="stone-card p-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+                        <div>
+                            <h3 class="font-headline-lg text-title-md text-white uppercase mb-1">GCS Backup History</h3>
+                            <p class="font-body-md text-on-surface-variant">GCS versioning keeps exactly the last 5 saves preserved indefinitely.</p>
+                        </div>
+                        <button id="manual-backup-btn" class="bg-wood-bark wood-button text-white px-6 py-2.5 font-label-lg uppercase tracking-widest flex items-center justify-center gap-2 text-xs">
+                            <span class="material-symbols-outlined text-base">bolt</span>
+                            Trigger Backup
+                        </button>
                     </div>
-                    <button id="manual-backup-btn" class="btn btn-secondary btn-custom-action">⚡ Trigger Backup</button>
-                </div>
-                
-                <div class="panel-list-wrapper mt-4 height-240">
-                    <div id="backups-list-container" class="panel-list-container-small">
-                        <!-- Backups loaded here -->
-                        <div class="empty-state empty-state-padded">No backups found in Google Cloud Storage.</div>
+                    
+                    <div class="space-y-3 max-h-96 overflow-y-auto" id="backups-list-container">
+                        <div class="empty-state text-on-surface-variant font-mono text-center py-6">No backups found in Google Cloud Storage.</div>
                     </div>
                 </div>
             </div>
 
             <!-- 4. Logs Tab -->
-            <div id="logs-tab" class="tab-content hidden">
-                <div class="flex-between-align-start">
-                    <div>
-                        <h3 class="panel-title title-spaced-sm">Live Server Logs</h3>
-                        <p class="panel-desc-inline">Recent container standard output fetched from GCP Cloud Logging.</p>
+            <div id="logs-tab" class="tab-content hidden space-y-4">
+                <div class="stone-card p-4">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
+                        <div>
+                            <h3 class="font-headline-lg text-title-md text-white uppercase mb-1">Live Server Logs</h3>
+                            <p class="font-body-md text-on-surface-variant">Recent container standard output fetched from GCP Cloud Logging.</p>
+                        </div>
+                        <button id="refresh-logs-btn" class="bg-surface-variant text-on-surface border border-white/5 rounded-sm px-4 py-2 flex items-center justify-center gap-2 hover:bg-surface-bright transition-all text-xs">
+                            <span class="material-symbols-outlined text-base">refresh</span>
+                            Refresh Logs
+                        </button>
                     </div>
-                    <button id="refresh-logs-btn" class="btn btn-primary btn-custom-action">🔄 Refresh Logs</button>
-                </div>
-
-                <div id="logs-terminal" class="terminal-output">
-                    Loading console logs...
+                    
+                    <pre id="logs-terminal" class="bg-surface-dim p-4 border border-white/10 rounded-sm text-secondary font-mono text-xs h-[400px] overflow-y-auto whitespace-pre-wrap select-text">Loading logs console...</pre>
                 </div>
             </div>
 
             <!-- 5. Console Tab -->
-            <div id="console-tab" class="tab-content hidden">
-                <h3 class="panel-title title-spaced">Command Console</h3>
-                <p class="panel-desc-spaced">Send RCON commands directly to the Minecraft container via VM metadata queue.</p>
-
-                <div id="console-output" class="terminal-output-gold">
-Welcome to the Minecraft Server RCON Console.
+            <div id="console-tab" class="tab-content hidden space-y-4">
+                <div class="stone-card p-4">
+                    <h3 class="font-headline-lg text-title-md text-white uppercase mb-2">Command Console</h3>
+                    <p class="font-body-md text-on-surface-variant mb-6">Send RCON commands directly to the Minecraft container via VM metadata queue.</p>
+                    
+                    <pre id="console-output" class="bg-surface-dim p-4 border border-white/10 rounded-sm text-gold-accent font-mono text-sm h-64 overflow-y-auto whitespace-pre-wrap select-text mb-4">Welcome to the Minecraft Server RCON Console.
 Commands are enqueued to GCE metadata and executed by the VM watchdog script.
 Type a command below to begin.
-</div>
-
-                <form id="console-form" class="flex-gap">
-                    <span class="terminal-prompt-arrow">&gt;</span>
-                    <input type="text" id="console-command-input" placeholder="Type command (e.g. /say Hello players, /time set day)..." required autocomplete="off" class="form-input-monospace">
-                    <button type="submit" class="btn btn-secondary btn-med">Send</button>
-                </form>
+</pre>
+                    
+                    <form id="console-form" class="flex gap-2 items-center">
+                        <span class="text-gold-accent font-mono font-bold text-lg">&gt;</span>
+                        <input type="text" id="console-command-input" placeholder="Type command (e.g. say Hello players, time set day)..." required autocomplete="off" class="input-field flex-1 font-mono text-sm">
+                        <button type="submit" class="bg-wood-bark wood-button text-white px-6 py-2.5 font-label-lg uppercase tracking-widest text-xs">Send</button>
+                    </form>
+                </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
-    <!-- Global Toast Alert -->
-    <div id="global-toast" class="dir-alert-toast hidden"></div>
+    <!-- Mobile Bottom Nav -->
+    <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center h-20 md:hidden bg-grass-deep/95 backdrop-blur-sm border-t-4 border-on-secondary-fixed z-50">
+        <a class="flex flex-col items-center justify-center text-primary font-bold transition-transform duration-100 active:scale-95" href="play.html">
+            <span class="material-symbols-outlined">dns</span>
+            <span class="font-label-sm uppercase mt-1">Servers</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-100 active:scale-95" href="admin.html">
+            <span class="material-symbols-outlined">shield</span>
+            <span class="font-label-sm uppercase mt-1">Admin</span>
+        </a>
+    </nav>
 
+    <!-- Scripts -->
     <script src="js/config.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>
