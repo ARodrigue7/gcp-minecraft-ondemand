@@ -275,6 +275,7 @@
 
         function renderSelectedServerDetails(server) {
             const state = statuses[server.id] || { status: "checking" };
+            const isOffline = state.status === "TERMINATED";
             
             let badgeClass = "bg-error-container/20 text-error border border-error/40 rounded-full";
             let dotClass = "bg-error shadow-[0_0_6px_rgba(255,180,171,0.5)]";
@@ -359,8 +360,8 @@
             if (server.isCustom) {
                 customActionsHtml = `
                     <div class="flex gap-4 mt-6 border-t border-white/10 pt-4">
-                        <button type="button" id="edit-btn" class="wood-plank px-6 py-2.5 flex-1 flex items-center justify-center gap-2 text-white">
-                            <span class="material-symbols-outlined text-base">edit</span>
+                        <button type="button" id="edit-btn" class="wood-button px-6 py-2.5 flex-1 flex items-center justify-center gap-2 text-white">
+                            <span class="material-symbols-outlined text-sm">edit</span>
                             <span class="font-label-lg text-xs uppercase tracking-widest">Edit Details</span>
                         </button>
                         <button type="button" id="delete-btn" class="px-6 py-2.5 flex-1 flex items-center justify-center gap-2 transition-all duration-100 text-white font-label-lg uppercase bg-red-800 border border-red-950 rounded-sm hover:bg-red-700">
@@ -432,8 +433,8 @@
                     </div>
  
                     <div class="mt-8">
-                        <button class="wood-plank w-full py-4 flex items-center justify-center gap-3 group text-white focus:outline-none" id="main-join-btn" ${joinBtnDisabled}>
-                            <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">${mainBtnIcon}</span>
+                        <button class="wood-button w-full py-4 flex items-center justify-center gap-3 group text-white focus:outline-none" id="main-join-btn" ${joinBtnDisabled}>
+                            <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform ${isOffline ? 'opacity-50' : ''}">${mainBtnIcon}</span>
                             <span class="font-display-lg text-title-md uppercase tracking-[0.15em]">${joinBtnText}</span>
                         </button>
                         <p class="text-center text-on-surface text-[11px] mt-4 italic opacity-80 flex items-center justify-center gap-2">

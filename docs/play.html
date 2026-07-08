@@ -9,87 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Be+Vietnam+Pro:wght@400;700&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="js/theme.js"></script>
-    <style>
-        body {
-            background-color: #05110a;
-            background-image: linear-gradient(rgba(5, 17, 10, 0.85), rgba(5, 17, 10, 0.85)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s');
-            background-attachment: fixed;
-            background-position: center;
-            background-size: cover;
-            overflow-x: hidden;
-        }
-
-        .pixel-border-outer {
-            border: 1px solid rgba(161, 141, 122, 0.2);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-        }
-
-        .wood-plank {
-            background-color: #f39c12;
-            border: 1px solid rgba(0,0,0,0.1);
-            border-bottom: 2px solid #865300;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            user-select: none;
-            border-radius: 0.125rem;
-        }
-        .wood-plank:hover {
-            background-color: #ffbe70;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
-        }
-        .wood-plank:active {
-            border-bottom-width: 1px;
-            transform: translateY(1px);
-        }
-
-        .stone-card {
-            background-color: rgba(21, 34, 27, 0.95);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(161, 141, 122, 0.15);
-            border-top: 2px solid #F39C12;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-        }
-
-        .input-field {
-            background-color: rgba(5, 17, 10, 0.7);
-            border: 1px solid rgba(52, 94, 55, 0.5);
-            color: #d7e6db;
-            padding: 8px 12px;
-            appearance: none;
-            transition: all 0.2s ease;
-        }
-        .input-field:focus {
-            outline: none;
-            border-color: #F39C12;
-            background-color: rgba(5, 17, 10, 0.9);
-            box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
-        }
-
-        .experience-bar-bg {
-            background-color: rgba(5, 17, 10, 0.5);
-            height: 3px;
-            width: 100%;
-            overflow: hidden;
-        }
-        .experience-bar-fill {
-            height: 100%;
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(9, 22, 15, 0.5);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #F39C12;
-            border-radius: 2px;
-        }
-    </style>
+    <link href="css/style.css" rel="stylesheet"/>
 </head>
-<body class="font-body-md text-on-surface min-h-screen">
-    <!-- TopNavBar Container -->
+<body class="bg-background text-on-surface font-body-md min-h-screen selection:bg-gold-accent selection:text-black">
     <div id="global-navbar" data-active-tab="servers"></div>
 
     <!-- Persistent Back Link Row (Resolves the bug where the back button disappears) -->
@@ -107,7 +29,7 @@
             <div class="stone-card p-6 flex flex-col gap-4">
                 <div class="flex justify-between items-center">
                     <h2 class="font-headline-lg text-headline-lg-mobile text-white uppercase tracking-tight">Servers</h2>
-                    <a href="admin.html" class="wood-plank px-3 py-1 flex items-center gap-1 text-no-decoration text-white font-label-lg text-label-lg">
+                    <a href="admin.html" class="wood-button px-3 py-1 flex items-center gap-1 text-no-decoration text-white font-label-lg text-label-lg">
                         <span class="material-symbols-outlined text-sm">settings</span>
                         <span>ADMIN</span>
                     </a>
@@ -121,7 +43,7 @@
                     <!-- Dynamically populated by play.js -->
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-4 border-t-2 border-on-secondary-fixed-variant">
-                    <button id="add-btn" class="wood-plank w-full py-3 flex items-center justify-center gap-2 text-white">
+                    <button id="add-btn" class="wood-button w-full py-3 flex items-center justify-center gap-2 text-white">
                         <span class="material-symbols-outlined">add</span>
                         <span class="font-label-lg text-label-lg uppercase">Add</span>
                     </button>
@@ -172,7 +94,7 @@
                     <input type="url" id="add-api-input" class="input-field w-full font-label-lg" autocomplete="off" placeholder="https://...">
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-4 border-t-2 border-on-secondary-fixed-variant/50">
-                    <button type="submit" class="wood-plank w-full py-3 flex items-center justify-center gap-2 text-white">
+                    <button type="submit" class="wood-button w-full py-3 flex items-center justify-center gap-2 text-white">
                         <span class="font-label-lg text-label-lg uppercase">Add Server</span>
                     </button>
                     <button type="button" id="close-add-btn" class="bg-surface-variant text-on-surface border-b-4 border-surface-container-high w-full py-3 flex items-center justify-center hover:bg-surface-bright transition-all">
@@ -208,7 +130,7 @@
                     <input type="url" id="edit-api-input" class="input-field w-full font-label-lg" autocomplete="off">
                 </div>
                 <div class="grid grid-cols-2 gap-3 pt-4 border-t-2 border-on-secondary-fixed-variant/50">
-                    <button type="submit" class="wood-plank w-full py-3 flex items-center justify-center gap-2 text-white">
+                    <button type="submit" class="wood-button w-full py-3 flex items-center justify-center gap-2 text-white">
                         <span class="font-label-lg text-label-lg uppercase">Save</span>
                     </button>
                     <button type="button" id="close-edit-btn" class="bg-surface-variant text-on-surface border-b-4 border-surface-container-high w-full py-3 flex items-center justify-center hover:bg-surface-bright transition-all">

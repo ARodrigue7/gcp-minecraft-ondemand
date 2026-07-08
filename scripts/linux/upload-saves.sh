@@ -85,24 +85,20 @@ fi
 
 # Upload files using a tarball for speed (Minecraft has many small region files)
 echo "Packaging local save files..."
-TEMP_UPLOAD_TAR="/tmp/minecraft-upload-$(date +%s).tar.gz"
+TEMP_UPLOAD_TAR=$(mktemp)
 
 # Package files excluding README.md
 cd "$SAVES_DIR"
 tar -czf "$TEMP_UPLOAD_TAR" --exclude="README.md" .
 
-echo "Uploading package to server..."
-gcloud compute scp --project="$PROJECT_ID" --zone="$ZONE" \
-  "$TEMP_UPLOAD_TAR" "$INSTANCE_NAME":/tmp/minecraft-upload.tar.gz
+echo "Uploading and extracting package on server..."
+cat "$TEMP_UPLOAD_TAR" | gcloud compute ssh "$INSTANCE_NAME" \
+  --project="$PROJECT_ID" \
+  --zone="$ZONE" \
+  --command="sudo tar -xzf - -C /mnt/disks/minecraft-data/data && sudo chown -R 1000:1000 /mnt/disks/minecraft-data/data && sudo chmod -R 755 /mnt/disks/minecraft-data/data"
 
 # Clean up local temp file
 rm -f "$TEMP_UPLOAD_TAR"
-
-echo "Extracting package on server..."
-gcloud compute ssh "$INSTANCE_NAME" \
-  --project="$PROJECT_ID" \
-  --zone="$ZONE" \
-  --command="sudo tar -xzf /tmp/minecraft-upload.tar.gz -C /mnt/disks/minecraft-data/data && sudo chown -R 1000:1000 /mnt/disks/minecraft-data/data && sudo chmod -R 755 /mnt/disks/minecraft-data/data && rm -f /tmp/minecraft-upload.tar.gz"
 
 echo "Files uploaded successfully."
 

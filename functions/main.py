@@ -1,4 +1,5 @@
 import functions_framework
+import os
 import time
 import json
 import urllib.request
@@ -41,6 +42,30 @@ from discord_webhook import send_discord_webhook
 # Validate configuration on module loading to fail fast
 validate_config()
 
+def get_cors_headers(request, for_preflight=False):
+    allowed_origins_str = os.environ.get('ALLOWED_ORIGINS', '*')
+    request_origin = request.headers.get('Origin', '')
+    
+    if allowed_origins_str == '*':
+        allow_origin = '*'
+    else:
+        allowed_origins = [o.strip() for o in allowed_origins_str.split(',')]
+        allow_origin = request_origin if request_origin in allowed_origins else allowed_origins[0]
+
+    if for_preflight:
+        return {
+            'Access-Control-Allow-Origin': allow_origin,
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-User',
+            'Access-Control-Max-Age': '3600'
+        }
+    else:
+        return {
+            'Access-Control-Allow-Origin': allow_origin,
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-User',
+            'Content-Type': 'application/json'
+        }
+
 @functions_framework.cloud_event
 def start_minecraft(cloudevent):
     """Cloud Function entry point triggered by Pub/Sub event."""
@@ -49,60 +74,30 @@ def start_minecraft(cloudevent):
     status, ip = get_instance_status_and_ip()
     logger.info(f"Current VM state: {status}, IP: {ip}")
     
-    # If the VM is stopped, start it and wait for IP
+    # If the VM is stopped, start it
     if status == 'TERMINATED':
         logger.info(f"Starting VM: {INSTANCE_NAME}...")
         start_instance()
-        
-        # Poll VM until it is RUNNING and has a public IP
-        max_attempts = 30
-        for attempt in range(max_attempts):
-            time.sleep(2)
-            status, ip = get_instance_status_and_ip()
-            logger.info(f"Polling VM status ({attempt + 1}/{max_attempts}): status={status}, IP={ip}")
-            if status == 'RUNNING' and ip:
-                break
-        else:
-            raise Exception("Timeout waiting for VM to start and obtain an IP address.")
-            
-    # If the VM is in any other transitioning state (e.g. PROVISIONING), wait for it to be RUNNING
+        # We do not block here; DNS will be updated by the next HTTP status check poll
     elif status != 'RUNNING':
         logger.info(f"VM is in state '{status}'. Waiting for transition to 'RUNNING'...")
-        max_attempts = 30
-        for attempt in range(max_attempts):
-            time.sleep(2)
-            status, ip = get_instance_status_and_ip()
-            logger.info(f"Polling VM status ({attempt + 1}/{max_attempts}): status={status}, IP={ip}")
-            if status == 'RUNNING' and ip:
-                break
-        else:
-            raise Exception("Timeout waiting for VM to transition to RUNNING.")
-            
-    # Update DNS if IP is available
-    if ip:
-        update_dns_record(ip)
     else:
-        logger.error("VM is running but does not have a public IP address.")
+        # Update DNS if IP is available and VM is RUNNING
+        if ip:
+            update_dns_record(ip)
+        else:
+            logger.error("VM is running but does not have a public IP address.")
 
 @functions_framework.http
 def get_status_http(request):
     """HTTP Cloud Function that retrieves VM status, handles whitelist submissions, and approves players."""
     # Set CORS headers for preflight request
     if request.method == 'OPTIONS':
-        headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-User',
-            'Access-Control-Max-Age': '3600'
-        }
+        headers = get_cors_headers(request, for_preflight=True)
         return ('', 204, headers)
 
     # Set CORS headers for the main request
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-User',
-        'Content-Type': 'application/json'
-    }
+    headers = get_cors_headers(request, for_preflight=False)
 
     # Handle Admin endpoints
     action = request.args.get('action')
@@ -112,7 +107,7 @@ def get_status_http(request):
             passcode = request.args.get('passcode')
             username = request.args.get('username')
             is_auth = False
-            if passcode == ADMIN_PASSCODE and username:
+            if passcode and username and hmac.compare_digest(passcode, ADMIN_PASSCODE):
                 approved_players, _ = get_whitelist_states()
                 if username.lower() in [p.lower() for p in approved_players]:
                     is_auth = True
@@ -125,15 +120,22 @@ def get_status_http(request):
         if request.method == 'GET':
             if action == 'admin_status':
                 try:
-                    status, ip = get_instance_status_and_ip()
+                    vm = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
                     
+                    status = vm.get('status')
+                    ip = None
+                    network_interfaces = vm.get('networkInterfaces', [])
+                    if network_interfaces:
+                        access_configs = network_interfaces[0].get('accessConfigs', [])
+                        if access_configs:
+                            ip = access_configs[0].get('natIP')
+                            
                     if status == 'RUNNING' and ip:
                         try:
                             update_dns_record(ip)
                         except Exception as dns_err:
                             print(f"Error updating DNS in admin status: {dns_err}")
                     
-                    vm = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
                     metadata = vm.get('metadata', {})
                     items = metadata.get('items', [])
                     

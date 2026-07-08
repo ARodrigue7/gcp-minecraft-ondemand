@@ -62,24 +62,11 @@ if [ "$STATUS" != "RUNNING" ]; then
 fi
 
 # Create tarball on the server
-echo "Creating backup archive on the server..."
+TEMP_TAR=$(mktemp)
 gcloud compute ssh "$INSTANCE_NAME" \
   --project="$PROJECT_ID" \
   --zone="$ZONE" \
-  --command="sudo tar -czf /tmp/minecraft-saves.tar.gz -C /mnt/disks/minecraft-data/data ."
-
-# Download tarball
-echo "Downloading archive..."
-TEMP_TAR="/tmp/minecraft-saves-$(date +%s).tar.gz"
-gcloud compute scp --project="$PROJECT_ID" --zone="$ZONE" \
-  "$INSTANCE_NAME":/tmp/minecraft-saves.tar.gz "$TEMP_TAR"
-
-# Clean up remote tarball
-echo "Cleaning up server archive..."
-gcloud compute ssh "$INSTANCE_NAME" \
-  --project="$PROJECT_ID" \
-  --zone="$ZONE" \
-  --command="rm -f /tmp/minecraft-saves.tar.gz"
+  --command="sudo tar -czf - -C /mnt/disks/minecraft-data/data ." > "$TEMP_TAR"
 
 # Extract locally
 echo "Extracting backup to $SAVES_DIR..."

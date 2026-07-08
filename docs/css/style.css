@@ -1,0 +1,135 @@
+/* Unified CSS for GCP Minecraft On-Demand */
+
+body {
+    background-color: #05110a;
+    background-image: linear-gradient(rgba(5, 17, 10, 0.85), rgba(5, 17, 10, 0.85)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    overflow-x: hidden;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+}
+
+/* Base button styles from index */
+.sleek-button {
+    border: 1px solid rgba(161, 141, 122, 0.3);
+    border-bottom: 2px solid rgba(161, 141, 122, 0.5);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sleek-button:active {
+    transform: translateY(1px);
+    border-bottom-width: 1px;
+}
+.primary-action {
+    background-color: #f39c12;
+    border-color: #d68910;
+    border-bottom-color: #b9770e;
+}
+
+/* Wood button (merged from play and admin) */
+.wood-button {
+    background-color: #f39c12;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-bottom: 2px solid #865300;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    border-radius: 0.125rem;
+    box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+.wood-button:hover {
+    background-color: #ffbe70;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
+}
+.wood-button:active {
+    border-bottom-width: 1px;
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+/* Cards & Panels */
+.tactical-panel {
+    background-color: rgba(21, 34, 27, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.stone-card {
+    background-color: rgba(21, 34, 27, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(161, 141, 122, 0.15);
+    border-top: 2px solid #F39C12;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.pixel-card {
+    border: 1px solid rgba(161, 141, 122, 0.2);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.pixel-border-outer {
+    border: 1px solid rgba(161, 141, 122, 0.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.refined-border {
+    border: 1px solid rgba(161, 141, 122, 0.2);
+}
+
+/* Inputs & Form Elements */
+.input-field {
+    background-color: rgba(5, 17, 10, 0.7);
+    border: 1px solid rgba(52, 94, 55, 0.5);
+    color: #d7e6db;
+    padding: 8px 12px;
+    appearance: none;
+    transition: all 0.2s ease;
+}
+.input-field:focus {
+    outline: none;
+    border-color: #F39C12;
+    background-color: rgba(5, 17, 10, 0.9);
+    box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+}
+
+/* Utilities */
+.active-tab {
+    position: relative;
+}
+.active-tab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #f39c12;
+}
+
+.experience-bar-bg {
+    background-color: rgba(5, 17, 10, 0.5);
+    height: 3px;
+    width: 100%;
+    overflow: hidden;
+}
+.experience-bar-fill {
+    height: 100%;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(9, 22, 15, 0.5);
+}
+::-webkit-scrollbar-thumb {
+    background: #F39C12;
+    border-radius: 2px;
+}
+

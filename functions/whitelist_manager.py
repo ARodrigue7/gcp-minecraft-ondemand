@@ -1,12 +1,11 @@
-from gcp_client import compute
+from gcp_client import compute, get_cached_instance, invalidate_instance_cache
 from config import PROJECT_ID, ZONE, INSTANCE_NAME, logger
 
 def get_whitelist_states():
     """Retrieves both approved-whitelist and pending-whitelist lists from GCE instance metadata."""
     logger.info(f"Fetching whitelist states from GCE instance {INSTANCE_NAME}...")
     try:
-        request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
-        instance = request.execute()
+        instance = get_cached_instance()
     except Exception as e:
         logger.error(f"Failed to fetch GCE instance details: {e}")
         return [], []
@@ -39,8 +38,7 @@ def update_whitelist_state(username, action, enqueue_cmd=None):
     """
     logger.info(f"Performing atomic GCE metadata update for '{username}' with action='{action}', command='{enqueue_cmd}'...")
     try:
-        request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
-        instance = request.execute()
+        instance = get_cached_instance()
     except Exception as e:
         logger.error(f"Failed to fetch GCE instance details for metadata update: {e}")
         raise
@@ -53,22 +51,20 @@ def update_whitelist_state(username, action, enqueue_cmd=None):
     pending_item = next((i for i in items if i.get('key') == 'pending-whitelist'), None)
     commands_item = next((i for i in items if i.get('key') == 'pending-commands'), None)
     
-    approved_players = [x.strip() for x in approved_item.get('value', '').split(',') if x.strip()] if approved_item else []
-    pending_players = [x.strip() for x in pending_item.get('value', '').split(',') if x.strip()] if pending_item else []
+    approved_players = set([x.strip() for x in approved_item.get('value', '').split(',') if x.strip()]) if approved_item else set()
+    pending_players = set([x.strip() for x in pending_item.get('value', '').split(',') if x.strip()]) if pending_item else set()
     pending_commands = [x.strip() for x in commands_item.get('value', '').split(',') if x.strip()] if commands_item else []
     
-    # Modify lists based on action
+    # Modify sets based on action
     if action == 'request':
-        if username not in pending_players:
-            pending_players.append(username)
+        pending_players.add(username)
     elif action == 'approve':
-        if username not in approved_players:
-            approved_players.append(username)
-        pending_players = [x for x in pending_players if x != username]
+        approved_players.add(username)
+        pending_players.discard(username)
     elif action == 'deny':
-        pending_players = [x for x in pending_players if x != username]
+        pending_players.discard(username)
     elif action == 'remove':
-        approved_players = [x for x in approved_players if x != username]
+        approved_players.discard(username)
         
     if enqueue_cmd:
         if enqueue_cmd not in pending_commands:
@@ -116,6 +112,7 @@ def update_whitelist_state(username, action, enqueue_cmd=None):
             }
         )
         update_request.execute()
+        invalidate_instance_cache()
         logger.info("Metadata successfully updated on GCE VM instance.")
     except Exception as e:
         logger.error(f"Failed to update GCE metadata: {e}")
@@ -140,8 +137,7 @@ def remove_from_gce_metadata_pending(username):
 def enqueue_admin_command(command):
     """Appends a command to GCE metadata pending-commands using immutable patterns."""
     logger.info(f"Fetching GCE instance details to enqueue command: {command}...")
-    request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
-    instance = request.execute()
+    instance = get_cached_instance()
     
     metadata = instance.get('metadata', {})
     items = metadata.get('items', [])
@@ -184,4 +180,5 @@ def enqueue_admin_command(command):
         }
     )
     update_request.execute()
-    logger.info("Metadata successfully updated on GCE VM instance.")
+    invalidate_instance_cache()
+    logger.info(f"Command '{command}' enqueued successfully.")

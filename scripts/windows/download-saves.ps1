@@ -55,14 +55,15 @@ if ($Status -ne "RUNNING") {
 }
 
 Write-Host "Packaging server save files..."
-gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="cd /mnt/disks/minecraft-data/data && tar -czf /tmp/minecraft-download.tar.gz ."
+$RemoteTemp = gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="mktemp"
+gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="cd /mnt/disks/minecraft-data/data && tar -czf $RemoteTemp ."
 
 Write-Host "Downloading package from server..."
 $TempTar = "$env:TEMP\minecraft-download-$(Get-Date -UFormat %s).tar.gz"
-gcloud compute scp --project=$ProjectId --zone=$Zone "$InstanceName`:/tmp/minecraft-download.tar.gz" $TempTar
+gcloud compute scp --project=$ProjectId --zone=$Zone "$InstanceName`:$RemoteTemp" $TempTar
 
 Write-Host "Cleaning up server temp file..."
-gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="rm -f /tmp/minecraft-download.tar.gz"
+gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="rm -f $RemoteTemp"
 
 Write-Host "Extracting package to local saves directory..."
 Get-ChildItem -Path $SavesDir -Exclude "README.md" | Remove-Item -Recurse -Force

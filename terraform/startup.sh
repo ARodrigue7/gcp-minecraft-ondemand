@@ -178,15 +178,16 @@ create_backup() {
     sleep 2
     
     echo "Creating world archive..."
-    tar -czf /tmp/rolling_backup.tar.gz -C /mnt/disks/minecraft-data/data world world_nether world_the_end >/dev/null 2>&1 || true
+    TMP_BACKUP=$(mktemp)
+    tar -czf $TMP_BACKUP -C /mnt/disks/minecraft-data/data world world_nether world_the_end >/dev/null 2>&1 || true
     
     echo "Resuming auto-saves..."
     docker exec minecraft rcon-cli save-on >/dev/null 2>&1 || true
     
-    if [ -f /tmp/rolling_backup.tar.gz ]; then
-      echo "Uploading backup to GCS..."
-      gsutil cp /tmp/rolling_backup.tar.gz gs://${backups_bucket}/rolling_backup.tar.gz >/dev/null 2>&1 || true
-      rm -f /tmp/rolling_backup.tar.gz
+    # Upload backup to Cloud Storage if successful
+    if [ -s $TMP_BACKUP ]; then
+      gsutil cp $TMP_BACKUP gs://${backups_bucket}/rolling_backup.tar.gz >/dev/null 2>&1 || true
+      rm -f $TMP_BACKUP
       echo "Backup uploaded successfully!"
     else
       echo "ERROR: Backup archive creation failed."
@@ -270,14 +271,14 @@ VM_ZONE=$(basename "$VM_ZONE_FULL")
 gcloud compute instances add-metadata "$VM_NAME" --zone="$VM_ZONE" --metadata=online-players="$PLAYER_LIST" >/dev/null 2>&1 || true
 
 if [ "$ONLINE_PLAYERS" -gt 0 ]; then
-  rm -f /tmp/minecraft-idle-since
+  rm -f /var/run/minecraft-idle-since
   echo "Players active. Idle timer reset."
 else
-  if [ ! -f /tmp/minecraft-idle-since ]; then
-    date +%s > /tmp/minecraft-idle-since
+  if [ ! -f /var/run/minecraft-idle-since ]; then
+    date +%s > /var/run/minecraft-idle-since
     echo "No players online. Idle timer started."
   else
-    IDLE_SINCE=$(cat /tmp/minecraft-idle-since)
+    IDLE_SINCE=$(cat /var/run/minecraft-idle-since)
     NOW=$(date +%s)
     IDLE_TIME=$((NOW - IDLE_SINCE))
     echo "Idle for $IDLE_TIME seconds."

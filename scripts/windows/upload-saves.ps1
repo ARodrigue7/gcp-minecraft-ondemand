@@ -85,12 +85,13 @@ tar -czf $TempTar --exclude="README.md" .
 Pop-Location
 
 Write-Host "Uploading package to server..."
-gcloud compute scp --project=$ProjectId --zone=$Zone $TempTar "$InstanceName`:/tmp/minecraft-upload.tar.gz"
+$RemoteTemp = gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="mktemp"
+gcloud compute scp --project=$ProjectId --zone=$Zone $TempTar "$InstanceName`:$RemoteTemp"
 
 Remove-Item $TempTar -Force
 
 Write-Host "Extracting package on server..."
-gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="sudo tar -xzf /tmp/minecraft-upload.tar.gz -C /mnt/disks/minecraft-data/data && sudo chown -R 1000:1000 /mnt/disks/minecraft-data/data && sudo chmod -R 755 /mnt/disks/minecraft-data/data && rm -f /tmp/minecraft-upload.tar.gz"
+gcloud compute ssh $InstanceName --project=$ProjectId --zone=$Zone --command="sudo tar -xzf $RemoteTemp -C /mnt/disks/minecraft-data/data && sudo chown -R 1000:1000 /mnt/disks/minecraft-data/data && sudo chmod -R 755 /mnt/disks/minecraft-data/data && rm -f $RemoteTemp"
 
 Write-Host "Files uploaded successfully."
 

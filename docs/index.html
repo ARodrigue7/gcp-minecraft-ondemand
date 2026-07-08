@@ -9,55 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <script src="js/theme.js"></script>
-    <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .pixel-bg {
-            background-image: linear-gradient(rgba(9, 22, 15, 0.9), rgba(9, 22, 15, 0.9)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCYPY4DQQQPb-sSIQL7UFYDmzqILn32Rk7qW4oXHs_vcT2LjhLCEFs7tlRlAl2YS6uM2CFC8uHtsSeH8GnpEm0gikc8M3Hi3wIWz1Lx9G3QxGcWUIsZBPQ-YuQnRZ5Dw3KFWjzN1TyUkLTPUcZImSHfmpoYLbR-V-rnRUzHDtm7DF8ZqkZq0NSoALnhEhIbxiVvg9o7rWuKq5qBucIeNXAelneSrSF2ITIxfeJon5C4RQJ_ejhwU8tBH3EzJL4mL6VdtLI_6fga5c8');
-            background-size: cover;
-            background-position: center;
-        }
-        .sleek-button {
-            border: 1px solid rgba(161, 141, 122, 0.3);
-            border-bottom: 2px solid rgba(161, 141, 122, 0.5);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sleek-button:active {
-            transform: translateY(1px);
-            border-bottom-width: 1px;
-        }
-        .primary-action {
-            background-color: #f39c12;
-            border-color: #d68910;
-            border-bottom-color: #b9770e;
-        }
-        .tactical-panel {
-            background-color: rgba(21, 34, 27, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(243, 156, 18, 0.2);
-        }
-        .refined-border {
-            border: 1px solid rgba(161, 141, 122, 0.2);
-        }
-        .active-tab {
-            position: relative;
-        }
-        .active-tab::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: #f39c12;
-        }
-    </style>
+    <link href="css/style.css" rel="stylesheet"/>
 </head>
 <body class="bg-background text-on-surface font-body-md min-h-screen selection:bg-gold-accent selection:text-black">
     <!-- TopNavBar Container -->
     <div id="global-navbar" data-active-tab="landing"></div>
-    <main class="pixel-bg min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4" style="background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s'); background-size: cover; background-position: center;">
+    <main class="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
         <!-- Tactical Content Container -->
         <div class="tactical-panel w-full max-w-2xl p-8 relative">
             <!-- Minimal Corner Accents -->

@@ -24,15 +24,36 @@ logging_service = discovery.build('logging', 'v2', cache_discovery=False)
 storage_service = discovery.build('storage', 'v1', cache_discovery=False)
 
 
+import time
+
+_instance_cache = None
+_instance_cache_time = 0
+CACHE_TTL = 10 # seconds
+
+def get_cached_instance():
+    """Retrieves the GCE instance, caching the result for a short TTL to prevent redundant API calls within the same request cycle."""
+    global _instance_cache, _instance_cache_time
+    if time.time() - _instance_cache_time < CACHE_TTL and _instance_cache:
+        return _instance_cache
+        
+    logger.info(f"Fetching GCE instance details for {INSTANCE_NAME}...")
+    request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
+    _instance_cache = request.execute()
+    _instance_cache_time = time.time()
+    return _instance_cache
+
+def invalidate_instance_cache():
+    """Invalidates the instance cache, useful after a metadata update."""
+    global _instance_cache_time
+    _instance_cache_time = 0
+
 def get_instance_status_and_ip():
     """Retrieves the current status and public IP address of the VM instance."""
-    logger.info(f"Retrieving GCE instance status for {INSTANCE_NAME}...")
-    request = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
-    response = request.execute()
-    status = response.get('status')
+    instance = get_cached_instance()
+    status = instance.get('status')
     
     ip = None
-    network_interfaces = response.get('networkInterfaces', [])
+    network_interfaces = instance.get('networkInterfaces', [])
     if network_interfaces:
         access_configs = network_interfaces[0].get('accessConfigs', [])
         if access_configs:
