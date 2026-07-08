@@ -59,3 +59,25 @@ def test_update_whitelist_state(mock_get_cached_instance, mock_compute, mock_inv
     mock_compute.instances().setMetadata.assert_called_once()
     mock_set_metadata.execute.assert_called_once()
     mock_invalidate.assert_called_once()
+
+@patch('whitelist_manager.get_cached_instance')
+def test_get_whitelist_sets_success(mock_get_cached_instance):
+    """Test get_whitelist_sets returns lowercase sets of player names."""
+    mock_instance = {
+        'metadata': {
+            'items': [
+                {'key': 'approved-whitelist', 'value': 'ArodPlayerLocal,PlayerTwo'},
+                {'key': 'pending-whitelist', 'value': 'PendingPlayer'}
+            ]
+        }
+    }
+    mock_get_cached_instance.return_value = mock_instance
+    
+    approved_set, pending_set = whitelist_manager.get_whitelist_sets()
+    assert 'arodplayerlocal' in approved_set
+    assert 'playertwo' in approved_set
+    assert 'pendingplayer' in pending_set
+    assert 'ArodPlayerLocal' not in approved_set # stored lowercase
+    assert len(approved_set) == 2
+    assert len(pending_set) == 1
+

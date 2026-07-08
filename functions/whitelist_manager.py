@@ -182,3 +182,8 @@ def enqueue_admin_command(command):
     update_request.execute()
     invalidate_instance_cache()
     logger.info(f"Command '{command}' enqueued successfully.")
+
+def get_whitelist_sets():
+    """Retrieves both approved-whitelist and pending-whitelist sets of lowercase strings for O(1) membership checks."""
+    approved, pending = get_whitelist_states()
+    return {p.lower() for p in approved}, {p.lower() for p in pending}

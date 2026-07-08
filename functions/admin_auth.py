@@ -1,6 +1,6 @@
 import hmac
 from config import ADMIN_PASSCODE, logger
-from whitelist_manager import get_whitelist_states
+from whitelist_manager import get_whitelist_sets
 
 def check_admin_auth(request):
     """Verifies the admin passcode in the request headers (Authorization: Bearer <passcode>)
@@ -37,8 +37,8 @@ def check_admin_auth(request):
         logger.warning("Missing X-Admin-User header in admin request.")
         return False
 
-    approved_players, _ = get_whitelist_states()
-    if admin_user.lower() not in [p.lower() for p in approved_players]:
+    approved_set, _ = get_whitelist_sets()
+    if admin_user.lower() not in approved_set:
         logger.warning(f"Admin request attempted by non-whitelisted user: {admin_user}")
         return False
 

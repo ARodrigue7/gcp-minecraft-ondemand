@@ -32,10 +32,10 @@ from whitelist_manager import (
     add_to_gce_metadata_whitelist,
     remove_from_gce_metadata_whitelist,
     enqueue_admin_command,
-    get_whitelist_states,
     add_to_gce_metadata_pending,
     remove_from_gce_metadata_pending,
-    update_whitelist_state
+    update_whitelist_state,
+    get_whitelist_sets
 )
 from discord_webhook import send_discord_webhook
 
@@ -108,8 +108,8 @@ def get_status_http(request):
             username = request.args.get('username')
             is_auth = False
             if passcode and username and hmac.compare_digest(passcode, ADMIN_PASSCODE):
-                approved_players, _ = get_whitelist_states()
-                if username.lower() in [p.lower() for p in approved_players]:
+                approved_set, _ = get_whitelist_sets()
+                if username.lower() in approved_set:
                     is_auth = True
         else:
             is_auth = check_admin_auth(request)
@@ -361,8 +361,8 @@ def get_status_http(request):
                     return (json.dumps({"error": "Missing Minecraft username. Wake up request denied."}), 400, headers)
                 
                 # Verify that the player is whitelisted
-                approved_players, _ = get_whitelist_states()
-                if username.lower() not in [p.lower() for p in approved_players]:
+                approved_set, _ = get_whitelist_sets()
+                if username.lower() not in approved_set:
                     return (json.dumps({"error": f"Player '{username}' is not whitelisted. Wake up request denied."}), 403, headers)
                 
                 # Check status and start if stopped
@@ -387,20 +387,18 @@ def get_status_http(request):
                 return (json.dumps({"error": "Invalid Minecraft username format. Usernames must be 3-16 characters long and contain only letters, numbers, and underscores."}), 400, headers)
 
             # Fetch approved and pending lists to prevent duplicate requests
-            approved_players, pending_players = get_whitelist_states()
+            approved_set, pending_set = get_whitelist_sets()
             
             username_lower = username.lower()
-            approved_lower = [p.lower() for p in approved_players]
-            pending_lower = [p.lower() for p in pending_players]
             
-            if username_lower in approved_lower:
+            if username_lower in approved_set:
                 return (json.dumps({
                     "success": True, 
                     "status": "approved", 
                     "message": f"'{username}' is already whitelisted! You can connect to the server."
                 }), 200, headers)
                 
-            if username_lower in pending_lower:
+            if username_lower in pending_set:
                 return (json.dumps({
                     "success": True, 
                     "status": "pending", 
