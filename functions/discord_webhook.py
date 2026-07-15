@@ -4,6 +4,23 @@ import time
 from config import DISCORD_WEBHOOK_URL, INSTANCE_NAME, ZONE, logger
 from discord_auth import generate_signature
 
+def delete_discord_message(message_id):
+    """Deletes a Discord webhook message by ID to keep the channel clean."""
+    if not message_id or not DISCORD_WEBHOOK_URL:
+        return
+    try:
+        delete_url = f"{DISCORD_WEBHOOK_URL}/messages/{message_id}"
+        req = urllib.request.Request(
+            delete_url,
+            method='DELETE',
+            headers={'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'}
+        )
+        with urllib.request.urlopen(req) as resp:
+            pass
+        logger.info(f"Successfully deleted Discord message {message_id}.")
+    except Exception as e:
+        logger.error(f"Failed to delete Discord message {message_id}: {e}")
+
 def send_discord_webhook(username, status_url):
     """Sends a formatted alert about a whitelist request to Discord with a one-click approval link."""
     if not DISCORD_WEBHOOK_URL:

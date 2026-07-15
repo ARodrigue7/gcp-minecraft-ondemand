@@ -1,8 +1,6 @@
 import functions_framework
 import os
-import time
 import json
-import urllib.request
 import re
 import hmac
 from config import (
@@ -17,9 +15,11 @@ from config import (
 )
 from templates import get_whitelist_approved_html, get_whitelist_denied_html
 from gcp_client import (
-    compute,
+    get_cached_instance,
     get_instance_status_and_ip,
     start_instance,
+    stop_instance,
+    reset_instance,
     update_dns_record,
     is_minecraft_ready,
     get_backups_list,
@@ -37,7 +37,7 @@ from whitelist_manager import (
     update_whitelist_state,
     get_whitelist_sets
 )
-from discord_webhook import send_discord_webhook
+from discord_webhook import send_discord_webhook, delete_discord_message
 
 # Validate configuration on module loading to fail fast
 validate_config()
@@ -120,22 +120,15 @@ def get_status_http(request):
         if request.method == 'GET':
             if action == 'admin_status':
                 try:
-                    vm = compute.instances().get(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
-                    
-                    status = vm.get('status')
-                    ip = None
-                    network_interfaces = vm.get('networkInterfaces', [])
-                    if network_interfaces:
-                        access_configs = network_interfaces[0].get('accessConfigs', [])
-                        if access_configs:
-                            ip = access_configs[0].get('natIP')
+                    status, ip = get_instance_status_and_ip()
                             
                     if status == 'RUNNING' and ip:
                         try:
                             update_dns_record(ip)
                         except Exception as dns_err:
-                            print(f"Error updating DNS in admin status: {dns_err}")
+                            logger.error(f"Error updating DNS in admin status: {dns_err}")
                     
+                    vm = get_cached_instance()
                     metadata = vm.get('metadata', {})
                     items = metadata.get('items', [])
                     
@@ -159,7 +152,7 @@ def get_status_http(request):
                         headers
                     )
                 except Exception as e:
-                    print(f"Error loading admin status: {e}")
+                    logger.error(f"Error loading admin status: {e}")
                     return (json.dumps({"error": str(e)}), 500, headers)
                     
             elif action == 'admin_logs':
@@ -213,16 +206,13 @@ def get_status_http(request):
                         return (json.dumps({"error": "Missing command in payload"}), 400, headers)
                     
                     if command == 'start':
-                        print(f"Admin starting VM: {INSTANCE_NAME}...")
                         start_instance()
                         return (json.dumps({"success": True, "message": "VM startup initiated."}), 200, headers)
                     elif command == 'stop':
-                        print(f"Admin stopping VM: {INSTANCE_NAME}...")
-                        compute.instances().stop(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                        stop_instance()
                         return (json.dumps({"success": True, "message": "VM shutdown initiated."}), 200, headers)
                     elif command == 'restart':
-                        print(f"Admin restarting VM: {INSTANCE_NAME}...")
-                        compute.instances().reset(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME).execute()
+                        reset_instance()
                         return (json.dumps({"success": True, "message": "VM restart initiated."}), 200, headers)
                     else:
                         return (json.dumps({"error": f"Invalid power command: {command}"}), 400, headers)
@@ -254,19 +244,7 @@ def get_status_http(request):
                 add_to_gce_metadata_whitelist(username)
                 
                 # Delete the Discord webhook message to keep the channel clean
-                if message_id:
-                    try:
-                        if DISCORD_WEBHOOK_URL:
-                            delete_url = f"{DISCORD_WEBHOOK_URL}/messages/{message_id}"
-                            del_req = urllib.request.Request(
-                                delete_url,
-                                method='DELETE',
-                                headers={'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'}
-                            )
-                            with urllib.request.urlopen(del_req) as del_resp:
-                                pass
-                    except Exception as e:
-                        logger.error(f"Failed to delete Discord message: {e}")
+                delete_discord_message(message_id)
                 
                 # Return confirmation landing page HTML from templates module
                 html = get_whitelist_approved_html(username)
@@ -294,19 +272,7 @@ def get_status_http(request):
                 remove_from_gce_metadata_pending(username)
                 
                 # Delete the Discord webhook message to keep the channel clean
-                if message_id:
-                    try:
-                        if DISCORD_WEBHOOK_URL:
-                            delete_url = f"{DISCORD_WEBHOOK_URL}/messages/{message_id}"
-                            del_req = urllib.request.Request(
-                                delete_url,
-                                method='DELETE',
-                                headers={'User-Agent': 'GCP-Minecraft-On-Demand-Webhook'}
-                            )
-                            with urllib.request.urlopen(del_req) as del_resp:
-                                pass
-                    except Exception as e:
-                        logger.error(f"Failed to delete Discord message on deny: {e}")
+                delete_discord_message(message_id)
                 
                 # Return denied landing page HTML from templates module
                 html = get_whitelist_denied_html(username)
