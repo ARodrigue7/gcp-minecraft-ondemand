@@ -118,7 +118,6 @@ The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC Saa
 │   ├── templates.py
 │   └── requirements.txt
 ├── scripts/
-├── tutorial.md
 ├── cloudshell-tutorial.md
 └── README.md
 ```
