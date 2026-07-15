@@ -72,6 +72,28 @@
             }
         };
 
+        // Global toggle function for deployment environment tabs
+        window.showDeployMethod = function(method) {
+            // Hide all instructions
+            document.querySelectorAll(".deploy-instruct-pane").forEach(pane => {
+                pane.classList.add("hidden");
+            });
+            // Show target instructions
+            const activePane = document.getElementById("deploy-instructions-" + method);
+            if (activePane) {
+                activePane.classList.remove("hidden");
+            }
+            // Reset tab highlights
+            document.querySelectorAll(".deploy-tab-btn").forEach(btn => {
+                btn.className = "deploy-tab-btn px-3 py-1.5 text-xs border border-white/10 text-on-surface-variant uppercase transition-all duration-200";
+            });
+            // Highlight active tab
+            const activeBtn = document.getElementById("deploy-btn-" + method);
+            if (activeBtn) {
+                activeBtn.className = "deploy-tab-btn active px-3 py-1.5 text-xs border border-primary text-primary font-bold uppercase transition-all duration-200 bg-primary/5";
+            }
+        };
+
         document.addEventListener("DOMContentLoaded", function() {
             const contentContainer = document.getElementById("docs-content");
             
