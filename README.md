@@ -41,182 +41,35 @@ Before deploying, ensure you have:
 
 ## 🚀 Setup & Deployment
 
-### Phase 1: Google Cloud Platform (GCP) Preparation
+The quickest way to deploy the entire stack is directly from your browser using Google Cloud Shell:
 
-#### Method A: Interactive Setup Wizard (Recommended)
-We've included an automated script that checks your dependencies, authenticates you, prompts you for your configuration variables, and enables all required GCP APIs automatically.
+[![Deploy to Google Cloud](https://deploy.cloud.google.com/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
 
-**Mac/Linux:**
-```bash
-# Make the script executable
-chmod +x scripts/linux/setup.sh
-# Run the interactive wizard
-./scripts/linux/setup.sh
-```
-
-**Windows (PowerShell):**
-```powershell
-.\scripts\windows\setup.ps1
-```
-
-#### Method B: One-Click Cloud Shell Deployment (Fastest)
-
-You can deploy the entire stack directly from your browser without installing anything locally:
-
-1. Click the button below to launch Google Cloud Shell:
-   
-   [![Deploy to Google Cloud](https://deploy.cloud.google.com/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
-   
-2. Cloud Shell will clone the repository, run the interactive setup wizard in the terminal to configure variables, and open the `terraform/terraform.tfvars` file for your final review.
-3. Run `cd terraform && terraform apply` to deploy.
-
-#### Method C: Manual Setup
-If you prefer to configure things manually, ensure your local terminal has Application Default Credentials configured:
-```bash
-gcloud auth application-default login
-```
-
-Then, manually enable the required APIs in your GCP project:
-```bash
-gcloud services enable \
-  compute.googleapis.com \
-  dns.googleapis.com \
-  pubsub.googleapis.com \
-  logging.googleapis.com \
-  cloudfunctions.googleapis.com \
-  cloudbuild.googleapis.com \
-  artifactregistry.googleapis.com
-```
-
----
-
-### Phase 2: Configure & Apply Terraform
-
-#### 1. Set Up Variables
-*(If you used Method A, this is already done for you! You can skip to step 2).*
-
-Copy the example variables file to your active configuration:
-```bash
-cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-```
-
-Open `terraform/terraform.tfvars` and configure the values:
-* `project_id`: Your actual GCP Project ID (e.g., `minecraft-ondemand-499002`).
-* `domain_name`: The subdomain players will use (e.g., `mc.yourdomain.com`).
-* `dns_zone_name`: Logical name for the zone inside GCP (e.g., `mc-yourdomain-com`).
-* `discord_webhook_url`: Your private Discord Webhook URL.
-* `admin_passcode`: Your secure password for accessing the admin portal.
-* `idle_timeout_seconds`: Inactivity seconds before auto-shutdown (e.g., `600` for 10 minutes).
-
-#### 2. Deploy Infrastructure
-Navigate to the `terraform/` directory, initialize, and deploy the infrastructure:
-```bash
-cd terraform
-terraform init
-terraform apply
-```
-When prompted, type `yes` to confirm.
-
-> [!IMPORTANT]
-> **If you are cloning or forking this repository:**
-> The default configuration stores Terraform state locally (`terraform.tfstate`), which is the easiest way to deploy DIY.
-> 
-> **To use a Remote GCS Backend (Optional):**
-> 1. Create a private GCS bucket in your own GCP project (with Object Versioning enabled).
-> 2. Copy the example backend configuration:
->    ```bash
->    cp terraform/backend.tf.example terraform/backend.tf
->    ```
-> 3. Update the `bucket` parameter in `terraform/backend.tf` to match your GCS bucket name before running `terraform init`.
-
-
-> [!NOTE]
-> Upon successful application, Terraform automatically creates the configuration file **`docs/config.js`** for your website and prints the assigned DNS name servers to your console.
-
-```text
-Outputs:
-dns_name_servers = [
-  "ns-cloud-c1.googledomains.com.",
-  "ns-cloud-c2.googledomains.com.",
-  "ns-cloud-c3.googledomains.com.",
-  "ns-cloud-c4.googledomains.com."
-]
-status_function_url = "https://us-central1-..."
-```
-**Keep these name servers handy for the next phase!**
-
----
-
-### Phase 3: Cloudflare DNS Delegation
-
-To let GCP intercept DNS requests and trigger the server wake-up sequence, delegate the subdomain (e.g., `mc.yourdomain.com`) to Google Cloud DNS. Cloudflare will continue managing your root domain (`yourdomain.com`), but resolves the subdomain through GCP.
-
-1. Log in to your **Cloudflare Dashboard**.
-2. Click on your domain (e.g., `yourdomain.com`).
-3. Click on **DNS** -> **Records** in the left sidebar.
-4. Create **four (4) NS Records**, one for each name server provided by your Terraform output.
-
-For each record:
-* **Type**: `NS`
-* **Name**: The subdomain prefix (e.g., `mc`).
-* **Nameserver**: A Google name server (e.g., `ns-cloud-c1.googledomains.com.`).
-* **TTL**: Auto / Default.
-
-> [!WARNING]
-> Do NOT create an `A` record on Cloudflare for `mc.yourdomain.com`. Cloudflare must delegate the entire DNS resolution of `mc.yourdomain.com` to GCP DNS so the query logs can trigger the Cloud Function.
-
----
-
-### Phase 4: How to Test the Flow
-
-1. **Ping the Subdomain:**
-   Open a terminal and run `ping mc.yourdomain.com` or launch Minecraft and add the server.
-2. **First Resolution:**
-   Initially, the ping might timeout. Behind the scenes, GCP's Logging Sink detects the resolution query and triggers the `minecraft-starter` Cloud Function.
-3. **VM Startup:**
-   The function powers on the GCE VM, retrieves the external IP, and updates GCP Cloud DNS.
-4. **Connect:**
-   Within 10–20 seconds, re-ping or refresh Minecraft. The subdomain resolves to the VM's public IP, and you can join!
-5. **Scale-to-Zero:**
-   Once everyone logs off and the server is idle for 10 minutes, the watchdog shuts down the instance automatically to eliminate compute charges.
+For detailed, step-by-step setup instructions, domain delegation configuration, and environment setup, please refer to:
+* **Interactive Guide:** Visit the hosted [Getting Started Guide](https://arodrigue7.github.io/gcp-minecraft-ondemand/getting-started.html) on your GitHub Pages site.
+* **Markdown Guide:** Read [tutorial.md](tutorial.md) directly in this repository.
 
 ---
 
 ## 🛡️ Whitelisting & Administration
 
-### 1. Enable Whitelisting
-Whitelisting is enabled by default in this deployment (pre-configured with `-e ENABLE_WHITELIST=TRUE` and `-e ENFORCE_WHITELIST=TRUE` in the container startup configuration). You do not need to perform any manual VM configurations to enable it.
-
-### 2. Player Portal (`docs/play.html`)
-The player hub is a dedicated page for your community. It reads the configuration dynamically to:
+### 1. Player Portal (`docs/play.html`)
+The player hub is a dedicated page for your community. It reads configuration dynamically to:
 - Show a **Live Server Status** badge (`🟢 Online`, `🔴 Offline`, `🟡 Starting...`).
 - Provide a **Copy Address** button to copy `mc.yourdomain.com` to the clipboard.
 - Provide a **Whitelist Request** form.
 
-#### Whitelist Request, Offline Checks, & One-Click Approval Flow:
-1. **Offline Status Check & Anti-Spam**: A player enters their Minecraft username on the Player Portal and clicks **Submit**. The Cloud Function queries the VM's metadata attributes (`approved-whitelist` and `pending-whitelist`) even if the VM is shut down.
+#### One-Click Discord Approval Flow:
+1. **Offline Status Check & Anti-Spam**: A player submits their username. The Cloud Function queries VM metadata attributes (`approved-whitelist` and `pending-whitelist`) even if the VM is shut down.
    - If they are already approved, they receive a prompt: *"Username is already whitelisted!"*
-   - If their request is already pending, they receive a prompt: *"Whitelist request is already pending approval."* This prevents threat actors from spamming the Discord webhook.
-   - If it is a new request, they are added to `pending-whitelist` and the Discord notification is sent.
+   - If their request is already pending, they receive a prompt: *"Whitelist request is already pending approval."* This prevents duplicate spamming of the Discord webhook.
 2. **Discord Notification**: The Cloud Function securely posts a rich message embed to your Discord channel.
 3. **One-Click Actions**:
    - **🟢 Approve Request Link**: Click this link in the embed. The Cloud Function verifies the secure HMAC signature, appends the player to `approved-whitelist`, removes them from `pending-whitelist`, and **automatically deletes the webhook alert message from Discord** to keep your channel clean.
    - **🔴 Deny & Dismiss Link**: Click this to reject the request. The Cloud Function removes the player from `pending-whitelist` and deletes the alert message from Discord immediately.
-   - **Manual SSH Command**: Copy/paste the pre-formatted command:
-     ```bash
-     gcloud compute ssh minecraft-server --zone=us-central1-a --command="docker exec minecraft rcon-cli whitelist add <username>"
-     ```
 
-
-### 3. RCON Watchdog Player Check
+### 2. RCON Watchdog Player Check
 Instead of checking raw TCP connection sockets (which can be tricked into keeping the VM online by automated server lists, scanner bots, or simple TCP pings), the watchdog script uses the Minecraft RCON client to query the exact player count (`rcon-cli list`). If the active player count remains at `0` for your configured timeout (default `600` seconds / 10 minutes), the VM is shut down gracefully.
-
-#### 🌐 Dynamic Configuration for Cloners/Forks:
-If other developers clone or fork this project, they do not need to rebuild or host their own website to test the player portal. They can pass their variables directly in the URL:
-```text
-https://your-username.github.io/gcp-minecraft-ondemand/play.html?api=https://YOUR_FUNCTION_URL&domain=YOUR_DOMAIN
-```
-Visiting this link **once** will automatically save the custom `api` and `domain` parameters to the browser's `localStorage` and persist them for all future visits! Otherwise, the page defaults to reading the local `docs/config.js`.
 
 ---
 
@@ -236,34 +89,28 @@ Uploads your local files in the `saves/` directory back up to the cloud.
 
 ---
 
+## 🧪 Testing
+
+We have built a comprehensive mock test suite using `pytest` to test all Cloud Function endpoint flows, authentication logic, whitelist metadata management, and DNS updates locally without needing live GCP credentials.
+
+To install dependencies and run the tests:
+```bash
+# Install dependencies
+pip3 install -r functions/requirements.txt
+
+# Run the test suite
+cd functions
+python3 -m pytest tests/ -v
+```
+
+---
+
 ## ⚙️ Customization
 
 You can customize the Minecraft server settings by editing [terraform/startup.sh](terraform/startup.sh).
 * `TYPE`: Change from `PAPER` to `VANILLA`, `FORGE`, `FABRIC`, etc.
 * `VERSION`: Set a specific version like `1.20.4` instead of `LATEST`.
 * `MEMORY`: Change the JVM memory allocation (e.g., `3G`).
-
-### 🌐 Dynamic DNS Configuration
-By default, this project uses **Google Cloud DNS** (`dns_provider = "google"`) to handle domain resolution and automatic IP updates on server boot. However, you can configure alternative providers in `terraform/terraform.tfvars`:
-
-* **Cloudflare** (`dns_provider = "cloudflare"`):
-  - Set `domain_name` to your subdomain (e.g., `mc.yourdomain.com`).
-  - Set `dns_api_token` to a Cloudflare API token (with Zone.DNS edit permissions).
-  - Set `cloudflare_zone_id` to your Cloudflare zone ID.
-* **DuckDNS** (`dns_provider = "duckdns"`):
-  - Set `domain_name` to your DuckDNS domain (e.g., `yoursubdomain.duckdns.org`).
-  - Set `dns_api_token` to your DuckDNS token.
-* **Dynu DNS** (`dns_provider = "dynu"`):
-  - Set `domain_name` to your Dynu hostname (e.g., `yourdomain.dynu.com`).
-  - Set `dns_api_token` to your Dynu IP update credential (API token or password).
-* **None** (`dns_provider = "none"`):
-  - Disables automatic dynamic DNS updates. Useful if you want to manage DNS updates manually.
-
----
-
-## 🔮 Future Roadmap
-
-* **Deploy to Google Cloud Button**: Introduce a secure, interactive setup wizard within Google Cloud Shell (via the standard `Deploy to GCP` button) to automate project provisioning and eliminate manual local file creation.
 
 ---
 
