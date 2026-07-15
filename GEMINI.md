@@ -89,18 +89,25 @@ The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC Saa
 │   ├── index.html
 │   ├── play.html
 │   ├── admin.html
-│   ├── images/
+│   ├── getting-started.html
+│   ├── tutorial.md
 │   ├── css/
 │   │   └── style.css
 │   └── js/
 │       ├── config.js
 │       ├── play.js
-│       └── admin.js
+│       ├── admin.js
+│       ├── navbar.js
+│       ├── theme.js
+│       └── toast.js
 ├── terraform/
 │   ├── main.tf
 │   ├── variables.tf
 │   └── outputs.tf
 ├── functions/
+│   ├── tests/
+│   │   ├── conftest.py
+│   │   └── test_*.py
 │   ├── main.py
 │   ├── config.py
 │   ├── gcp_client.py
@@ -124,15 +131,15 @@ The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC Saa
 ```
 
 🔄 Change Log & Active Focus
-Current Iteration: Phase 6 - Stateful Whitelisting & Webhook Anti-Spam (GCP Minecraft On-Demand)
+Current Iteration: Phase 6 - Interactive Documentation, Cloud Shell Wizard, and DRY Refactoring
 
 Recent Changes:
-* Stateful Whitelisting: Added `pending-whitelist` metadata key to Compute Engine instance to securely check player whitelist status (Approved / Pending / Not Whitelisted) directly on the portal page, even when the VM is powered down.
-* Webhook Anti-Spam: Cloud Function now blocks duplicate whitelist requests for the same player, preventing Discord webhook spam.
-* IAM Permissions: Added `google_service_account_iam_member.cf_sa_user` to grant `roles/iam.serviceAccountUser` role to the Cloud Function service account, allowing it to perform metadata updates on the VM instance.
-* Dynamic Frontend: Updated portal Javascript to render dynamic responses directly from the Cloud Function.
-* Whitelist Race Condition Resolution: Fixed the GCE metadata update conflict (`412 Supplied fingerprint does not match current metadata fingerprint`) by implementing a unified, atomic metadata transaction function `update_whitelist_state` in the Cloud Function.
-* Manual Whitelisting: Successfully whitelisted player `ArodPlayerLocal`, moving them from pending to approved list and queuing the RCON command.
+* Getting Started Guide: Renamed documentation to `getting-started.html` and updated navbar routing. Added Step 0 cloning steps and Windows setup wizard instructions.
+* Dynamic Deploy Badge: Added the official "Run on Google Cloud" badge and styled it centered with automatic fork repository resolution.
+* Spaced-Evenly Icon-Only Mobile Menu: Upgraded the bottom navigation bar to standard icon-only layout with large touch targets.
+* Interactive DNS Instructions: Integrated styled tab selectors in the markdown guide explaining step-by-step configs for Google DNS, Cloudflare, DuckDNS, and Dynu.
+* Python DRY Refactoring: Extracted VM stop/reset helper methods and Discord message deletion wrapper to keep code modular and clean.
+* Test suite collection: Added `conftest.py` mock defaults for local test execution, bringing the suite to a 100% pass rate (42/42 tests passing).
 
 Active Blockers: None!
 
