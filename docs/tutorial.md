@@ -104,7 +104,21 @@ We provide an interactive script to configure your nameservers, admin passcode, 
   .\scripts\windows\setup.ps1
   ```
 
-Follow the prompts. This script automatically generates your secure `terraform/terraform.tfvars` file.
+Follow the prompts. The script automatically generates your secure `terraform/terraform.tfvars` file.
+
+### 📋 Example Inputs Reference Table
+
+Here are examples of what you should input during the setup prompts depending on your DNS configuration:
+
+| Prompt Name | Example Value (Google / Cloudflare DNS) | Example Value (DuckDNS Free DNS) | Description / Notes |
+| :--- | :--- | :--- | :--- |
+| **GCP Project ID** | `minecraft-servers-412204` | `my-gcp-sandbox` | Your actual GCP project alphanumeric ID. |
+| **Minecraft Domain** | `mc.mycustomdomain.com` | `mycoolserver.duckdns.org` | The domain/subdomain players will connect to. |
+| **Cloud DNS Zone** | `mc-mycustomdomain-com` | `mycoolserver-duckdns-org` | Internal GCP name for the zone (automatic default is fine). |
+| **Admin Passcode** | `DiamondArmor99!` | `MySecretPass123` | Password used to log into the web admin dashboard. |
+| **Discord Webhook URL** | `https://discord.com/api/webhooks/...` | `https://discord.com/api/webhooks/...` | Webhook URL to route whitelist approval cards. |
+| **DNS Provider** | `1` (Google Cloud DNS) or `2` (Cloudflare) | `3` (DuckDNS) | Choose the provider managing the target domain. |
+| **API Token / Zone ID** | *(Specific to Cloudflare/DuckDNS)* | `a1b2c3d4-e5f6-...` | Credentials for your dynamic DNS provider. |
 
 ---
 
