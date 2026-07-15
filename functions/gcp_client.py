@@ -1,4 +1,5 @@
 import socket
+import time
 import urllib.request
 import json
 from googleapiclient import discovery
@@ -23,8 +24,6 @@ dns = discovery.build('dns', 'v1', cache_discovery=False)
 logging_service = discovery.build('logging', 'v2', cache_discovery=False)
 storage_service = discovery.build('storage', 'v1', cache_discovery=False)
 
-
-import time
 
 _instance_cache = None
 _instance_cache_time = 0
@@ -66,6 +65,18 @@ def start_instance():
     """Triggers the start request for the VM instance."""
     logger.info(f"Triggering start for GCE instance {INSTANCE_NAME}...")
     request = compute.instances().start(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
+    return request.execute()
+
+def stop_instance():
+    """Triggers the stop request for the VM instance."""
+    logger.info(f"Triggering stop for GCE instance {INSTANCE_NAME}...")
+    request = compute.instances().stop(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
+    return request.execute()
+
+def reset_instance():
+    """Triggers a hard reset for the VM instance."""
+    logger.info(f"Triggering reset for GCE instance {INSTANCE_NAME}...")
+    request = compute.instances().reset(project=PROJECT_ID, zone=ZONE, instance=INSTANCE_NAME)
     return request.execute()
 
 def update_dns_record(new_ip):

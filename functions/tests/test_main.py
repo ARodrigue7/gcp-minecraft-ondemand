@@ -70,16 +70,18 @@ def test_start_minecraft_running(mock_update_dns, mock_start_instance, mock_get_
     mock_start_instance.assert_not_called()
     mock_update_dns.assert_called_once_with('1.2.3.4')
 
-@patch('main.compute')
+@patch('main.get_cached_instance')
+@patch('main.get_instance_status_and_ip')
 @patch('main.update_dns_record')
-def test_admin_status_dns_update_error(mock_update_dns, mock_compute):
+def test_admin_status_dns_update_error(mock_update_dns, mock_get_status, mock_get_cached_instance):
     """Test get_status_http handles DNS update exceptions at line 134 gracefully."""
     mock_vm = {
         'status': 'RUNNING',
         'networkInterfaces': [{'accessConfigs': [{'natIP': '1.2.3.4'}]}],
         'metadata': {'items': []}
     }
-    mock_compute.instances().get().execute.return_value = mock_vm
+    mock_get_status.return_value = ('RUNNING', '1.2.3.4')
+    mock_get_cached_instance.return_value = mock_vm
     mock_update_dns.side_effect = Exception("DNS Update Failed")
     
     mock_request = MagicMock()

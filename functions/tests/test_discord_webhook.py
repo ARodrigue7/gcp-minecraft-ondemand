@@ -11,11 +11,12 @@ import discord_webhook
 def test_send_discord_webhook_success(mock_urlopen):
     """Test successful Discord webhook transmission."""
     mock_response = MagicMock()
+    mock_response.read.return_value = b'{"id": "123"}'
     mock_urlopen.return_value.__enter__.return_value = mock_response
     
     result = discord_webhook.send_discord_webhook('TestUser', 'http://status.url')
     assert result is True
-    mock_urlopen.assert_called_once()
+    assert mock_urlopen.call_count == 2
 
 @patch('discord_webhook.DISCORD_WEBHOOK_URL', None)
 @patch('discord_webhook.urllib.request.urlopen')

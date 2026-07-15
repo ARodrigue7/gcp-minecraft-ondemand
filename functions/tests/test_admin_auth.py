@@ -7,10 +7,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import admin_auth
 
 @patch('admin_auth.ADMIN_PASSCODE', 'secret_passcode')
-@patch('admin_auth.get_whitelist_states')
+@patch('admin_auth.get_whitelist_sets')
 def test_check_admin_auth_success(mock_get_whitelist_states):
     """Test successful authentication."""
-    mock_get_whitelist_states.return_value = (['AdminUser'], [])
+    mock_get_whitelist_states.return_value = ({'adminuser'}, set())
     
     mock_request = MagicMock()
     mock_request.headers = {
@@ -41,7 +41,7 @@ def test_check_admin_auth_missing_admin_user_header():
     assert admin_auth.check_admin_auth(mock_request) is False
 
 @patch('admin_auth.ADMIN_PASSCODE', 'secret_passcode')
-@patch('admin_auth.get_whitelist_states')
+@patch('admin_auth.get_whitelist_sets')
 def test_check_admin_auth_not_in_whitelist(mock_get_whitelist_states):
     """Test check_admin_auth fails when the user is not in the approved whitelist."""
     mock_get_whitelist_states.return_value = (['OtherUser'], [])
