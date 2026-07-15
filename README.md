@@ -47,7 +47,7 @@ The quickest way to deploy the entire stack is directly from your browser using 
 
 For detailed, step-by-step setup instructions, domain delegation configuration, and environment setup, please refer to:
 * **Interactive Guide:** Visit the hosted [Getting Started Guide](https://arodrigue7.github.io/gcp-minecraft-ondemand/getting-started.html) on your GitHub Pages site.
-* **Markdown Guide:** Read [tutorial.md](tutorial.md) directly in this repository.
+* **Markdown Guide:** Read [tutorial.md](docs/tutorial.md) directly in this repository.
 
 ---
 
