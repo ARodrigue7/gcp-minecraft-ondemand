@@ -1,27 +1,63 @@
 (function() {
     function initNavbar() {
+        // 1. Render Top Navbar (if container exists)
         const container = document.getElementById("global-navbar");
-        if (!container) return;
+        let activeTab = "landing";
+        
+        if (container) {
+            activeTab = container.getAttribute("data-active-tab") || "landing";
+            container.innerHTML = `
+            <header class="bg-surface/90 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+                <nav class="flex justify-between items-center w-full px-base md:px-margin max-w-container-max mx-auto h-14">
+                    <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='index.html'">
+                        <span class="font-headline-lg text-[20px] font-bold text-primary uppercase tracking-[0.1em]">GCP Minecraft</span>
+                    </div>
+                    <div class="hidden md:flex gap-8 items-center h-full">
+                        <a class="${activeTab === 'landing' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface/60 hover:text-on-surface'} px-1 py-1 transition-all duration-200 text-label-lg h-full flex items-center" href="index.html">LANDING</a>
+                        <a class="${activeTab === 'servers' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface/60 hover:text-on-surface'} px-1 py-1 transition-all duration-200 text-label-lg h-full flex items-center" href="play.html">SERVERS</a>
+                        <a class="${activeTab === 'admin' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface/60 hover:text-on-surface'} px-1 py-1 transition-all duration-200 text-label-lg h-full flex items-center" href="admin.html">ADMIN</a>
+                    </div>
+                    <div class="flex items-center">
+                        <!-- Right side kept empty for clean, minimalist layout -->
+                    </div>
+                </nav>
+            </header>
+            `;
+        } else {
+            // Determine active tab based on path fallback for pages without global-navbar (like admin panel)
+            const path = window.location.pathname;
+            if (path.includes("play.html")) {
+                activeTab = "servers";
+            } else if (path.includes("admin.html")) {
+                activeTab = "admin";
+            }
+        }
 
-        const activeTab = container.getAttribute("data-active-tab");
+        // 2. Render Bottom Navbar for Mobile (on all pages)
+        const existingBottomNav = document.getElementById("global-bottom-navbar");
+        if (existingBottomNav) {
+            existingBottomNav.remove();
+        }
 
-        container.innerHTML = `
-        <header class="bg-surface/90 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-            <nav class="flex justify-between items-center w-full px-base md:px-margin max-w-container-max mx-auto h-14">
-                <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='index.html'">
-                    <span class="font-headline-lg text-[20px] font-bold text-primary uppercase tracking-[0.1em]">GCP Minecraft</span>
-                </div>
-                <div class="hidden md:flex gap-8 items-center h-full">
-                    <a class="${activeTab === 'landing' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface/60 hover:text-on-surface'} px-1 py-1 transition-all duration-200 text-label-lg h-full flex items-center" href="index.html">LANDING</a>
-                    <a class="${activeTab === 'servers' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface/60 hover:text-on-surface'} px-1 py-1 transition-all duration-200 text-label-lg h-full flex items-center" href="play.html">SERVERS</a>
-                    <a class="${activeTab === 'admin' ? 'text-primary font-bold border-b-2 border-primary' : 'text-on-surface/60 hover:text-on-surface'} px-1 py-1 transition-all duration-200 text-label-lg h-full flex items-center" href="admin.html">ADMIN</a>
-                </div>
-                <div class="flex items-center">
-                    <!-- Right side kept empty for clean, minimalist layout -->
-                </div>
-            </nav>
-        </header>
+        const bottomNav = document.createElement("nav");
+        bottomNav.id = "global-bottom-navbar";
+        bottomNav.className = "fixed bottom-0 left-0 w-full flex justify-around items-center h-20 md:hidden bg-grass-deep/95 backdrop-blur-sm border-t border-white/10 z-50";
+        
+        bottomNav.innerHTML = `
+            <a class="flex flex-col items-center justify-center ${activeTab === 'landing' ? 'text-primary font-bold' : 'text-on-surface-variant'} transition-transform duration-100 active:scale-95" href="index.html">
+                <span class="material-symbols-outlined">dns</span>
+                <span class="font-label-sm uppercase mt-1">Landing</span>
+            </a>
+            <a class="flex flex-col items-center justify-center ${activeTab === 'servers' ? 'text-primary font-bold' : 'text-on-surface-variant'} transition-transform duration-100 active:scale-95" href="play.html">
+                <span class="material-symbols-outlined">sports_esports</span>
+                <span class="font-label-sm uppercase mt-1">Servers</span>
+            </a>
+            <a class="flex flex-col items-center justify-center ${activeTab === 'admin' ? 'text-primary font-bold' : 'text-on-surface-variant'} transition-transform duration-100 active:scale-95" href="admin.html">
+                <span class="material-symbols-outlined">shield</span>
+                <span class="font-label-sm uppercase mt-1">Admin</span>
+            </a>
         `;
+        document.body.appendChild(bottomNav);
     }
 
     if (document.readyState === "loading") {

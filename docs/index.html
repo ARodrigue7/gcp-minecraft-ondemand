@@ -14,7 +14,7 @@
 <body class="bg-background text-on-surface font-body-md min-h-screen selection:bg-gold-accent selection:text-black">
     <!-- TopNavBar Container -->
     <div id="global-navbar" data-active-tab="landing"></div>
-    <main class="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
+    <main class="min-h-[calc(100vh-64px)] flex items-center justify-center pt-12 pb-28 md:py-12 px-4" style="background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.75)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuCmSpQClkVnrUl7us_ntTlCeS0O3h-Y61ZR_Yt_evMaLv9m5ScVMKWBzmaGBweOX1ajgdkCUVJdPVfVb93gLxr_ScAmKm3JNAe5HC8e__zQ_XUU1g01rfZbK3tgbvEcYwfZb9Hoiv9rR3wyQPJzXP0cI67lZXmZ4_tUgQegwvqyeH3g7LIcAEkXV5nKD72sKLp0QNGlj70IM_O1PYZmBR1u5v53S00MFfnMR1qy0WQC8_geNApFpU8pbC7gq_i9zxoKUhk6vTrIr8s'); background-size: cover; background-position: center;">
         <!-- Tactical Content Container -->
         <div class="tactical-panel w-full max-w-2xl p-8 relative">
             <!-- Minimal Corner Accents -->
@@ -97,21 +97,7 @@
             </div>
         </div>
     </main>
-    <!-- BottomNavBar (Mobile Only) -->
-    <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center h-16 md:hidden bg-surface-container-lowest border-t refined-border z-50">
-        <a class="flex flex-col items-center justify-center text-primary transition-transform duration-100 active:scale-95" href="index.html">
-            <span class="material-symbols-outlined">dns</span>
-            <span class="font-label-sm text-[10px] uppercase">Landing</span>
-        </a>
-        <a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-100 active:scale-95" href="play.html">
-            <span class="material-symbols-outlined">sports_esports</span>
-            <span class="font-label-sm text-[10px] uppercase">Servers</span>
-        </a>
-        <a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-100 active:scale-95" href="admin.html">
-            <span class="material-symbols-outlined">admin_panel_settings</span>
-            <span class="font-label-sm text-[10px] uppercase">Admin</span>
-        </a>
-    </nav>
+
     <script src="js/navbar.js"></script>
 </body>
 </html>

@@ -80,21 +80,34 @@ body {
 .refined-border {
     border: 1px solid rgba(161, 141, 122, 0.2);
 }
-
 /* Inputs & Form Elements */
-.input-field {
-    background-color: rgba(5, 17, 10, 0.7);
-    border: 1px solid rgba(52, 94, 55, 0.5);
-    color: #d7e6db;
-    padding: 8px 12px;
-    appearance: none;
-    transition: all 0.2s ease;
+input.input-field,
+textarea.input-field,
+select.input-field {
+    background-color: rgba(5, 17, 10, 0.7) !important;
+    color: #d7e6db !important;
+    border: 1px solid rgba(52, 94, 55, 0.5) !important;
+    padding: 8px 12px !important;
+    appearance: none !important;
+    transition: all 0.2s ease !important;
 }
-.input-field:focus {
-    outline: none;
-    border-color: #F39C12;
-    background-color: rgba(5, 17, 10, 0.9);
-    box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+
+input.input-field:focus,
+textarea.input-field:focus,
+select.input-field:focus {
+    outline: none !important;
+    border-color: #F39C12 !important;
+    background-color: rgba(5, 17, 10, 0.9) !important;
+    box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1) !important;
+}
+
+/* Style autofill states to ensure readability */
+input.input-field:-webkit-autofill,
+input.input-field:-webkit-autofill:hover,
+input.input-field:-webkit-autofill:focus,
+input.input-field:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #09160f inset !important;
+    -webkit-text-fill-color: #d7e6db !important;
 }
 
 /* Utilities */
