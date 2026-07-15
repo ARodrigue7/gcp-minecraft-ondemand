@@ -106,9 +106,10 @@ We provide an interactive script to configure your nameservers, admin passcode, 
 
 Follow the prompts. The script automatically generates your secure `terraform/terraform.tfvars` file.
 
-### 📋 Example Inputs Reference Table
-
-Here are examples of what you should input during the setup prompts depending on your DNS configuration:
+<details class="border border-white/10 p-4 rounded bg-surface-container/20 mt-4">
+<summary class="cursor-pointer font-bold text-sm text-primary select-none hover:underline">📋 View Configuration Reference Table</summary>
+<div class="mt-4">
+<p class="text-xs text-on-surface-variant mb-4">Use these examples to guide you on what values to input for the prompts:</p>
 
 | Prompt Name | Example Value (Google / Cloudflare DNS) | Example Value (DuckDNS Free DNS) | Description / Notes |
 | :--- | :--- | :--- | :--- |
@@ -119,6 +120,8 @@ Here are examples of what you should input during the setup prompts depending on
 | **Discord Webhook URL** | `https://discord.com/api/webhooks/...` | `https://discord.com/api/webhooks/...` | Webhook URL to route whitelist approval cards. |
 | **DNS Provider** | `1` (Google Cloud DNS) or `2` (Cloudflare) | `3` (DuckDNS) | Choose the provider managing the target domain. |
 | **API Token / Zone ID** | *(Specific to Cloudflare/DuckDNS)* | `a1b2c3d4-e5f6-...` | Credentials for your dynamic DNS provider. |
+</div>
+</details>
 
 ---
 

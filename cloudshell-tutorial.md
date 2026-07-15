@@ -42,9 +42,9 @@ We provide an interactive script to enable project settings and configure your a
 
 Follow the prompts. The wizard automatically validates your inputs, checks your project authentication, and generates your secure `terraform/terraform.tfvars` configuration file.
 
-### 📋 Example Inputs Reference Table
-
-Here are examples of what you should input during the setup prompts depending on your DNS configuration:
+<details>
+<summary>📋 View Configuration Reference Table</summary>
+<br>
 
 | Prompt Name | Example Value (Google / Cloudflare DNS) | Example Value (DuckDNS Free DNS) | Description / Notes |
 | :--- | :--- | :--- | :--- |
@@ -55,6 +55,7 @@ Here are examples of what you should input during the setup prompts depending on
 | **Discord Webhook URL** | `https://discord.com/api/webhooks/...` | `https://discord.com/api/webhooks/...` | Webhook URL to route whitelist approval cards. |
 | **DNS Provider** | `1` (Google Cloud DNS) or `2` (Cloudflare) | `3` (DuckDNS) | Choose the provider managing the target domain. |
 | **API Token / Zone ID** | *(Specific to Cloudflare/DuckDNS)* | `a1b2c3d4-e5f6-...` | Credentials for your dynamic DNS provider. |
+</details>
 
 ---
 
