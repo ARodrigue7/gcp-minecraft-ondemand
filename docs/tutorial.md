@@ -24,6 +24,23 @@ Before you begin, ensure you have the following resources ready:
 
 To start, you must select your deployment environment to authorize the session and configure your Google Cloud Platform (GCP) project.
 
+<details class="border border-white/10 p-4 rounded bg-surface-container/20 mt-4 mb-6">
+<summary class="cursor-pointer font-bold text-sm text-primary select-none hover:underline">📋 View Configuration Reference Table</summary>
+<div class="mt-4">
+<p class="text-xs text-on-surface-variant mb-4">Use these examples to guide you on what values to input for the placeholders and prompts:</p>
+
+| Prompt Name | Example Value (Google / Cloudflare DNS) | Example Value (DuckDNS Free DNS) | Description / Notes |
+| :--- | :--- | :--- | :--- |
+| **GCP Project ID** | `minecraft-servers-412204` | `my-gcp-sandbox` | Your actual GCP project alphanumeric ID. |
+| **Minecraft Domain** | `mc.mycustomdomain.com` | `mycoolserver.duckdns.org` | The domain/subdomain players will connect to. |
+| **Cloud DNS Zone** | `mc-mycustomdomain-com` | `mycoolserver-duckdns-org` | Internal GCP name for the zone (automatic default is fine). |
+| **Admin Passcode** | `DiamondArmor99!` | `MySecretPass123` | Password used to log into the web admin dashboard. |
+| **Discord Webhook URL** | `https://discord.com/api/webhooks/...` | `https://discord.com/api/webhooks/...` | Webhook URL to route whitelist approval cards. |
+| **DNS Provider** | `1` (Google Cloud DNS) or `2` (Cloudflare) | `3` (DuckDNS) | Choose the provider managing the target domain. |
+| **API Token / Zone ID** | *(Specific to Cloudflare/DuckDNS)* | `a1b2c3d4-e5f6-...` | Credentials for your dynamic DNS provider. |
+</div>
+</details>
+
 Select your deployment method below:
 
 <div class="deploy-method-selector mt-4 border border-white/10 p-4 rounded bg-surface-container/20 mb-6">
@@ -105,23 +122,6 @@ We provide an interactive script to configure your nameservers, admin passcode, 
   ```
 
 Follow the prompts. The script automatically generates your secure `terraform/terraform.tfvars` file.
-
-<details class="border border-white/10 p-4 rounded bg-surface-container/20 mt-4">
-<summary class="cursor-pointer font-bold text-sm text-primary select-none hover:underline">📋 View Configuration Reference Table</summary>
-<div class="mt-4">
-<p class="text-xs text-on-surface-variant mb-4">Use these examples to guide you on what values to input for the prompts:</p>
-
-| Prompt Name | Example Value (Google / Cloudflare DNS) | Example Value (DuckDNS Free DNS) | Description / Notes |
-| :--- | :--- | :--- | :--- |
-| **GCP Project ID** | `minecraft-servers-412204` | `my-gcp-sandbox` | Your actual GCP project alphanumeric ID. |
-| **Minecraft Domain** | `mc.mycustomdomain.com` | `mycoolserver.duckdns.org` | The domain/subdomain players will connect to. |
-| **Cloud DNS Zone** | `mc-mycustomdomain-com` | `mycoolserver-duckdns-org` | Internal GCP name for the zone (automatic default is fine). |
-| **Admin Passcode** | `DiamondArmor99!` | `MySecretPass123` | Password used to log into the web admin dashboard. |
-| **Discord Webhook URL** | `https://discord.com/api/webhooks/...` | `https://discord.com/api/webhooks/...` | Webhook URL to route whitelist approval cards. |
-| **DNS Provider** | `1` (Google Cloud DNS) or `2` (Cloudflare) | `3` (DuckDNS) | Choose the provider managing the target domain. |
-| **API Token / Zone ID** | *(Specific to Cloudflare/DuckDNS)* | `a1b2c3d4-e5f6-...` | Credentials for your dynamic DNS provider. |
-</div>
-</details>
 
 ---
 
