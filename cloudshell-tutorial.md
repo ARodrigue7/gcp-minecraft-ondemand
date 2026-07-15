@@ -12,15 +12,15 @@ Since you are running inside Google Cloud Shell, the repository is already clone
 <summary>📋 View Configuration Reference Table</summary>
 <br>
 
-| Prompt Name | Example Value (Google / Cloudflare DNS) | Example Value (DuckDNS Free DNS) | Description / Notes |
+| Prompt Name | Example Value (Google Cloud DNS - Recommended) | Example Value (Cloudflare / DuckDNS) | Description / Notes |
 | :--- | :--- | :--- | :--- |
 | **GCP Project ID** | `minecraft-servers-412204` | `my-gcp-sandbox` | Your actual GCP project alphanumeric ID. |
 | **Minecraft Domain** | `mc.mycustomdomain.com` | `mycoolserver.duckdns.org` | The domain/subdomain players will connect to. |
 | **Cloud DNS Zone** | `mc-mycustomdomain-com` | `mycoolserver-duckdns-org` | Internal GCP name for the zone (automatic default is fine). |
 | **Admin Passcode** | `DiamondArmor99!` | `MySecretPass123` | Password used to log into the web admin dashboard. |
 | **Discord Webhook URL** | `https://discord.com/api/webhooks/...` | `https://discord.com/api/webhooks/...` | Webhook URL to route whitelist approval cards. |
-| **DNS Provider** | `1` (Google Cloud DNS) or `2` (Cloudflare) | `3` (DuckDNS) | Choose the provider managing the target domain. |
-| **API Token / Zone ID** | *(Specific to Cloudflare/DuckDNS)* | `a1b2c3d4-e5f6-...` | Credentials for your dynamic DNS provider. |
+| **DNS Provider** | `1` (Google Cloud DNS) | `2` (Cloudflare) or `3` (DuckDNS) | Choose the provider managing the target domain. |
+| **API Token / Zone ID** | `N/A (Uses secure GCP IAM)` | `a1b2c3d4-e5f6-...` (API key or Zone ID) | Credentials for your dynamic DNS provider. |
 </details>
 
 Set your active GCP Project ID in the terminal:
