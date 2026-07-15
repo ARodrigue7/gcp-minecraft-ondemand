@@ -53,7 +53,7 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Document configuration and administration in `README.md`.
 
 ### ⬜ Phase 6: Future Enhancements (Backlog)
-* [ ] Integrate "Deploy to Google Cloud" button for an automated browser-to-Cloud-Shell deployment wizard.
+* [x] Integrate "Deploy to Google Cloud" button for an automated browser-to-Cloud-Shell deployment wizard.
 * [x] Implement bot-abuse prevention (passcode-protected webpage wakeup button + watchdog player check using RCON player count instead of port 25565 TCP count).
 * [x] Implement the admin_auth module to validate an admin passcode via a web form.
 * [x] Provide an admin interface to run any docker exec mc-send-to-rcon command.
