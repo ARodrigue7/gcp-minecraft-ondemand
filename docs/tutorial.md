@@ -20,56 +20,77 @@ Before you begin, ensure you have the following resources ready:
 
 ---
 
-## 📥 Step 0: Clone the Repository
+## 📥 Step 1: Authenticate and Configure Project
 
-If you are deploying locally, clone the project files to your local workstation and navigate into the project directory:
+To start, you must select your deployment environment to authorize the session and configure your Google Cloud Platform (GCP) project.
 
-```bash
-# Clone the repository
-git clone https://github.com/ARodrigue7/gcp-minecraft-ondemand.git
+Select your deployment method below:
 
-# Navigate into the project folder
-cd gcp-minecraft-ondemand
-```
+<div class="deploy-method-selector mt-4 border border-white/10 p-4 rounded bg-surface-container/20 mb-6">
+<label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-2">Select your deployment method:</label>
+<div class="flex flex-wrap gap-2 mb-4">
+<button id="deploy-btn-cloudshell" class="deploy-tab-btn active px-3 py-1.5 text-xs border border-primary text-primary font-bold uppercase transition-all duration-200 bg-primary/5" onclick="showDeployMethod('cloudshell')">Google Cloud Shell (Recommended)</button>
+<button id="deploy-btn-local" class="deploy-tab-btn px-3 py-1.5 text-xs border border-white/10 text-on-surface-variant uppercase transition-all duration-200" onclick="showDeployMethod('local')">Local Workstation</button>
+</div>
 
-*(Note: If you clicked the "Deploy to Google Cloud" button, Cloud Shell has already cloned and opened this repository for you, so you can skip to Step 1!)*
+<!-- Cloud Shell -->
+<div id="deploy-instructions-cloudshell" class="deploy-instruct-pane space-y-4">
+<p class="text-sm text-on-surface/90">Google Cloud Shell is a free, pre-configured browser terminal. All CLI tools (Git, Terraform, gcloud) are already installed and authenticated to your account, and the repository is already cloned.</p>
+<ol class="list-decimal pl-5 space-y-2 text-sm text-on-surface/90">
+<li><strong>Set your target GCP Project ID:</strong><br>
+Replace <code>YOUR_PROJECT_ID</code> with your GCP Project ID:
+<pre><code class="language-bash">gcloud config set project YOUR_PROJECT_ID</code></pre>
+</li>
+<li><strong>Enable Required GCP Services APIs:</strong><br>
+<pre><code class="language-bash">gcloud services enable \
+  compute.googleapis.com \
+  cloudfunctions.googleapis.com \
+  pubsub.googleapis.com \
+  dns.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudbuild.googleapis.com</code></pre>
+</li>
+<li>Proceed directly to <strong>Step 2: Configure Environment Variables</strong>.</li>
+</ol>
+</div>
 
----
-
-## 🔐 Step 1: Authenticate and Configure Project
-
-First, ensure you are authenticated to Google Cloud and have selected the target project.
-
-1. **Authenticate your CLI session:**
-   ```bash
-   gcloud auth login
-   ```
-
-2. **Set your target GCP Project ID:**
-   Replace `YOUR_PROJECT_ID` with your actual GCP project:
-   ```bash
-   gcloud config set project YOUR_PROJECT_ID
-   ```
-
-3. **Enable GCP Services APIs:**
-   Enable the required APIs for Compute Engine, Cloud Functions, KMS, Pub/Sub, and Secret Manager:
-   ```bash
-   gcloud services enable \
-     compute.googleapis.com \
-     cloudfunctions.googleapis.com \
-     pubsub.googleapis.com \
-     dns.googleapis.com \
-     secretmanager.googleapis.com \
-     cloudbuild.googleapis.com
-   ```
+<!-- Local Workstation -->
+<div id="deploy-instructions-local" class="deploy-instruct-pane space-y-4 hidden">
+<p class="text-sm text-on-surface/90">Deploying from your local machine (macOS, Linux, or Windows) requires having Git, Terraform, and the Google Cloud CLI installed.</p>
+<ol class="list-decimal pl-5 space-y-2 text-sm text-on-surface/90">
+<li><strong>Clone the Repository & Navigate:</strong>
+<pre><code class="language-bash">git clone https://github.com/ARodrigue7/gcp-minecraft-ondemand.git
+cd gcp-minecraft-ondemand</code></pre>
+</li>
+<li><strong>Authenticate your CLI session:</strong>
+<pre><code class="language-bash">gcloud auth login</code></pre>
+</li>
+<li><strong>Configure Application Default Credentials (for Terraform):</strong>
+<pre><code class="language-bash">gcloud auth application-default login</code></pre>
+</li>
+<li><strong>Set your target GCP Project ID:</strong>
+<pre><code class="language-bash">gcloud config set project YOUR_PROJECT_ID</code></pre>
+</li>
+<li><strong>Enable Required GCP Services APIs:</strong>
+<pre><code class="language-bash">gcloud services enable \
+  compute.googleapis.com \
+  cloudfunctions.googleapis.com \
+  pubsub.googleapis.com \
+  dns.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudbuild.googleapis.com</code></pre>
+</li>
+</ol>
+</div>
+</div>
 
 ---
 
 ## ⚙️ Step 2: Configure Environment Variables
 
-We provide an interactive script to configure your nameservers, passcode, and Discord notifications:
+We provide an interactive script to configure your nameservers, admin passcode, and Discord webhooks:
 
-* **Mac/Linux:**
+* **If using Google Cloud Shell or Mac/Linux:**
   ```bash
   # Make the setup script executable
   chmod +x scripts/linux/setup.sh
