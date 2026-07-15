@@ -1,6 +1,6 @@
 # 🎮 GCP Minecraft On-Demand (Scale-to-Zero)
 
-[![Deploy to Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
+[![Deploy to Google Cloud](https://storage.googleapis.com/cloudrun/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
 
 An event-driven, cost-optimized infrastructure deployment that hosts a containerized Minecraft server on Google Cloud Platform (GCP). The architecture scales to **zero** compute usage when no players are online and automatically wakes up on-demand when a connection or DNS resolution is initiated.
 
@@ -43,7 +43,7 @@ Before deploying, ensure you have:
 
 The quickest way to deploy the entire stack is directly from your browser using Google Cloud Shell:
 
-[![Deploy to Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
+[![Deploy to Google Cloud](https://storage.googleapis.com/cloudrun/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
 
 For detailed, step-by-step setup instructions, domain delegation configuration, and environment setup, please refer to:
 * **Interactive Guide:** Visit the hosted [Getting Started Guide](https://arodrigue7.github.io/gcp-minecraft-ondemand/getting-started.html) on your GitHub Pages site.
