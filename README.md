@@ -1,6 +1,6 @@
 # 🎮 GCP Minecraft On-Demand (Scale-to-Zero)
 
-[![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand&cloudshell_tutorial=tutorial.md)
+[![Deploy to Google Cloud](https://deploy.cloud.google.com/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
 
 An event-driven, cost-optimized infrastructure deployment that hosts a containerized Minecraft server on Google Cloud Platform (GCP). The architecture scales to **zero** compute usage when no players are online and automatically wakes up on-demand when a connection or DNS resolution is initiated.
 
@@ -59,7 +59,18 @@ chmod +x scripts/linux/setup.sh
 .\scripts\windows\setup.ps1
 ```
 
-#### Method B: Manual Setup
+#### Method B: One-Click Cloud Shell Deployment (Fastest)
+
+You can deploy the entire stack directly from your browser without installing anything locally:
+
+1. Click the button below to launch Google Cloud Shell:
+   
+   [![Deploy to Google Cloud](https://deploy.cloud.google.com/button.svg)](https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git)
+   
+2. Cloud Shell will clone the repository, run the interactive setup wizard in the terminal to configure variables, and open the `terraform/terraform.tfvars` file for your final review.
+3. Run `cd terraform && terraform apply` to deploy.
+
+#### Method C: Manual Setup
 If you prefer to configure things manually, ensure your local terminal has Application Default Credentials configured:
 ```bash
 gcloud auth application-default login
