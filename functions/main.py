@@ -5,11 +5,8 @@ import re
 import hmac
 from config import (
     validate_config,
-    PROJECT_ID,
-    ZONE,
     INSTANCE_NAME,
     DOMAIN_NAME,
-    DISCORD_WEBHOOK_URL,
     ADMIN_PASSCODE,
     logger
 )
@@ -30,7 +27,6 @@ from discord_auth import generate_signature
 from admin_auth import check_admin_auth
 from whitelist_manager import (
     add_to_gce_metadata_whitelist,
-    remove_from_gce_metadata_whitelist,
     enqueue_admin_command,
     add_to_gce_metadata_pending,
     remove_from_gce_metadata_pending,
@@ -106,8 +102,7 @@ def get_status_http(request):
         if action == 'admin_download_backup':
             passcode = request.args.get('passcode')
             username = request.args.get('username')
-            is_auth = False
-            if passcode and username and hmac.compare_digest(passcode, ADMIN_PASSCODE):
+            if passcode and username and ADMIN_PASSCODE and hmac.compare_digest(passcode, ADMIN_PASSCODE):
                 approved_set, _ = get_whitelist_sets()
                 if username.lower() in approved_set:
                     is_auth = True
@@ -218,7 +213,7 @@ def get_status_http(request):
                         return (json.dumps({"error": f"Invalid power command: {command}"}), 400, headers)
                     
             except Exception as e:
-                print(f"Error handling admin post request: {e}")
+                logger.error(f"Error handling admin post request: {e}")
                 return (json.dumps({"error": str(e)}), 500, headers)
 
     if request.method == 'GET':
@@ -290,7 +285,7 @@ def get_status_http(request):
                 try:
                     update_dns_record(ip)
                 except Exception as dns_err:
-                    print(f"Error updating DNS in standard status: {dns_err}")
+                    logger.error(f"Error updating DNS in standard status: {dns_err}")
                 
                 if not is_minecraft_ready(ip):
                     status = 'STARTING' # Override status so UI waits
@@ -318,9 +313,7 @@ def get_status_http(request):
 
             # 1. Wake Up / Start Server action
             if action == 'start':
-                passcode = request_json.get('passcode')
                 username = request_json.get('username')
-                
 
                 # Enforce Minecraft username check
                 if not username:
@@ -334,7 +327,7 @@ def get_status_http(request):
                 # Check status and start if stopped
                 status, ip = get_instance_status_and_ip()
                 if status == 'TERMINATED':
-                    print(f"Starting GCE instance {INSTANCE_NAME} via HTTP start command...")
+                    logger.info(f"Starting GCE instance {INSTANCE_NAME} via HTTP start command...")
                     start_instance()
                     return (json.dumps({"success": True, "message": "Server startup initiated successfully."}), 200, headers)
                 else:

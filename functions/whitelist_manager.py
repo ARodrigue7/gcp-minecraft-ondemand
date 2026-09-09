@@ -122,10 +122,6 @@ def add_to_gce_metadata_whitelist(username):
     """Appends a username to the approved-whitelist metadata attribute on the VM using immutable patterns."""
     update_whitelist_state(username, 'approve')
 
-def remove_from_gce_metadata_whitelist(username):
-    """Removes a username from the approved-whitelist metadata attribute on the VM using immutable patterns."""
-    update_whitelist_state(username, 'remove')
-
 def add_to_gce_metadata_pending(username):
     """Appends a username to the pending-whitelist metadata attribute on the VM using immutable patterns."""
     update_whitelist_state(username, 'request')
