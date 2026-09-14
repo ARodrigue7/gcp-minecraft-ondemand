@@ -57,6 +57,21 @@ resource "google_storage_bucket" "minecraft_backups" {
   }
 }
 
+# Storage Bucket for custom Minecraft mods and plugins
+resource "google_storage_bucket" "minecraft_mods" {
+  name                        = "${var.project_id}-minecraft-mods"
+  location                    = var.region
+  uniform_bucket_level_access = true
+  force_destroy               = true
+
+  cors {
+    origin          = ["*"]
+    method          = ["GET", "PUT", "POST", "HEAD", "DELETE", "OPTIONS"]
+    response_header = ["*"]
+    max_age_seconds = 3600
+  }
+}
+
 # ==========================================
 # 🖥️ COMPUTE ENGINE VM (MINECRAFT SERVER)
 # ==========================================
@@ -84,6 +99,13 @@ resource "google_project_iam_member" "vm_monitoring" {
 # Grant VM permissions to write backups to GCS
 resource "google_storage_bucket_iam_member" "vm_backups_admin" {
   bucket = google_storage_bucket.minecraft_backups.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.minecraft_sa.email}"
+}
+
+# Grant VM permissions to sync mods from GCS
+resource "google_storage_bucket_iam_member" "vm_mods_admin" {
+  bucket = google_storage_bucket.minecraft_mods.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.minecraft_sa.email}"
 }
@@ -149,6 +171,10 @@ resource "google_compute_instance" "minecraft" {
       dns_provider               = var.dns_provider
       domain_name                = var.domain_name
       dns_api_token              = var.dns_api_token
+      server_type                = lower(var.server_type)
+      modpack_id                 = var.modpack_id
+      curseforge_api_key         = var.curseforge_api_key
+      mods_bucket                = google_storage_bucket.minecraft_mods.name
     })
     approved-whitelist = ""
     pending-whitelist  = ""
@@ -270,6 +296,9 @@ resource "google_project_iam_custom_role" "cf_compute_controller" {
   permissions = [
     "compute.instances.get",
     "compute.instances.start",
+    "compute.instances.stop",
+    "compute.instances.reset",
+    "compute.instances.setMachineType",
     "compute.instances.setMetadata"
   ]
 }
@@ -296,9 +325,16 @@ resource "google_project_iam_member" "cf_dns" {
 }
 
 # Grant Cloud Function permissions to list/read backups
-resource "google_storage_bucket_iam_member" "cf_backups_viewer" {
+resource "google_storage_bucket_iam_member" "cf_backups_admin" {
   bucket = google_storage_bucket.minecraft_backups.name
-  role   = "roles/storage.objectViewer"
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.cf_sa.email}"
+}
+
+# Grant Cloud Function permissions to manage mods bucket
+resource "google_storage_bucket_iam_member" "cf_mods_admin" {
+  bucket = google_storage_bucket.minecraft_mods.name
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.cf_sa.email}"
 }
 
@@ -488,6 +524,7 @@ resource "google_cloudfunctions2_function" "minecraft_status" {
       DOMAIN_NAME        = var.domain_name
       FUNCTION_REGION    = var.region
       BACKUPS_BUCKET     = google_storage_bucket.minecraft_backups.name
+      MODS_BUCKET        = google_storage_bucket.minecraft_mods.name
       INSTANCE_ID        = google_compute_instance.minecraft.instance_id
       DNS_PROVIDER       = var.dns_provider
       CLOUDFLARE_ZONE_ID = var.cloudflare_zone_id

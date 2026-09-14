@@ -68,6 +68,9 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Make the Minecraft server run as a non-root user.
 * [x] Fix project landing back button disappearing on `play.html` when a server is selected and the details card expands.
 * [x] Prevent the "Join Server" button / double-click from initiating a wakeup request without prompts when the server is offline.
+* [x] Implement core Terraform foundation for server type selection (Vanilla, Paper, Fabric, Modrinth, CurseForge) with dynamic memory derivation and dimension migration.
+* [x] Implement Phase 2 Portal Server Setup (Server tab, 5 engine type cards, 3-tier machine resizing, live Modrinth search, and GCS server-config.json persistence).
+* [x] Implement Phase 3 Custom Mods & Plugins Manager (Dedicated mods GCS bucket with CORS, direct resumable browser uploads, jar enable/disable toggle, and boot rsync).
 
 ---
 
@@ -132,19 +135,19 @@ The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC Saa
 ```
 
 🔄 Change Log & Active Focus
-Current Iteration: Phase 6 - Interactive Documentation, Cloud Shell Wizard, and DRY Refactoring
+Current Iteration: Phase 6 - Custom Mods & Plugins Manager (Phase 3 Complete)
 
 Recent Changes:
-* Getting Started Guide: Renamed documentation to `getting-started.html` and updated navbar routing. Added Step 0 cloning steps and Windows setup wizard instructions.
-* Dynamic Deploy Badge: Added the official "Run on Google Cloud" badge and styled it centered with automatic fork repository resolution.
-* Spaced-Evenly Icon-Only Mobile Menu: Upgraded the bottom navigation bar to standard icon-only layout with large touch targets.
-* Interactive DNS Instructions: Integrated styled tab selectors in the markdown guide explaining step-by-step configs for Google DNS, Cloudflare, DuckDNS, and Dynu.
-* Python DRY Refactoring: Extracted VM stop/reset helper methods and Discord message deletion wrapper to keep code modular and clean.
-* Test suite collection: Added `conftest.py` mock defaults for local test execution, bringing the suite to a 100% pass rate (42/42 tests passing).
+* Dedicated Mods Storage: Created `${project_id}-minecraft-mods` GCS bucket with CORS configuration and IAM roles for VM & Cloud Function.
+* Direct Resumable Uploads: Implemented `create_upload_session` in `functions/mods_manager.py` allowing browsers to stream jar uploads directly to GCS, bypassing memory limits.
+* Jar Management Actions: Added list, toggle enable/disable (`.jar` ↔ `.jar.disabled`), and delete endpoints with path traversal security validation.
+* Engine-Aware UI: Added Mods tab in `docs/admin.html` with drag-and-drop uploader, active file count, state badges, and type-aware logic (`/plugins` on Paper, `/mods` on Fabric/packs, disabled on Vanilla).
+* Startup Sync: Configured `terraform/startup.sh` to synchronize `gs://${mods_bucket}/mods` and `plugins` to local host mount directories on boot.
+* Unit Test Coverage: Added 11 new tests across `test_mods_manager.py` and `test_main.py` (60/60 passing).
 
 Active Blockers: None!
 
-Immediate Next Step: Prepare the Multi-Tenant BYOC SaaS transition plan (MULTI_TENANT_SAAS.md).
+Immediate Next Step: User acceptance testing and end-to-end sandbox deployment verification.
 
 ---
 

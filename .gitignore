@@ -21,8 +21,7 @@ saves/*
 !saves/README.md
 logs/
 .DS_Store
-docs/config.json
+docs/config.js
 
-# Gemini & Agent files
-GEMINI.md
+# Agent files
 .agents/

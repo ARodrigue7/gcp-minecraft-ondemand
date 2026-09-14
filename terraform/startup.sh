@@ -58,6 +58,56 @@ elif [ "${dns_provider}" = "dynu" ] && [ -n "${dns_api_token}" ]; then
   curl -s "https://api.dynu.com/nic/update?hostname=${domain_name}&password=${dns_api_token}" || echo "WARNING: Dynu boot update failed."
 fi
 
+## Sourcing dynamic server config from GCS if present, falling back to Terraform defaults
+ACTIVE_SERVER_TYPE="${server_type}"
+ACTIVE_MC_VERSION="${minecraft_version}"
+ACTIVE_MODPACK_ID="${modpack_id}"
+ACTIVE_IDLE_LIMIT=${idle_timeout_seconds}
+
+if gsutil -q stat "gs://${backups_bucket}/server-config.json"; then
+  CONFIG_RAW=$$(gsutil cat "gs://${backups_bucket}/server-config.json" 2>/dev/null || echo "")
+  if [ -n "$$CONFIG_RAW" ]; then
+    eval "$$(python3 -c "import json, sys
+try:
+    d = json.loads(sys.argv[1])
+    print(f'ACTIVE_SERVER_TYPE=\"{d.get(\"type\", \"${server_type}\")}\"')
+    print(f'ACTIVE_MC_VERSION=\"{d.get(\"minecraft_version\", \"${minecraft_version}\")}\"')
+    print(f'ACTIVE_MODPACK_ID=\"{d.get(\"modpack_id\", \"${modpack_id}\")}\"')
+    print(f'ACTIVE_IDLE_LIMIT={d.get(\"idle_timeout_seconds\", ${idle_timeout_seconds})}')
+except Exception:
+    pass" "$$CONFIG_RAW")"
+  fi
+fi
+
+# Dimension conversion between Paper (separate dirs) and Fabric/Vanilla (nested)
+if [ "$$ACTIVE_SERVER_TYPE" = "fabric" ] || [ "$$ACTIVE_SERVER_TYPE" = "vanilla" ]; then
+  if [ -d "$MOUNT_DIR/data/world_nether/DIM-1" ]; then
+    echo "Migrating Nether dimension from Paper to Fabric/Vanilla layout..."
+    mkdir -p "$MOUNT_DIR/data/world/DIM-1"
+    cp -rn "$MOUNT_DIR/data/world_nether/DIM-1/"* "$MOUNT_DIR/data/world/DIM-1/" 2>/dev/null || true
+    rm -rf "$MOUNT_DIR/data/world_nether"
+  fi
+  if [ -d "$MOUNT_DIR/data/world_the_end/DIM1" ]; then
+    echo "Migrating End dimension from Paper to Fabric/Vanilla layout..."
+    mkdir -p "$MOUNT_DIR/data/world/DIM1"
+    cp -rn "$MOUNT_DIR/data/world_the_end/DIM1/"* "$MOUNT_DIR/data/world/DIM1/" 2>/dev/null || true
+    rm -rf "$MOUNT_DIR/data/world_the_end"
+  fi
+elif [ "$$ACTIVE_SERVER_TYPE" = "paper" ]; then
+  if [ -d "$MOUNT_DIR/data/world/DIM-1" ] && [ ! -d "$MOUNT_DIR/data/world_nether" ]; then
+    echo "Migrating Nether dimension from Vanilla/Fabric to Paper layout..."
+    mkdir -p "$MOUNT_DIR/data/world_nether/DIM-1"
+    cp -rn "$MOUNT_DIR/data/world/DIM-1/"* "$MOUNT_DIR/data/world_nether/DIM-1/" 2>/dev/null || true
+    rm -rf "$MOUNT_DIR/data/world/DIM-1"
+  fi
+  if [ -d "$MOUNT_DIR/data/world/DIM1" ] && [ ! -d "$MOUNT_DIR/data/world_the_end" ]; then
+    echo "Migrating End dimension from Vanilla/Fabric to Paper layout..."
+    mkdir -p "$MOUNT_DIR/data/world_the_end/DIM1"
+    cp -rn "$MOUNT_DIR/data/world/DIM1/"* "$MOUNT_DIR/data/world_the_end/DIM1/" 2>/dev/null || true
+    rm -rf "$MOUNT_DIR/data/world/DIM1"
+  fi
+fi
+
 # Run the Minecraft server container (recreate on boot to ensure fresh config/logs)
 if docker ps -a --format '{{.Names}}' | grep -Eq "^minecraft\$"; then
   echo "Removing existing minecraft container..."
@@ -68,6 +118,40 @@ fi
 # Sync approved whitelist from GCE instance metadata on startup
 APPROVED_WHITELIST=$(curl -s -f -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/approved-whitelist || echo "")
 
+# Derive server memory from host RAM (~70% of total)
+SERVER_MEM=$$(awk '/MemTotal/{printf "%dM\n", $$2*0.7/1024}' /proc/meminfo)
+[ -z "$$SERVER_MEM" ] && SERVER_MEM="2048M"
+
+DOCKER_TYPE_ENV=()
+case "$$ACTIVE_SERVER_TYPE" in
+  "vanilla")
+    DOCKER_TYPE_ENV+=("-e" "TYPE=VANILLA" "-e" "VERSION=$$ACTIVE_MC_VERSION")
+    ;;
+  "paper")
+    DOCKER_TYPE_ENV+=("-e" "TYPE=PAPER" "-e" "VERSION=$$ACTIVE_MC_VERSION")
+    ;;
+  "fabric")
+    DOCKER_TYPE_ENV+=("-e" "TYPE=FABRIC" "-e" "VERSION=$$ACTIVE_MC_VERSION")
+    ;;
+  "modrinth")
+    DOCKER_TYPE_ENV+=("-e" "TYPE=MODRINTH" "-e" "MODRINTH_MODPACK=$$ACTIVE_MODPACK_ID")
+    ;;
+  "curseforge")
+    DOCKER_TYPE_ENV+=("-e" "TYPE=AUTO_CURSEFORGE" "-e" "CF_PAGE_URL=$$ACTIVE_MODPACK_ID")
+    if [ -n "${curseforge_api_key}" ]; then
+      DOCKER_TYPE_ENV+=("-e" "CF_API_KEY=${curseforge_api_key}")
+    fi
+    ;;
+  *)
+    DOCKER_TYPE_ENV+=("-e" "TYPE=PAPER" "-e" "VERSION=$$ACTIVE_MC_VERSION")
+    ;;
+esac
+
+mkdir -p "$MOUNT_DIR/mods" "$MOUNT_DIR/plugins"
+# Sync custom mods and plugins from GCS bucket
+gsutil -m rsync -r -d "gs://${mods_bucket}/mods" "$MOUNT_DIR/mods" 2>/dev/null || true
+gsutil -m rsync -r -d "gs://${mods_bucket}/plugins" "$MOUNT_DIR/plugins" 2>/dev/null || true
+
 echo "Starting fresh Minecraft server container..."
 docker run -d \
   --name minecraft \
@@ -75,21 +159,23 @@ docker run -d \
   --log-driver=gcplogs \
   -p 25565:25565 \
   -v "$MOUNT_DIR/data:/data" \
+  -v "$MOUNT_DIR/mods:/mods" \
+  -v "$MOUNT_DIR/plugins:/plugins" \
   -e UID=1000 \
   -e GID=1000 \
   -e EULA=TRUE \
-  -e TYPE=PAPER \
-  -e VERSION=${minecraft_version} \
-  -e MEMORY=3G \
+  "$${DOCKER_TYPE_ENV[@]}" \
+  -e MEMORY="$$SERVER_MEM" \
   -e ENABLE_WHITELIST=TRUE \
   -e ENFORCE_WHITELIST=TRUE \
   -e WHITELIST="$${APPROVED_WHITELIST}" \
   itzg/minecraft-server
 
-
 # Render dynamic configuration variables for the watchdog script
 cat <<EOF > /mnt/disks/minecraft-data/watchdog-config.env
 INSTANCE_NAME="${instance_name}"
+SERVER_TYPE="$$ACTIVE_SERVER_TYPE"
+IDLE_LIMIT="$$ACTIVE_IDLE_LIMIT"
 DISK_AUTO_EXPAND=${disk_auto_expand}
 DISK_AUTO_EXPAND_MAX_GB=${disk_auto_expand_max_gb}
 DISK_AUTO_EXPAND_THRESHOLD=${disk_auto_expand_threshold}
@@ -104,12 +190,17 @@ WATCHDOG_SCRIPT="/mnt/disks/minecraft-data/minecraft-watchdog.sh"
 cat <<'EOF' > /mnt/disks/minecraft-data/minecraft-watchdog.sh
 #!/bin/bash
 PORT=25565
-IDLE_LIMIT=${idle_timeout_seconds}
-INITIAL_DELAY=600 # 10 minutes startup grace period
 
 # Sourcing dynamic configuration if present
 if [ -f /mnt/disks/minecraft-data/watchdog-config.env ]; then
   source /mnt/disks/minecraft-data/watchdog-config.env
+fi
+
+IDLE_LIMIT=$${IDLE_LIMIT:-${idle_timeout_seconds}}
+
+INITIAL_DELAY=600 # 10 minutes default startup grace period
+if [ "$SERVER_TYPE" = "modrinth" ] || [ "$SERVER_TYPE" = "curseforge" ] || [ "$SERVER_TYPE" = "fabric" ]; then
+  INITIAL_DELAY=1800 # 30 minutes grace period for modpack download & compilation
 fi
 
 check_and_expand_disk() {
@@ -179,7 +270,10 @@ create_backup() {
     
     echo "Creating world archive..."
     TMP_BACKUP=$(mktemp)
-    tar -czf $TMP_BACKUP -C /mnt/disks/minecraft-data/data world world_nether world_the_end >/dev/null 2>&1 || true
+    WORLD_DIRS=$(cd /mnt/disks/minecraft-data/data 2>/dev/null && ls -d world* 2>/dev/null)
+    if [ -n "$WORLD_DIRS" ]; then
+      tar -czf $TMP_BACKUP -C /mnt/disks/minecraft-data/data $WORLD_DIRS >/dev/null 2>&1
+    fi
     
     echo "Resuming auto-saves..."
     docker exec minecraft rcon-cli save-on >/dev/null 2>&1 || true
