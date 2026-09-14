@@ -60,6 +60,14 @@
                     <span class="material-symbols-outlined text-[18px]">dashboard</span>
                     <span class="font-label-lg">Dashboard</span>
                 </button>
+                <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="server-tab">
+                    <span class="material-symbols-outlined text-[18px] group-hover:text-primary">tune</span>
+                    <span class="font-label-lg">Server</span>
+                </button>
+                <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="mods-tab" id="mods-nav-btn">
+                    <span class="material-symbols-outlined text-[18px] group-hover:text-primary">extension</span>
+                    <span class="font-label-lg" id="mods-nav-label">Mods</span>
+                </button>
                 <button class="tab-btn w-full text-on-surface-variant hover:bg-surface-container-high/50 px-3 py-2 flex items-center gap-2 transition-colors duration-200 group text-left" data-tab="whitelist-tab">
                     <span class="material-symbols-outlined text-[18px] group-hover:text-primary">security</span>
                     <span class="font-label-lg">Whitelist</span>
@@ -198,7 +206,249 @@
                 </section>
             </div>
 
-            <!-- 2. Whitelist Tab -->
+            <!-- 2. Server Tab (Setup, Engine, Machine Sizing, Modpacks) -->
+            <div id="server-tab" class="tab-content hidden space-y-4">
+                <div class="stone-card p-4 space-y-6">
+                    <div class="border-b border-white/10 pb-4">
+                        <h2 class="font-headline-lg text-title-md text-white uppercase mb-1">Server Setup & Modpacks</h2>
+                        <p class="font-body-md text-on-surface-variant text-xs">Configure your server engine, machine sizing, and modpack. Settings apply at server boot.</p>
+                    </div>
+
+                    <!-- Server Type Matrix -->
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-bold">1. Select Server Engine</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="server-type-grid">
+                            <!-- Vanilla -->
+                            <div class="server-type-card p-3 rounded-sm border border-outline-variant/30 bg-surface-container/40 hover:bg-surface-container-high/30 cursor-pointer transition-all flex flex-col justify-between" data-type="vanilla">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="material-symbols-outlined text-primary text-xl">deployed_code</span>
+                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-xs bg-surface-container-highest text-on-surface-variant uppercase">Vanilla</span>
+                                    </div>
+                                    <div class="font-bold text-sm text-white mb-1">Vanilla</div>
+                                    <div class="text-[11px] text-on-surface-variant leading-snug">Official Mojang server. Pure vanilla gameplay.</div>
+                                </div>
+                                <div class="mt-3 pt-2 border-t border-white/5 text-[10px] text-on-surface-variant/70 font-mono">Min RAM: 2 GB</div>
+                            </div>
+                            <!-- Paper -->
+                            <div class="server-type-card p-3 rounded-sm border border-primary bg-primary/10 cursor-pointer transition-all flex flex-col justify-between" data-type="paper">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="material-symbols-outlined text-primary text-xl">bolt</span>
+                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-xs bg-primary/20 text-primary uppercase">Plugins</span>
+                                    </div>
+                                    <div class="font-bold text-sm text-white mb-1">Paper</div>
+                                    <div class="text-[11px] text-on-surface-variant leading-snug">High performance. Supports Spigot/Bukkit plugins.</div>
+                                </div>
+                                <div class="mt-3 pt-2 border-t border-white/5 text-[10px] text-on-surface-variant/70 font-mono">Min RAM: 2 GB</div>
+                            </div>
+                            <!-- Fabric -->
+                            <div class="server-type-card p-3 rounded-sm border border-outline-variant/30 bg-surface-container/40 hover:bg-surface-container-high/30 cursor-pointer transition-all flex flex-col justify-between" data-type="fabric">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="material-symbols-outlined text-primary text-xl">handyman</span>
+                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-xs bg-surface-container-highest text-on-surface-variant uppercase">Custom Mods</span>
+                                    </div>
+                                    <div class="font-bold text-sm text-white mb-1">Fabric</div>
+                                    <div class="text-[11px] text-on-surface-variant leading-snug">Lightweight mod loader. Bring your own .jar mods.</div>
+                                </div>
+                                <div class="mt-3 pt-2 border-t border-white/5 text-[10px] text-on-surface-variant/70 font-mono">Min RAM: 4 GB</div>
+                            </div>
+                            <!-- Modrinth -->
+                            <div class="server-type-card p-3 rounded-sm border border-outline-variant/30 bg-surface-container/40 hover:bg-surface-container-high/30 cursor-pointer transition-all flex flex-col justify-between" data-type="modrinth">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="material-symbols-outlined text-secondary text-xl">apps</span>
+                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-xs bg-secondary/20 text-secondary uppercase">Modrinth</span>
+                                    </div>
+                                    <div class="font-bold text-sm text-white mb-1">Modrinth Pack</div>
+                                    <div class="text-[11px] text-on-surface-variant leading-snug">1-click automated modpack install from Modrinth.</div>
+                                </div>
+                                <div class="mt-3 pt-2 border-t border-white/5 text-[10px] text-on-surface-variant/70 font-mono">Min RAM: 6-8 GB</div>
+                            </div>
+                            <!-- CurseForge -->
+                            <div class="server-type-card p-3 rounded-sm border border-outline-variant/30 bg-surface-container/40 hover:bg-surface-container-high/30 cursor-pointer transition-all flex flex-col justify-between" data-type="curseforge">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="material-symbols-outlined text-gold-accent text-xl">auto_fix_high</span>
+                                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded-xs bg-gold-accent/20 text-gold-accent uppercase">CurseForge</span>
+                                    </div>
+                                    <div class="font-bold text-sm text-white mb-1">CurseForge Pack</div>
+                                    <div class="text-[11px] text-on-surface-variant leading-snug">Auto-downloads pack by CurseForge URL.</div>
+                                </div>
+                                <div class="mt-3 pt-2 border-t border-white/5 text-[10px] text-on-surface-variant/70 font-mono">Min RAM: 6-8 GB</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Machine Sizing Grid -->
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-on-surface-variant mb-3 font-bold">2. Machine Sizing & Live Pricing</label>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <label class="flex items-center justify-between p-3 rounded-sm border border-outline-variant/30 bg-surface-container/30 cursor-pointer hover:bg-surface-container-high/30 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" name="machine-size" value="e2-medium" class="accent-primary" checked>
+                                    <div>
+                                        <div class="font-bold text-sm text-white">e2-medium</div>
+                                        <div class="text-[11px] text-on-surface-variant font-mono">2 vCPU • 4 GB RAM</div>
+                                    </div>
+                                </div>
+                                <div class="text-right font-mono">
+                                    <div class="text-xs text-secondary font-bold">~$0.033 / hr</div>
+                                    <div class="text-[10px] text-on-surface-variant">~$0.33 / 10 hrs</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-sm border border-outline-variant/30 bg-surface-container/30 cursor-pointer hover:bg-surface-container-high/30 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" name="machine-size" value="e2-standard-2" class="accent-primary">
+                                    <div>
+                                        <div class="font-bold text-sm text-white">e2-standard-2</div>
+                                        <div class="text-[11px] text-on-surface-variant font-mono">2 vCPU • 8 GB RAM</div>
+                                    </div>
+                                </div>
+                                <div class="text-right font-mono">
+                                    <div class="text-xs text-secondary font-bold">~$0.067 / hr</div>
+                                    <div class="text-[10px] text-on-surface-variant">~$0.67 / 10 hrs</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center justify-between p-3 rounded-sm border border-outline-variant/30 bg-surface-container/30 cursor-pointer hover:bg-surface-container-high/30 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" name="machine-size" value="e2-standard-4" class="accent-primary">
+                                    <div>
+                                        <div class="font-bold text-sm text-white">e2-standard-4</div>
+                                        <div class="text-[11px] text-on-surface-variant font-mono">4 vCPU • 16 GB RAM</div>
+                                    </div>
+                                </div>
+                                <div class="text-right font-mono">
+                                    <div class="text-xs text-secondary font-bold">~$0.134 / hr</div>
+                                    <div class="text-[10px] text-on-surface-variant">~$1.34 / 10 hrs</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Details Form -->
+                    <div class="bg-surface-dim p-4 rounded-sm border border-white/5 space-y-4">
+                        <label class="block text-xs uppercase tracking-widest text-on-surface-variant font-bold">3. Engine Settings</label>
+                        
+                        <!-- Version Input (Vanilla/Paper/Fabric) -->
+                        <div id="server-version-container">
+                            <label class="block text-xs text-on-surface-variant mb-1 font-mono">Minecraft Version</label>
+                            <input type="text" id="server-version-input" class="input-field w-full font-mono text-sm" placeholder="LATEST or 1.20.4" value="LATEST">
+                        </div>
+
+                        <!-- Modrinth Search & Input -->
+                        <div id="modrinth-search-container" class="hidden space-y-2">
+                            <label class="block text-xs text-on-surface-variant font-mono">Search Modrinth Directory</label>
+                            <input type="text" id="modrinth-search-input" class="input-field w-full font-mono text-sm" placeholder="Type modpack name (e.g. Cobblemon, Fabulously Optimized)...">
+                            <div id="modrinth-search-results" class="bg-surface-container-lowest border border-white/10 rounded-sm overflow-hidden empty:hidden"></div>
+                        </div>
+
+                        <!-- Modpack ID Input (Modrinth / CurseForge) -->
+                        <div id="server-modpack-container" class="hidden">
+                            <label id="server-modpack-label" class="block text-xs text-on-surface-variant mb-1 font-mono">Modpack Identifier</label>
+                            <input type="text" id="server-modpack-input" class="input-field w-full font-mono text-sm" placeholder="slug or URL">
+                        </div>
+
+                        <!-- Idle Shutdown Timeout -->
+                        <div>
+                            <label class="block text-xs text-on-surface-variant mb-1 font-mono">Idle Auto-Shutdown Limit</label>
+                            <select id="server-idle-select" class="input-field w-full font-mono text-sm">
+                                <option value="600">10 Minutes (600s) — Best for Vanilla/Paper</option>
+                                <option value="900">15 Minutes (900s)</option>
+                                <option value="1200">20 Minutes (1200s) — Recommended for Modpacks</option>
+                                <option value="1800">30 Minutes (1800s) — Heavy Modpacks</option>
+                            </select>
+                        </div>
+
+                        <!-- World Safety -->
+                        <div class="pt-2 border-t border-white/5 flex items-center justify-between">
+                            <div class="text-xs text-on-surface-variant font-mono">
+                                Current World Stamp: <strong id="server-world-stamp" class="text-white">paper</strong>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-on-surface-variant">
+                                <input type="checkbox" id="server-fresh-world-checkbox" class="accent-primary">
+                                <span>Start fresh world on next boot</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Save & Restart Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <div class="flex items-center gap-3">
+                            <button id="server-save-btn" class="bg-wood-bark wood-button text-white px-6 py-2.5 font-label-lg uppercase tracking-widest text-xs flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">save</span>
+                                Save Settings
+                            </button>
+                            <button id="server-restart-now-btn" class="hidden bg-primary/90 wood-button text-white px-6 py-2.5 font-label-lg uppercase tracking-widest text-xs flex items-center gap-2 hover:bg-primary">
+                                <span class="material-symbols-outlined text-base">cached</span>
+                                Restart Server Now
+                            </button>
+                        </div>
+                        <span id="server-save-notice" class="text-xs font-mono text-secondary hidden"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Mods & Plugins Manager Tab -->
+            <div id="mods-tab" class="tab-content hidden space-y-4">
+                <div class="stone-card p-4 space-y-6">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                        <div>
+                            <h2 id="mods-tab-title" class="font-headline-lg text-title-md text-white uppercase mb-1">Custom Mods & Plugins</h2>
+                            <p id="mods-tab-desc" class="font-body-md text-on-surface-variant text-xs">Manage server jar files. Files are staged in GCS and synchronized at boot.</p>
+                        </div>
+                        <span id="mods-count-badge" class="font-mono text-xs px-2.5 py-1 rounded-sm bg-surface-container-highest text-primary uppercase">0 Files</span>
+                    </div>
+
+                    <!-- Vanilla Warning Notice -->
+                    <div id="mods-vanilla-notice" class="hidden p-4 rounded-sm border border-gold-accent/30 bg-gold-accent/5 flex items-start gap-3">
+                        <span class="material-symbols-outlined text-gold-accent text-xl">info</span>
+                        <div>
+                            <div class="font-bold text-sm text-gold-accent mb-1">Vanilla Engine Selected</div>
+                            <div class="text-xs text-on-surface-variant leading-relaxed">Official Vanilla Minecraft does not support custom mods or plugins. To install custom mods, switch to <strong>Fabric</strong> in the Server tab. To install plugins, switch to <strong>Paper</strong>.</div>
+                        </div>
+                    </div>
+
+                    <div id="mods-manager-content" class="space-y-6">
+                        <!-- Drag-and-Drop Upload Zone -->
+                        <div>
+                            <div id="mods-drop-zone" class="border-2 border-dashed border-outline-variant/40 hover:border-primary/60 bg-surface-dim p-6 rounded-sm text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                                <div class="text-xs font-bold text-white uppercase tracking-wider">Drag and drop .jar files here, or click to browse</div>
+                                <div class="text-[10px] text-on-surface-variant font-mono">Uploads stream directly to Google Cloud Storage. Max ~500 MB per file.</div>
+                                <input type="file" id="mods-file-input" class="hidden" accept=".jar,.zip" multiple>
+                            </div>
+                            <div id="mods-upload-status" class="mt-2 text-xs font-mono text-secondary hidden"></div>
+                        </div>
+
+                        <!-- Installed Mods Table -->
+                        <div class="overflow-x-auto rounded-sm border border-white/10 bg-surface-dim">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-white/10 bg-surface-container-lowest/50 text-[10px] font-mono uppercase text-on-surface-variant tracking-wider">
+                                        <th class="p-3">File Name</th>
+                                        <th class="p-3">Size</th>
+                                        <th class="p-3">State</th>
+                                        <th class="p-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mods-table-body" class="divide-y divide-white/5">
+                                    <tr>
+                                        <td colspan="4" class="text-center py-6 text-xs font-mono text-on-surface-variant">Click the Mods tab to load files.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-[11px] font-mono text-on-surface-variant/70">
+                            Tip: Disabling a mod renames it to <code class="text-primary">.jar.disabled</code> without deleting it from cloud storage. Changes take effect on the next server start.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Whitelist Tab -->
             <div id="whitelist-tab" class="tab-content hidden space-y-4">
                 <!-- Title Header Widget -->
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-3">
@@ -309,5 +559,7 @@ Type a command below to begin.
     <script src="js/toast.js"></script>
     <script src="js/navbar.js"></script>
     <script src="js/admin.js"></script>
+    <script src="js/server.js"></script>
+    <script src="js/mods.js"></script>
 </body>
 </html>
