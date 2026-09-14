@@ -21,7 +21,6 @@ saves/*
 !saves/README.md
 logs/
 .DS_Store
-docs/config.js
 
 # Agent files
 .agents/

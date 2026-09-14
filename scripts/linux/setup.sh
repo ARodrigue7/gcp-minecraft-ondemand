@@ -61,47 +61,48 @@ if [ "$SKIP_CONFIG" = false ]; then
     read -p "Enter your GCP Project ID (e.g., my-project-123): " PROJECT_ID
     read -p "Enter your Minecraft Domain (e.g., mc.yourdomain.com): " DOMAIN_NAME
     
-    # Suggest a DNS Zone name based on domain
-    SUGGESTED_ZONE=$(echo "$DOMAIN_NAME" | tr '.' '-')
-    read -p "Enter a name for the Cloud DNS Zone [$SUGGESTED_ZONE]: " DNS_ZONE_NAME
-    DNS_ZONE_NAME=${DNS_ZONE_NAME:-$SUGGESTED_ZONE}
-
-    read -s -p "Enter a secure Admin Passcode for the web portal: " ADMIN_PASSCODE
-    echo ""
-    read -p "Enter your Discord Webhook URL for whitelist requests: " DISCORD_WEBHOOK_URL
-
     echo ""
     echo "Which DNS Provider are you using for dynamic updates?"
-    echo "1) Google Cloud DNS (Default, recommended if you delegate from Cloudflare)"
-    echo "2) Cloudflare"
-    echo "3) DuckDNS"
+    echo "1) DuckDNS (Free, 2-minute setup at duckdns.org - Recommended for beginners)"
+    echo "2) Google Cloud DNS (Default if you own a custom domain)"
+    echo "3) Cloudflare"
     echo "4) Dynu"
-    echo "5) None"
+    echo "5) None (Manual IP management)"
     read -p "Select [1-5]: " DNS_CHOICE
 
     case $DNS_CHOICE in
-        2)
+        1)
+            DNS_PROVIDER="duckdns"
+            DNS_ZONE_NAME=""
+            read -p "Enter your DuckDNS Token: " DNS_API_TOKEN
+            CLOUDFLARE_ZONE_ID=""
+            if [[ ! "$DOMAIN_NAME" =~ \.duckdns\.org$ ]]; then
+                echo -e "${YELLOW}Notice: DuckDNS domains typically end with .duckdns.org (e.g., yourname.duckdns.org). Current domain: $DOMAIN_NAME${NC}"
+            fi
+            ;;
+        3)
             DNS_PROVIDER="cloudflare"
+            DNS_ZONE_NAME=""
             read -p "Enter your Cloudflare API Token: " DNS_API_TOKEN
             read -p "Enter your Cloudflare Zone ID: " CLOUDFLARE_ZONE_ID
             ;;
-        3)
-            DNS_PROVIDER="duckdns"
-            read -p "Enter your DuckDNS Token: " DNS_API_TOKEN
-            CLOUDFLARE_ZONE_ID=""
-            ;;
         4)
             DNS_PROVIDER="dynu"
+            DNS_ZONE_NAME=""
             read -p "Enter your Dynu API Token/Password: " DNS_API_TOKEN
             CLOUDFLARE_ZONE_ID=""
             ;;
         5)
             DNS_PROVIDER="none"
+            DNS_ZONE_NAME=""
             DNS_API_TOKEN=""
             CLOUDFLARE_ZONE_ID=""
             ;;
         *)
             DNS_PROVIDER="google"
+            SUGGESTED_ZONE=$(echo "$DOMAIN_NAME" | tr '.' '-')
+            read -p "Enter a name for the Cloud DNS Zone [$SUGGESTED_ZONE]: " DNS_ZONE_NAME
+            DNS_ZONE_NAME=${DNS_ZONE_NAME:-$SUGGESTED_ZONE}
             DNS_API_TOKEN=""
             CLOUDFLARE_ZONE_ID=""
             ;;
@@ -145,8 +146,14 @@ if [ -n "$PROJECT_ID" ]; then
       cloudbuild.googleapis.com \
       artifactregistry.googleapis.com \
       secretmanager.googleapis.com \
+      run.googleapis.com \
+      eventarc.googleapis.com \
+      storage.googleapis.com \
+      iam.googleapis.com \
+      cloudresourcemanager.googleapis.com \
       --project="$PROJECT_ID"
     echo "✅ APIs enabled successfully."
+
 else
     echo -e "${YELLOW}[4/4] Skipping API enablement (Project ID not found).${NC}"
 fi
