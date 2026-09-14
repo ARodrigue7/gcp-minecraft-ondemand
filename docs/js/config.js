@@ -1,1 +1,1 @@
-window.serverConfig = {"domainName":"mc.pitcomi.com","statusUrl":"https://minecraft-status-kph3kdzzsq-uc.a.run.app"};
+window.serverConfig = {"domainName":"mc.example.com","statusUrl":""};

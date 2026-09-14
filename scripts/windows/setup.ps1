@@ -78,26 +78,30 @@ if (-not $SkipConfig) {
 
     Write-Host ""
     Write-Host "Which DNS Provider are you using for dynamic updates?"
-    Write-Host "1) Google Cloud DNS (Default, recommended if you delegate from Cloudflare)"
-    Write-Host "2) Cloudflare"
-    Write-Host "3) DuckDNS"
+    Write-Host "1) DuckDNS (Free, 2-minute setup at duckdns.org - Recommended for beginners)"
+    Write-Host "2) Google Cloud DNS (Default if you own a custom domain)"
+    Write-Host "3) Cloudflare"
     Write-Host "4) Dynu"
-    Write-Host "5) None"
+    Write-Host "5) None (Manual IP management)"
     $DnsChoice = Read-Host "Select [1-5]"
 
     $DnsProvider = "google"
+    $DnsZoneName = ""
     $DnsApiToken = ""
     $CloudflareZoneId = ""
 
     switch ($DnsChoice) {
-        "2" {
+        "1" {
+            $DnsProvider = "duckdns"
+            $DnsApiToken = Read-Host "Enter your DuckDNS Token"
+            if ($DomainName -notmatch '\.duckdns\.org$') {
+                Write-ColorHost "Notice: DuckDNS domains typically end with .duckdns.org (e.g., yourname.duckdns.org)." "Yellow"
+            }
+        }
+        "3" {
             $DnsProvider = "cloudflare"
             $DnsApiToken = Read-Host "Enter your Cloudflare API Token"
             $CloudflareZoneId = Read-Host "Enter your Cloudflare Zone ID"
-        }
-        "3" {
-            $DnsProvider = "duckdns"
-            $DnsApiToken = Read-Host "Enter your DuckDNS Token"
         }
         "4" {
             $DnsProvider = "dynu"
@@ -105,6 +109,14 @@ if (-not $SkipConfig) {
         }
         "5" {
             $DnsProvider = "none"
+        }
+        Default {
+            $DnsProvider = "google"
+            $SuggestedZone = $DomainName -replace '\.', '-'
+            $DnsZoneName = Read-Host "Enter a name for the Cloud DNS Zone [$SuggestedZone]"
+            if ([string]::IsNullOrWhiteSpace($DnsZoneName)) {
+                $DnsZoneName = $SuggestedZone
+            }
         }
     }
 
@@ -140,8 +152,9 @@ Write-Host ""
 if (-not [string]::IsNullOrWhiteSpace($ProjectID)) {
     Write-ColorHost "[4/4] Enabling Required GCP APIs for project: $ProjectID..." "Yellow"
     Write-Host "This may take a few minutes..."
-    gcloud services enable compute.googleapis.com dns.googleapis.com pubsub.googleapis.com logging.googleapis.com cloudfunctions.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com --project="$ProjectID"
+    gcloud services enable compute.googleapis.com dns.googleapis.com pubsub.googleapis.com logging.googleapis.com cloudfunctions.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com run.googleapis.com eventarc.googleapis.com storage.googleapis.com iam.googleapis.com cloudresourcemanager.googleapis.com --project="$ProjectID"
     Write-Host "✅ APIs enabled successfully."
+
 } else {
     Write-ColorHost "[4/4] Skipping API enablement (Project ID not found)." "Yellow"
 }

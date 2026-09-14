@@ -4,19 +4,19 @@
 # The GCP Project ID where resources will be deployed
 project_id = "your-gcp-project-id"
 
-# The fully qualified domain name for the Minecraft server (e.g. play.yourdomain.com)
+# The fully qualified domain name for the Minecraft server (e.g. play.yourdomain.com or yourname.duckdns.org)
 domain_name = "play.yourdomain.com"
 
-# The name of the Cloud DNS managed zone
+# The name of the Cloud DNS managed zone (only required if dns_provider is "google")
 dns_zone_name = "play-yourdomain-com"
 
 # Size of the persistent data disk in GB (standard pd)
-disk_size_gb = 10
+disk_size_gb = 30
 
-# Compute Engine machine type (e.g., e2-medium or e2-small)
+# Compute Engine machine type (e.g., e2-medium (4GB), e2-standard-2 (8GB), e2-standard-4 (16GB))
 machine_type = "e2-medium"
 
-# Idle timeout in seconds before the VM shuts down automatically (10 minutes)
+# Idle timeout in seconds before the VM shuts down automatically (600 = 10 minutes)
 idle_timeout_seconds = 600
 
 # The GCP region and zone for regional resources
@@ -29,21 +29,31 @@ discord_webhook_url = "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEB
 # Admin Passcode for accessing the web admin portal
 admin_passcode = "your-secure-admin-password"
 
-
-
 # Set to false to disable DNS autostart (forcing manual passcode entry on portal)
 enable_dns_autostart = false
 
-# Minecraft Version to run (e.g. 26.2 or LATEST)
+# Minecraft Engine / Server Type: "paper", "vanilla", "fabric", "modrinth", or "curseforge"
+server_type = "paper"
+
+# Minecraft Version to run (e.g. "1.21", "1.20.4", or "LATEST") - used for paper, vanilla, fabric
 minecraft_version = "LATEST"
+
+# Modpack Project ID / Slug / Page URL (only if server_type is "modrinth" or "curseforge")
+# Examples:
+#   Modrinth: "cobblemon" or "all-the-mods-9"
+#   CurseForge: "https://www.curseforge.com/minecraft/modpacks/all-the-mods-9"
+modpack_id = ""
+
+# CurseForge Eternal/Overwolf API Key (optional - itzg container bundles key on Java 17+)
+curseforge_api_key = ""
 
 # Elastic Storage Settings
 disk_auto_expand           = true
-disk_auto_expand_max_gb    = 25
+disk_auto_expand_max_gb    = 40
 disk_auto_expand_threshold = 80
 
 # Dynamic DNS Provider Setup
-# Supported providers: "google", "cloudflare", "duckdns", "dynu", or "none"
-dns_provider       = "google"
+# Supported providers: "duckdns", "google", "cloudflare", "dynu", or "none"
+dns_provider       = "duckdns"
 dns_api_token      = "your-dns-provider-api-token-if-needed"
 cloudflare_zone_id = "your-cloudflare-zone-id-if-using-cloudflare"

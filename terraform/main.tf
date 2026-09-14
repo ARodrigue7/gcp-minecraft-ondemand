@@ -571,9 +571,10 @@ resource "google_cloud_run_service_iam_member" "status_invoker" {
 
 # Generate frontend config.js automatically on terraform apply
 resource "local_file" "frontend_config" {
-  filename = "${path.module}/../docs/config.js"
+  filename = "${path.module}/../docs/js/config.js"
   content = "window.serverConfig = ${jsonencode({
     statusUrl  = google_cloudfunctions2_function.minecraft_status.service_config[0].uri
     domainName = var.domain_name
   })};"
 }
+

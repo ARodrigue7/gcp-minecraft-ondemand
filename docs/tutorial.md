@@ -58,18 +58,10 @@ Select your deployment method below:
 Replace <code>YOUR_PROJECT_ID</code> with your GCP Project ID:
 <pre><code class="language-bash">gcloud config set project YOUR_PROJECT_ID</code></pre>
 </li>
-<li><strong>Enable Required GCP Services APIs:</strong><br>
-<pre><code class="language-bash">gcloud services enable \
-  compute.googleapis.com \
-  cloudfunctions.googleapis.com \
-  pubsub.googleapis.com \
-  dns.googleapis.com \
-  secretmanager.googleapis.com \
-  cloudbuild.googleapis.com</code></pre>
-</li>
-<li>Proceed directly to <strong>Step 2: Configure Environment Variables</strong>.</li>
+<li>Proceed directly to <strong>Step 2: Configure Environment Variables</strong>. The setup wizard automatically enables all required GCP APIs for you.</li>
 </ol>
 </div>
+
 
 <!-- Local Workstation -->
 <div id="deploy-instructions-local" class="deploy-instruct-pane space-y-4 hidden">
@@ -88,16 +80,9 @@ cd gcp-minecraft-ondemand</code></pre>
 <li><strong>Set your target GCP Project ID:</strong>
 <pre><code class="language-bash">gcloud config set project YOUR_PROJECT_ID</code></pre>
 </li>
-<li><strong>Enable Required GCP Services APIs:</strong>
-<pre><code class="language-bash">gcloud services enable \
-  compute.googleapis.com \
-  cloudfunctions.googleapis.com \
-  pubsub.googleapis.com \
-  dns.googleapis.com \
-  secretmanager.googleapis.com \
-  cloudbuild.googleapis.com</code></pre>
-</li>
+<li>Proceed to <strong>Step 2: Configure Environment Variables</strong>. The setup wizard will automatically enable all 13 required GCP APIs for your project.</li>
 </ol>
+
 </div>
 </div>
 
@@ -222,22 +207,41 @@ Select your provider below to view custom setup steps:
 
 Finally, configure the Player Portal and Admin Dashboard:
 
-1. **Update portal configuration:**
-   Open the file `docs/js/config.js` and input your Minecraft domain name and `statusUrl` (use the `function_url` output from Terraform):
-   ```javascript
-   window.serverConfig = {
-     "domainName": "mc.yourdomain.com",
-     "statusUrl": "https://<your-cloud-function-url>"
-   };
-   ```
-
-2. **Host the portal:**
-   Deploy the `docs/` folder to GitHub Pages (free and recommended) or upload it to a public GCP Cloud Storage bucket.
+1. **Automatic configuration:**
+   Terraform automatically writes your generated endpoints directly to `docs/js/config.js` upon completion of `terraform apply`.
+2. **Host the portal on GitHub Pages:**
+   - Commit and push `docs/js/config.js` to your repository's `main` branch.
+   - Go to your repository's **Settings** -> **Pages**.
+   - Under **Build and deployment**, set Source to **Deploy from a branch**, Branch to **`main`**, and folder to **`/docs`**. Click **Save**.
+   - Your web splash page will be live at `https://<your-username>.github.io/<repo-name>/play.html`!
 
 ---
 
-## 🎉 Deployment Complete!
+## 🎮 Step 6: Whitelist Yourself, Then Play!
 
-Congratulations! Your event-driven server is fully set up.
-* Players can query the status, request whitelisting, and click **Wake Up Cluster** on your web portal.
-* Attempting to connect to the IP `mc.yourdomain.com` in Minecraft will trigger DNS lookup logs, invoking the wakeup function automatically!
+> [!IMPORTANT]
+> **Admin Portal Access Requirement**: The admin portal enforces dual-factor authentication: it requires both your **Admin Passcode** and that your Minecraft username exists on the **approved whitelist**. Because the server starts with an empty whitelist, you must approve yourself first via Discord:
+
+1. **Submit Whitelist Request:**
+   Open your GitHub Pages `play.html`, scroll to **Whitelist Request**, enter your Minecraft Java Edition username, and submit.
+2. **Approve in Discord:**
+   Open your Discord channel with the configured webhook. An interactive card will appear—click **Approve**.
+3. **Log Into Admin Portal:**
+   Visit `admin.html` on your GitHub Pages site. Enter your **Admin Passcode** and your approved Minecraft username to access server controls, logs, backups, and the mods/plugins manager.
+4. **Wake the Server:**
+   Click **Wake Server** on `play.html` or `admin.html`. The VM will boot and launch the Minecraft container (~2–3 minutes for initial setup). Once the badge indicates **ONLINE**, connect in Minecraft Java Edition!
+
+---
+
+## 🛠️ Troubleshooting
+
+| Issue / Error Message | Root Cause | Solution |
+| :--- | :--- | :--- |
+| `Error 403: ... API has not been used` | A required GCP API has not finished activating. | Wait 30 seconds and re-run `terraform apply`, or run `./scripts/linux/setup.sh`. |
+| `Billing account not found` | Your GCP project lacks an active billing link. | In GCP Console, link an active billing account under **Billing** -> **Manage billing accounts**. |
+| Admin portal says **Unauthorized** with correct password | Your Minecraft username is not yet on the approved whitelist. | Request access on `play.html` and approve the card in your Discord channel (Step 6). |
+| Player page shows blank status or buttons do nothing | `docs/js/config.js` was not pushed to your GitHub repo. | Commit `docs/js/config.js` and push to your `main` branch. |
+| Server won't wake on DuckDNS | Free DDNS providers do not support GCP DNS query policies. | Normal for free DDNS; use the **Wake Server** button on `play.html` or `admin.html`. |
+| First `terraform apply` fails | GCP IAM permissions occasionally take 15–30s to propagate. | Wait 30 seconds and run `terraform apply` again. |
+| Portal says **Running** but Minecraft says "Connection refused" | The Minecraft server container is still loading chunks or downloading assets. | Wait 60–90 seconds for vanilla (or 2–3 minutes for modpacks) and refresh server list. |
+

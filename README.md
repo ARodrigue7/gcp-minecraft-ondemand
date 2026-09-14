@@ -105,12 +105,24 @@ python3 -m pytest tests/ -v
 
 ---
 
-## ⚙️ Customization
+## ⚙️ Customization & Server Management
 
-You can customize the Minecraft server settings by editing [terraform/startup.sh](terraform/startup.sh).
-* `TYPE`: Change from `PAPER` to `VANILLA`, `FORGE`, `FABRIC`, etc.
-* `VERSION`: Set a specific version like `1.20.4` instead of `LATEST`.
-* `MEMORY`: Change the JVM memory allocation (e.g., `3G`).
+Server settings can be configured either dynamically from the **Admin Portal** or as initial defaults in **Terraform**:
+
+### 1. Web Admin Portal (Recommended)
+Log into your web admin portal (`admin.html`) to configure:
+* **Server Engine**: Switch between **Paper**, **Fabric**, **Vanilla**, **Modrinth**, or **CurseForge** with a single click.
+* **Machine Sizing & Memory**: Scale compute tiers dynamically between `e2-medium` (4GB), `e2-standard-2` (8GB), and `e2-standard-4` (16GB) with live cost estimation.
+* **Custom Mods & Plugins**: Upload, enable, disable, and delete `.jar` files with drag-and-drop support directly into GCS.
+* **Modpack Search**: Search Modrinth modpacks live from the portal.
+
+### 2. Terraform Variables (`terraform/terraform.tfvars`)
+Set initial infrastructure defaults before deployment:
+* `server_type`: Default server type (`"paper"`, `"fabric"`, `"vanilla"`, `"modrinth"`, `"curseforge"`).
+* `modpack_id`: Modrinth project slug or CurseForge page URL.
+* `disk_size_gb`: Size of persistent data disk (default `30` GB).
+* `idle_timeout_seconds`: Inactivity duration before automatic shutdown (default `600` seconds).
+
 
 ---
 
