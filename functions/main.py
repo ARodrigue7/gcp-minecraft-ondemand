@@ -34,6 +34,8 @@ from whitelist_manager import (
     get_whitelist_sets
 )
 from discord_webhook import send_discord_webhook, delete_discord_message
+from server_config import get_server_config, save_server_config
+from mods_manager import list_mods, create_upload_session, toggle_mod, delete_mod
 
 # Validate configuration on module loading to fail fast
 validate_config()
@@ -97,7 +99,7 @@ def get_status_http(request):
 
     # Handle Admin endpoints
     action = request.args.get('action')
-    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_add', 'admin_whitelist_remove', 'admin_download_backup', 'admin_power']:
+    if action in ['admin_status', 'admin_logs', 'admin_command', 'admin_whitelist_add', 'admin_whitelist_remove', 'admin_download_backup', 'admin_power', 'admin_get_config', 'admin_save_config', 'admin_mods_list', 'admin_mods_upload_session', 'admin_mods_toggle', 'admin_mods_delete']:
         is_auth = False
         if action == 'admin_download_backup':
             passcode = request.args.get('passcode')
@@ -113,7 +115,16 @@ def get_status_http(request):
             return (json.dumps({"error": "Unauthorized"}), 401, headers)
             
         if request.method == 'GET':
-            if action == 'admin_status':
+            if action == 'admin_get_config':
+                cfg = get_server_config()
+                return (json.dumps(cfg), 200, headers)
+
+            elif action == 'admin_mods_list':
+                folder = request.args.get('folder', 'mods')
+                items = list_mods(folder)
+                return (json.dumps({"mods": items, "folder": folder}), 200, headers)
+
+            elif action == 'admin_status':
                 try:
                     status, ip = get_instance_status_and_ip()
                             
@@ -211,6 +222,34 @@ def get_status_http(request):
                         return (json.dumps({"success": True, "message": "VM restart initiated."}), 200, headers)
                     else:
                         return (json.dumps({"error": f"Invalid power command: {command}"}), 400, headers)
+                        
+                elif action == 'admin_save_config':
+                    updated = save_server_config(request_json)
+                    return (json.dumps({"success": True, "config": updated}), 200, headers)
+
+                elif action == 'admin_mods_upload_session':
+                    filename = request_json.get('filename')
+                    folder = request_json.get('folder', 'mods')
+                    if not filename:
+                        return (json.dumps({"error": "Missing filename parameter"}), 400, headers)
+                    session = create_upload_session(filename, folder)
+                    return (json.dumps(session), 200, headers)
+
+                elif action == 'admin_mods_toggle':
+                    filename = request_json.get('filename')
+                    folder = request_json.get('folder', 'mods')
+                    if not filename:
+                        return (json.dumps({"error": "Missing filename parameter"}), 400, headers)
+                    res = toggle_mod(filename, folder)
+                    return (json.dumps(res), 200, headers)
+
+                elif action == 'admin_mods_delete':
+                    filename = request_json.get('filename')
+                    folder = request_json.get('folder', 'mods')
+                    if not filename:
+                        return (json.dumps({"error": "Missing filename parameter"}), 400, headers)
+                    res = delete_mod(filename, folder)
+                    return (json.dumps(res), 200, headers)
                     
             except Exception as e:
                 logger.error(f"Error handling admin post request: {e}")

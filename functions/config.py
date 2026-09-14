@@ -21,6 +21,7 @@ DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 # New config variables for Admin Panel, backups, and wakeup control
 ADMIN_PASSCODE = os.environ.get('ADMIN_PASSCODE')
 BACKUPS_BUCKET = os.environ.get('BACKUPS_BUCKET')
+MODS_BUCKET = os.environ.get('MODS_BUCKET', f"{PROJECT_ID}-minecraft-mods" if PROJECT_ID else "")
 INSTANCE_ID = os.environ.get('INSTANCE_ID')
 
 # Generic Dynamic DNS configurations
