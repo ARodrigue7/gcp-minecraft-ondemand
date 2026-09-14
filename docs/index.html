@@ -83,8 +83,8 @@
 
                 <!-- Deploy Button -->
                 <div class="flex justify-center w-full mt-6">
-                    <a id="deploy-button" href="https://deploy.cloud.google.com/?git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git" target="_blank" class="inline-block transition-transform hover:scale-105 active:scale-95 duration-200">
-                        <img src="https://deploy.cloud.run/button.svg" alt="Deploy to Google Cloud" class="h-9">
+                    <a id="deploy-button" href="https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=https://github.com/ARodrigue7/gcp-minecraft-ondemand.git&cloudshell_tutorial=cloudshell-tutorial.md" target="_blank" class="inline-block transition-transform hover:scale-105 active:scale-95 duration-200">
+                        <img src="https://storage.googleapis.com/cloudrun/button.svg" alt="Deploy to Google Cloud" class="h-9">
                     </a>
                 </div>
             </div>
@@ -125,7 +125,7 @@
                 }
             }
             
-            deployBtn.href = `https://deploy.cloud.google.com/?git_repo=${encodeURIComponent(repoUrl)}`;
+            deployBtn.href = `https://ssh.cloud.google.com/cloudshell/open?cloudshell_git_repo=${encodeURIComponent(repoUrl)}&cloudshell_tutorial=cloudshell-tutorial.md`;
         });
     </script>
 </body>

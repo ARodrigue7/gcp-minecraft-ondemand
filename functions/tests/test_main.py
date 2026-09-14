@@ -131,3 +131,80 @@ def test_get_cors_headers_disallowed():
     with patch.dict(os.environ, {'ALLOWED_ORIGINS': 'https://allowed.com,https://another.com'}):
         headers = main.get_cors_headers(mock_request)
         assert headers['Access-Control-Allow-Origin'] == 'https://allowed.com'
+
+@patch('main.check_admin_auth', return_value=True)
+@patch('main.get_server_config', return_value={"type": "fabric", "machine_type": "e2-standard-2"})
+def test_admin_get_config(mock_cfg, mock_auth):
+    mock_request = MagicMock()
+    mock_request.method = 'GET'
+    mock_request.args = {'action': 'admin_get_config'}
+    
+    response, code, _ = main.get_status_http(mock_request)
+    assert code == 200
+    data = json.loads(response)
+    assert data["type"] == "fabric"
+
+@patch('main.check_admin_auth', return_value=True)
+@patch('main.save_server_config', return_value={"type": "modrinth", "modpack_id": "cobblemon"})
+def test_admin_save_config(mock_save, mock_auth):
+    mock_request = MagicMock()
+    mock_request.method = 'POST'
+    mock_request.args = {'action': 'admin_save_config'}
+    mock_request.get_json.return_value = {"type": "modrinth", "modpack_id": "cobblemon"}
+    
+    response, code, _ = main.get_status_http(mock_request)
+    assert code == 200
+    data = json.loads(response)
+@patch('main.check_admin_auth', return_value=True)
+@patch('main.list_mods', return_value=[{"filename": "test.jar", "size": 100, "enabled": True}])
+def test_admin_mods_list(mock_list, mock_auth):
+    mock_request = MagicMock()
+    mock_request.method = 'GET'
+    mock_request.args = {'action': 'admin_mods_list', 'folder': 'mods'}
+    
+    response, code, _ = main.get_status_http(mock_request)
+    assert code == 200
+    data = json.loads(response)
+    assert len(data["mods"]) == 1
+    assert data["mods"][0]["filename"] == "test.jar"
+
+@patch('main.check_admin_auth', return_value=True)
+@patch('main.create_upload_session', return_value={"upload_url": "https://gcs.upload/123", "filename": "test.jar", "folder": "mods"})
+def test_admin_mods_upload_session(mock_session, mock_auth):
+    mock_request = MagicMock()
+    mock_request.method = 'POST'
+    mock_request.args = {'action': 'admin_mods_upload_session'}
+    mock_request.get_json.return_value = {"filename": "test.jar", "folder": "mods"}
+    
+    response, code, _ = main.get_status_http(mock_request)
+    assert code == 200
+    data = json.loads(response)
+    assert data["upload_url"] == "https://gcs.upload/123"
+
+@patch('main.check_admin_auth', return_value=True)
+@patch('main.toggle_mod', return_value={"filename": "test.jar.disabled", "enabled": False})
+def test_admin_mods_toggle(mock_toggle, mock_auth):
+    mock_request = MagicMock()
+    mock_request.method = 'POST'
+    mock_request.args = {'action': 'admin_mods_toggle'}
+    mock_request.get_json.return_value = {"filename": "test.jar", "folder": "mods"}
+    
+    response, code, _ = main.get_status_http(mock_request)
+    assert code == 200
+    data = json.loads(response)
+    assert data["enabled"] is False
+
+@patch('main.check_admin_auth', return_value=True)
+@patch('main.delete_mod', return_value={"deleted": True, "filename": "test.jar"})
+def test_admin_mods_delete(mock_del, mock_auth):
+    mock_request = MagicMock()
+    mock_request.method = 'POST'
+    mock_request.args = {'action': 'admin_mods_delete'}
+    mock_request.get_json.return_value = {"filename": "test.jar", "folder": "mods"}
+    
+    response, code, _ = main.get_status_http(mock_request)
+    assert code == 200
+    data = json.loads(response)
+    assert data["deleted"] is True
+
+

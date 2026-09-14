@@ -38,7 +38,7 @@ variable "dns_zone_name" {
 variable "disk_size_gb" {
   description = "Size of the persistent data disk in GB"
   type        = number
-  default     = 20
+  default     = 30
 }
 
 variable "disk_auto_expand" {
@@ -50,7 +50,7 @@ variable "disk_auto_expand" {
 variable "disk_auto_expand_max_gb" {
   description = "Maximum size in GB the persistent disk can automatically scale to"
   type        = number
-  default     = 25
+  default     = 40
 }
 
 variable "disk_auto_expand_threshold" {
@@ -114,5 +114,28 @@ variable "cloudflare_zone_id" {
   description = "Zone ID for Cloudflare DNS (only needed if using 'cloudflare' DNS provider)"
   type        = string
   default     = ""
+}
+
+variable "server_type" {
+  description = "Minecraft server type: vanilla, paper, fabric, modrinth, curseforge"
+  type        = string
+  default     = "paper"
+  validation {
+    condition     = contains(["vanilla", "paper", "fabric", "modrinth", "curseforge"], lower(var.server_type))
+    error_message = "server_type must be one of: vanilla, paper, fabric, modrinth, curseforge."
+  }
+}
+
+variable "modpack_id" {
+  description = "Modrinth slug/project ID or CurseForge page URL"
+  type        = string
+  default     = ""
+}
+
+variable "curseforge_api_key" {
+  description = "CurseForge Eternal/Overwolf API key (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
 }
 
