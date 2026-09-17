@@ -36,8 +36,14 @@
                 </div>
             </div>
 
-            <!-- Scrollable Docs Reader -->
-            <div id="docs-content" class="markdown-body h-[60vh] overflow-y-auto pr-4 select-text">
+            <!-- On This Page -->
+            <nav id="docs-toc" class="hidden mb-8 border border-white/10 bg-surface-container/20 p-4">
+                <p class="text-[9px] font-label-sm text-on-surface-variant uppercase tracking-widest mb-3">On This Page</p>
+                <ul id="docs-toc-list" class="space-y-1.5"></ul>
+            </nav>
+
+            <!-- Docs Reader -->
+            <div id="docs-content" class="markdown-body select-text">
                 <div class="flex items-center justify-center h-full">
                     <div class="text-center space-y-3">
                         <span class="material-symbols-outlined animate-spin text-primary text-3xl">autorenew</span>
@@ -94,6 +100,48 @@
             }
         };
 
+        function slugify(text) {
+            return text.toLowerCase()
+                .replace(/[^\w\s-]/g, "")
+                .trim()
+                .replace(/\s+/g, "-");
+        }
+
+        function buildTableOfContents(container) {
+            const headings = container.querySelectorAll("h2");
+            const toc = document.getElementById("docs-toc");
+            const list = document.getElementById("docs-toc-list");
+            if (!headings.length || !toc || !list) return;
+
+            const seen = {};
+            headings.forEach(function(heading) {
+                let id = slugify(heading.textContent);
+                if (seen[id]) {
+                    seen[id] += 1;
+                    id = id + "-" + seen[id];
+                } else {
+                    seen[id] = 1;
+                }
+                heading.id = id;
+
+                const link = document.createElement("a");
+                link.href = "#" + id;
+                link.textContent = heading.textContent;
+                link.className = "block text-xs text-on-surface-variant hover:text-primary transition-colors duration-200";
+
+                const item = document.createElement("li");
+                item.appendChild(link);
+                list.appendChild(item);
+            });
+            toc.classList.remove("hidden");
+        }
+
+        function jumpToHash() {
+            if (!location.hash) return;
+            const target = document.getElementById(location.hash.slice(1));
+            if (target) target.scrollIntoView();
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const contentContainer = document.getElementById("docs-content");
             
@@ -112,6 +160,8 @@
                         breaks: true
                     });
                     contentContainer.innerHTML = marked.parse(markdownText);
+                    buildTableOfContents(contentContainer);
+                    jumpToHash();
                 })
                 .catch(error => {
                     console.error("Docs load error:", error);

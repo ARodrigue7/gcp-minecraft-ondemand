@@ -64,9 +64,16 @@ ACTIVE_MC_VERSION="${minecraft_version}"
 ACTIVE_MODPACK_ID="${modpack_id}"
 ACTIVE_IDLE_LIMIT=${idle_timeout_seconds}
 
-if gsutil -q stat "gs://${backups_bucket}/server-config.json"; then
+CONFIG_RAW=""
+
+if command -v gcloud >/dev/null 2>&1 && gcloud storage --help >/dev/null 2>&1; then
+  CONFIG_RAW=$$(gcloud storage cat "gs://${backups_bucket}/server-config.json" 2>/dev/null || echo "")
+elif command -v gsutil >/dev/null 2>&1; then
   CONFIG_RAW=$$(gsutil cat "gs://${backups_bucket}/server-config.json" 2>/dev/null || echo "")
-  if [ -n "$$CONFIG_RAW" ]; then
+fi
+
+if [ -n "$$CONFIG_RAW" ]; then
+
     eval "$$(python3 -c "import json, sys
 try:
     d = json.loads(sys.argv[1])
@@ -148,9 +155,15 @@ case "$$ACTIVE_SERVER_TYPE" in
 esac
 
 mkdir -p "$MOUNT_DIR/mods" "$MOUNT_DIR/plugins"
-# Sync custom mods and plugins from GCS bucket
-gsutil -m rsync -r -d "gs://${mods_bucket}/mods" "$MOUNT_DIR/mods" 2>/dev/null || true
-gsutil -m rsync -r -d "gs://${mods_bucket}/plugins" "$MOUNT_DIR/plugins" 2>/dev/null || true
+# Sync custom mods and plugins from GCS bucket (prefer modern gcloud storage, fallback to gsutil)
+if command -v gcloud >/dev/null 2>&1 && gcloud storage --help >/dev/null 2>&1; then
+  gcloud storage rsync "gs://${mods_bucket}/mods" "$MOUNT_DIR/mods" --recursive --delete-unmatched-destination-objects 2>/dev/null || true
+  gcloud storage rsync "gs://${mods_bucket}/plugins" "$MOUNT_DIR/plugins" --recursive --delete-unmatched-destination-objects 2>/dev/null || true
+elif command -v gsutil >/dev/null 2>&1; then
+  gsutil -m rsync -r -d "gs://${mods_bucket}/mods" "$MOUNT_DIR/mods" 2>/dev/null || true
+  gsutil -m rsync -r -d "gs://${mods_bucket}/plugins" "$MOUNT_DIR/plugins" 2>/dev/null || true
+fi
+
 
 echo "Starting fresh Minecraft server container..."
 docker run -d \
@@ -278,14 +291,19 @@ create_backup() {
     echo "Resuming auto-saves..."
     docker exec minecraft rcon-cli save-on >/dev/null 2>&1 || true
     
-    # Upload backup to Cloud Storage if successful
+    # Upload backup to Cloud Storage if successful (prefer modern gcloud storage, fallback to gsutil)
     if [ -s $TMP_BACKUP ]; then
-      gsutil cp $TMP_BACKUP gs://${backups_bucket}/rolling_backup.tar.gz >/dev/null 2>&1 || true
+      if command -v gcloud >/dev/null 2>&1 && gcloud storage --help >/dev/null 2>&1; then
+        gcloud storage cp $TMP_BACKUP "gs://${backups_bucket}/rolling_backup.tar.gz" >/dev/null 2>&1 || true
+      elif command -v gsutil >/dev/null 2>&1; then
+        gsutil cp $TMP_BACKUP "gs://${backups_bucket}/rolling_backup.tar.gz" >/dev/null 2>&1 || true
+      fi
       rm -f $TMP_BACKUP
       echo "Backup uploaded successfully!"
     else
       echo "ERROR: Backup archive creation failed."
     fi
+
   else
     echo "ERROR: Minecraft container is not running, skipping backup."
   fi
