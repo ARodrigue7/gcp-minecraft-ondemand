@@ -71,6 +71,8 @@ This implementation acts as a cloud-native GCP equivalent to established AWS on-
 * [x] Implement core Terraform foundation for server type selection (Vanilla, Paper, Fabric, Modrinth, CurseForge) with dynamic memory derivation and dimension migration.
 * [x] Implement Phase 2 Portal Server Setup (Server tab, 5 engine type cards, 3-tier machine resizing, live Modrinth search, and GCS server-config.json persistence).
 * [x] Implement Phase 3 Custom Mods & Plugins Manager (Dedicated mods GCS bucket with CORS, direct resumable browser uploads, jar enable/disable toggle, and boot rsync).
+* [x] Remediate deprecated `gsutil` CLI usage in `terraform/startup.sh` by transitioning to `gcloud storage` (cat, rsync, cp) ahead of Google Cloud's March 2027 removal deadline.
+
 
 ---
 
@@ -135,19 +137,19 @@ The blueprint and strategic notes for transitioning to a **Multi-Tenant BYOC Saa
 ```
 
 🔄 Change Log & Active Focus
-Current Iteration: Phase 6 - Custom Mods & Plugins Manager (Phase 3 Complete)
+Current Iteration: Phase 6 - gsutil Remediation & Onboarding Docs Overhaul
 
 Recent Changes:
-* Dedicated Mods Storage: Created `${project_id}-minecraft-mods` GCS bucket with CORS configuration and IAM roles for VM & Cloud Function.
-* Direct Resumable Uploads: Implemented `create_upload_session` in `functions/mods_manager.py` allowing browsers to stream jar uploads directly to GCS, bypassing memory limits.
-* Jar Management Actions: Added list, toggle enable/disable (`.jar` ↔ `.jar.disabled`), and delete endpoints with path traversal security validation.
-* Engine-Aware UI: Added Mods tab in `docs/admin.html` with drag-and-drop uploader, active file count, state badges, and type-aware logic (`/plugins` on Paper, `/mods` on Fabric/packs, disabled on Vanilla).
-* Startup Sync: Configured `terraform/startup.sh` to synchronize `gs://${mods_bucket}/mods` and `plugins` to local host mount directories on boot.
-* Unit Test Coverage: Added 11 new tests across `test_mods_manager.py` and `test_main.py` (60/60 passing).
+* Storage CLI Modernization: Migrated `terraform/startup.sh` from legacy `gsutil` (`cat`, `rsync`, `cp`) to modern `gcloud storage` commands with automatic `gsutil` fallback ahead of Google Cloud's March 2027 removal deadline.
+* Documentation Overhaul: Rewrote `cloudshell-tutorial.md` and `docs/tutorial.md` with streamlined onboarding, click-by-click value gathering, dual-authentication whitelist loop instructions, and error-to-fix troubleshooting tables.
+* Interactive Table of Contents: Added slugified header navigation and "On This Page" TOC in `docs/getting-started.html`.
+* Dedicated Mods Storage & Manager: GCS resumable jar uploads, atomic enable/disable toggles, engine-aware UI, and startup mount sync.
+* Test Suite & Validation: 60/60 passing tests and zero syntax warnings across rendered templates and Terraform configs.
 
 Active Blockers: None!
 
-Immediate Next Step: User acceptance testing and end-to-end sandbox deployment verification.
+Immediate Next Step: End-to-end sandbox deployment and release tag preparation.
+
 
 ---
 
